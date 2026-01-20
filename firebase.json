@@ -1,0 +1,1 @@
+{"flutter":{"platforms":{"android":{"default":{"projectId":"jam-sync-db","appId":"1:888936093592:android:711ec03bb6c5101858bded","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"jam-sync-db","configurations":{"android":"1:888936093592:android:711ec03bb6c5101858bded","ios":"1:888936093592:ios:85d8e3708885b98f58bded"}}}}}}
