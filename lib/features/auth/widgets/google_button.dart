@@ -3,11 +3,12 @@ import 'package:jam_sync/shared/utils/app_styles.dart';
 import 'package:jam_sync/shared/utils/gap_helper.dart';
 
 class GoogleButton extends StatelessWidget {
-  const GoogleButton({super.key, required VoidCallback action});
+  const GoogleButton({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Container(
+      padding: const EdgeInsets.symmetric(vertical: 8),
       decoration: BoxDecoration(
         color: AppStyles.white,
         borderRadius: BorderRadius.circular(10),
@@ -20,6 +21,7 @@ class GoogleButton extends StatelessWidget {
         ],
       ),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Image.asset('assets/images/google.png', width: 24, height: 24),
           12.width,

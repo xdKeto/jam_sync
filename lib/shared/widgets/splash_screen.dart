@@ -8,33 +8,40 @@ class SplashScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Container(
-            margin: const EdgeInsets.only(bottom: 20),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10),
-              image: DecorationImage(
-                image: AssetImage('assets/images/logo.png'),
-                fit: BoxFit.cover,
+    return Scaffold(
+      backgroundColor: AppStyles.lightTeal,
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 160),
+                  child: Image.asset(
+                    'assets/images/logo.png',
+                    fit: BoxFit.contain,
+                  ),
+                ),
               ),
-            ),
+              Text('Welcome to JamSync', style: AppStyles.h1(context)),
+              6.height,
+              Text(
+                'Collaborate on music in real-time with digital music sheet.',
+                style: AppStyles.bodyMedium(context),
+                textAlign: TextAlign.center,
+              ),
+              16.height,
+              LoadingAnimationWidget.staggeredDotsWave(
+                color: AppStyles.white,
+                size: 32,
+              ),
+            ],
           ),
-          Text('Welcome to JamSync', style: AppStyles.h1(context)),
-          6.height,
-          Text(
-            'Collaborate on music in real-time with digital music sheet.',
-            style: AppStyles.bodyMedium(context),
-          ),
-          8.height,
-          LoadingAnimationWidget.staggeredDotsWave(
-            color: AppStyles.white,
-            size: 24,
-          ),
-        ],
+        ),
       ),
     );
   }

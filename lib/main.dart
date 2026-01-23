@@ -13,8 +13,9 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   await Supabase.initialize(
-    url: 'https://your-project.supabase.co',
-    anonKey: 'your-anon-key',
+    url: 'https://hulqxdpctueedviciken.supabase.co',
+    anonKey:
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1bHF4ZHBjdHVlZWR2aWNpa2VuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg4NzY4NDksImV4cCI6MjA4NDQ1Mjg0OX0.Mk5hFfizbXzZYgJWik4x1TeiKtZ050JVGVEc7CcA1Ds',
   );
   runApp(const ProviderScope(child: MyApp()));
 }
@@ -28,6 +29,7 @@ class MyApp extends ConsumerWidget {
 
     return MaterialApp(
       title: 'Jam Sync',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
@@ -43,6 +45,8 @@ class MyApp extends ConsumerWidget {
               return ErrorScreen();
             },
             loading: () {
+              Future.delayed(const Duration(seconds: 5));
+
               return SplashScreen();
             },
           );

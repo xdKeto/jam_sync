@@ -4,11 +4,11 @@ class AppStyles {
   AppStyles._();
 
   // Primary Palette
-  static const Color primary = Color(0xFF1B4965);
-  static const Color secondary = Color(0xFF62B6CB);
-  static const Color tertiary = Color(0xFF5FA8D3);
-  static const Color accent = Color(0xFFBEE9E8);
-  static const Color surface = Color(0xFFCAE9FF);
+  static const Color darkNavy = Color(0xFF1B4965);
+  static const Color mediumBlue = Color(0xFF62B6CB);
+  static const Color skyBlue = Color(0xFF5FA8D3);
+  static const Color lightTeal = Color(0xFFBEE9E8);
+  static const Color paleBlue = Color(0xFFCAE9FF);
 
   // Semantic Colors
   static const Color success = Color(0xFF4CAF50);
@@ -39,18 +39,47 @@ class AppStyles {
   static const Color background = Color(0xFFFFFFFF);
   static const Color backgroundDark = Color(0xFF1B4965);
 
-  // Gradient
-  static const LinearGradient primaryGradient = LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    colors: [primary, secondary],
+  static InputDecoration formBox = InputDecoration(
+    filled: true,
+    fillColor: AppStyles.white,
+    contentPadding: EdgeInsets.symmetric(vertical: 6, horizontal: 12),
+    enabledBorder: OutlineInputBorder(
+      borderSide: BorderSide(color: AppStyles.grey200),
+      borderRadius: BorderRadius.circular(10.0),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderSide: BorderSide(color: AppStyles.darkNavy),
+      borderRadius: BorderRadius.circular(10.0),
+    ),
   );
 
-  static const LinearGradient accentGradient = LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    colors: [accent, surface],
-  );
+  static BoxDecoration buttonBox(Color color, double borderRad) {
+    return BoxDecoration(
+      color: color,
+      borderRadius: BorderRadius.circular(borderRad),
+      border: Border.all(color: color, width: 2),
+    );
+  }
+
+  static BoxDecoration buttonBox2(Color color, double borderRad) {
+    return BoxDecoration(
+      border: Border.all(color: color, width: 2),
+      borderRadius: BorderRadius.circular(borderRad),
+    );
+  }
+
+  // Gradient
+  // static const LinearGradient primaryGradient = LinearGradient(
+  //   begin: Alignment.topLeft,
+  //   end: Alignment.bottomRight,
+  //   colors: [primary, secondary],
+  // );
+
+  // static const LinearGradient accentGradient = LinearGradient(
+  //   begin: Alignment.topLeft,
+  //   end: Alignment.bottomRight,
+  //   colors: [accent, surface],
+  // );
 
   // ============================================
   // RESPONSIVE HELPERS
@@ -219,10 +248,10 @@ class AppStyles {
   static TextStyle link(BuildContext context) => TextStyle(
     fontSize: responsiveSize(context, mobile: 14, tablet: 16),
     fontWeight: FontWeight.w500,
-    color: secondary,
+    color: mediumBlue,
     height: 1.5,
     decoration: TextDecoration.underline,
-    decorationColor: secondary,
+    decorationColor: mediumBlue,
   );
 
   // Error text

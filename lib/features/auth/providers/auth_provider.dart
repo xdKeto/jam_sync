@@ -21,8 +21,8 @@ final userProvider = FutureProvider.family<Map<String, dynamic>?, String>((
   return doc.data();
 });
 
-// cek status user
-final isNewUserProvider = FutureProvider<bool>((ref) async {
+// cek status user - autoDispose agar tidak cache stale data
+final isNewUserProvider = FutureProvider.autoDispose<bool>((ref) async {
   final user = FirebaseAuth.instance.currentUser;
   if (user == null) return false;
 
@@ -41,7 +41,9 @@ class AuthNotifier extends StateNotifier<AsyncValue<void>> {
   static final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
   static bool isInitialize = false;
 
-  AuthNotifier() : super(const AsyncValue.data(null));
+  final Ref _ref;
+
+  AuthNotifier(this._ref) : super(const AsyncValue.data(null));
 
   static Future<void> initSignIn() async {
     if (!isInitialize) {
@@ -90,12 +92,14 @@ class AuthNotifier extends StateNotifier<AsyncValue<void>> {
 
       final User? user = userCredential.user;
       if (user != null) {
-        final userData = FirebaseFirestore.instance
+        final userDoc = FirebaseFirestore.instance
             .collection('users')
             .doc(user.uid);
-        final docSnapshot = await userData.get();
+        final docSnapshot = await userDoc.get();
+
         if (!docSnapshot.exists) {
-          await userData.set({
+          // User baru - buat dokumen dengan profileCompleted: false
+          await userDoc.set({
             'uid': user.uid,
             'email': user.email,
             'displayName': user.displayName ?? '',
@@ -104,7 +108,14 @@ class AuthNotifier extends StateNotifier<AsyncValue<void>> {
             'lastSeenAt': FieldValue.serverTimestamp(),
             'profileCompleted': false,
           });
+        } else {
+          // User existing - update lastSeenAt saja
+          await userDoc.update({'lastSeenAt': FieldValue.serverTimestamp()});
         }
+
+        // Invalidate isNewUserProvider agar data di-refresh
+        _ref.invalidate(isNewUserProvider);
+        _ref.invalidate(userProvider(user.uid));
       }
       state = const AsyncValue.data(null);
     } catch (e, string) {
@@ -117,6 +128,10 @@ class AuthNotifier extends StateNotifier<AsyncValue<void>> {
     try {
       await _googleSignIn.signOut();
       await _auth.signOut();
+
+      // Invalidate providers agar state bersih
+      _ref.invalidate(isNewUserProvider);
+
       state = const AsyncValue.data(null);
     } catch (e, string) {
       state = AsyncValue.error(e, string);
@@ -140,9 +155,14 @@ class AuthNotifier extends StateNotifier<AsyncValue<void>> {
             'lastSeenAt': FieldValue.serverTimestamp(),
           });
 
+      // Invalidate providers agar routing ke HomeScreen pakai data fresh
+      _ref.invalidate(isNewUserProvider);
+      _ref.invalidate(userProvider(user.uid));
+
       state = AsyncValue.data(null);
     } catch (e, string) {
       state = AsyncValue.error(e, string);
+      rethrow;
     }
   }
 
@@ -153,5 +173,5 @@ class AuthNotifier extends StateNotifier<AsyncValue<void>> {
 
 final authNotifierProvider =
     StateNotifierProvider<AuthNotifier, AsyncValue<void>>(
-      (ref) => AuthNotifier(),
+      (ref) => AuthNotifier(ref),
     );

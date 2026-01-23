@@ -1,6 +1,7 @@
 {
   "project_info": {
     "project_number": "888936093592",
+    "firebase_url": "https://jam-sync-db-default-rtdb.asia-southeast1.firebasedatabase.app",
     "project_id": "jam-sync-db",
     "storage_bucket": "jam-sync-db.firebasestorage.app"
   },
@@ -13,6 +14,14 @@
         }
       },
       "oauth_client": [
+        {
+          "client_id": "888936093592-8b4q7m7kias9ucji0oio1t2ur0dfgpp6.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.jam_sync",
+            "certificate_hash": "2c61533481b2fc41dfd03568b143581c3724eb96"
+          }
+        },
         {
           "client_id": "888936093592-3nn700cedmuo4gseash2uhstfu7352ij.apps.googleusercontent.com",
           "client_type": 3
