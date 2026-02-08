@@ -21,7 +21,7 @@ final userProvider = FutureProvider.family<Map<String, dynamic>?, String>((
   return doc.data();
 });
 
-// cek status user - autoDispose agar tidak cache stale data
+// cek status user - autoDispose
 final isNewUserProvider = FutureProvider.autoDispose<bool>((ref) async {
   final user = FirebaseAuth.instance.currentUser;
   if (user == null) return false;
@@ -109,11 +109,10 @@ class AuthNotifier extends StateNotifier<AsyncValue<void>> {
             'profileCompleted': false,
           });
         } else {
-          // User existing - update lastSeenAt saja
           await userDoc.update({'lastSeenAt': FieldValue.serverTimestamp()});
         }
 
-        // Invalidate isNewUserProvider agar data di-refresh
+        // refresh data
         _ref.invalidate(isNewUserProvider);
         _ref.invalidate(userProvider(user.uid));
       }
@@ -129,7 +128,7 @@ class AuthNotifier extends StateNotifier<AsyncValue<void>> {
       await _googleSignIn.signOut();
       await _auth.signOut();
 
-      // Invalidate providers agar state bersih
+      // invalidate providers
       _ref.invalidate(isNewUserProvider);
 
       state = const AsyncValue.data(null);
@@ -155,7 +154,7 @@ class AuthNotifier extends StateNotifier<AsyncValue<void>> {
             'lastSeenAt': FieldValue.serverTimestamp(),
           });
 
-      // Invalidate providers agar routing ke HomeScreen pakai data fresh
+      // invalidate providers
       _ref.invalidate(isNewUserProvider);
       _ref.invalidate(userProvider(user.uid));
 

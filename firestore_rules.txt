@@ -1,0 +1,53 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isProjectParticipant(projectId) {
+      return exists(/databases/$(database)/documents/projects/$(projectId)/participants/$(request.auth.uid));
+    }
+
+    function isProjectLeader(projectId) {
+      return get(/databases/$(database)/documents/projects/$(projectId)/participants/$(request.auth.uid)).data.role == "leader";
+    }
+
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && request.auth.uid == userId;
+    }
+
+    match /projects/{projectId} {
+      allow read: if isAuthenticated() && isProjectParticipant(projectId);
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && isProjectLeader(projectId);
+      allow delete: if isAuthenticated() && isProjectLeader(projectId);
+
+      match /pages/{pageId} {
+        allow read: if isAuthenticated() && isProjectParticipant(projectId);
+        allow create: if isAuthenticated() && isProjectParticipant(projectId);
+        allow update: if isAuthenticated() && isProjectParticipant(projectId);
+        allow delete: if isAuthenticated() && isProjectLeader(projectId);
+
+        match /bars/{barId} {
+          allow read: if isAuthenticated() && isProjectParticipant(projectId);
+          allow write: if isAuthenticated() && isProjectParticipant(projectId);
+        }
+      }
+
+      match /participants/{userId} {
+        allow read: if isAuthenticated() && isProjectParticipant(projectId);
+        allow create: if isAuthenticated();
+        allow update: if isAuthenticated() && (request.auth.uid == userId || isProjectLeader(projectId));
+        allow delete: if isAuthenticated() && (request.auth.uid == userId || isProjectLeader(projectId));
+      }
+
+      match /logs/{logId} {
+        allow read: if isAuthenticated();
+        allow create: if isAuthenticated() && isProjectParticipant(projectId);
+      }
+    }
+  }
+}

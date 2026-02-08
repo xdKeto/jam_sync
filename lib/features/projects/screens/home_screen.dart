@@ -1,13 +1,72 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jam_sync/features/auth/providers/auth_provider.dart';
+import 'package:jam_sync/features/poc_sync/providers/room_provider.dart';
+import 'package:jam_sync/features/poc_sync/services/sync_provider.dart';
+import 'package:jam_sync/features/poc_sync/screens/poc_room_screen.dart';
+import 'package:jam_sync/shared/utils/app_styles.dart';
+import 'package:jam_sync/shared/utils/gap_helper.dart';
+import 'package:jam_sync/shared/widgets/the_button.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Init sync service 
+    ref.read(pocSyncServiceProvider);
+
     final authState = ref.watch(authStateProvider);
+
+    void joinRoom(BuildContext context, WidgetRef ref) {
+      final codeController = TextEditingController();
+
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('Join Room', style: AppStyles.staticBodyMedium),
+          content: TextField(
+            controller: codeController,
+            decoration: const InputDecoration(
+              labelText: 'Room Code',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          actions: [
+            GestureDetector(
+              onTap: () => Navigator.pop(context),
+              child: TheButton(
+                text: 'Cancel',
+                color: AppStyles.error,
+                textColor: AppStyles.white,
+              ),
+            ),
+            GestureDetector(
+              onTap: () async {
+                try {
+                  await ref
+                      .read(roomProvider.notifier)
+                      .joinRoom(codeController.text);
+
+                  // push room screen
+                  if (!context.mounted) return;
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => PocRoomScreen()),
+                  );
+                } catch (e) {
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(SnackBar(content: Text(e.toString())));
+                }
+              },
+              child: TheButton(text: 'Join', color: AppStyles.lightTeal),
+            ),
+          ],
+        ),
+      );
+    }
 
     return Scaffold(
       body: SafeArea(
@@ -33,7 +92,7 @@ class HomeScreen extends ConsumerWidget {
                             ? AssetImage(photoURL) as ImageProvider
                             : NetworkImage(photoURL),
                       ),
-                      const SizedBox(height: 16),
+                      16.height,
                       // Name
                       Text(
                         displayName,
@@ -42,10 +101,42 @@ class HomeScreen extends ConsumerWidget {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      8.height,
                       Text(user.email ?? ''),
-                      const SizedBox(height: 32),
-                      // Logout Button
+                      8.height,
+                      GestureDetector(
+                        onTap: () async {
+                          try {
+                            await ref.read(roomProvider.notifier).createRoom();
+
+                            // push room screen
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => PocRoomScreen(),
+                              ),
+                            );
+                          } catch (e) {
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text(e.toString())),
+                            );
+                          }
+                        },
+                        child: TheButton(
+                          text: "Create Room",
+                          color: AppStyles.lightTeal,
+                        ),
+                      ),
+                      8.height,
+                      GestureDetector(
+                        onTap: () => joinRoom(context, ref),
+                        child: TheButton(
+                          text: "Join Room",
+                          color: AppStyles.lightTeal,
+                        ),
+                      ),
+                      32.height, // Logout Button
                       ElevatedButton.icon(
                         onPressed: () {
                           ref.read(authNotifierProvider.notifier).signOut();

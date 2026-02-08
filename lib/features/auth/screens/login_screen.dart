@@ -21,7 +21,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     try {
       await ref.read(authNotifierProvider.notifier).signInWithGoogle();
-      // Tidak perlu pop/navigate - main.dart akan replace page ini
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
