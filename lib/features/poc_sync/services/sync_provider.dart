@@ -9,7 +9,7 @@ final pocSyncServiceProvider = Provider<PocSyncService>((ref) {
 
 class PocSyncService {
   final DatabaseReference rtdb = FirebaseDatabase.instance.ref();
-int serverTimeOffset = 0;
+  int serverTimeOffset = 0;
 
   void initService() {
     rtdb.child('.info/serverTimeOffset').onValue.listen((event) {

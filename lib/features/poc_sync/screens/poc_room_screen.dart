@@ -68,10 +68,11 @@ class _PocRoomScreenState extends ConsumerState<PocRoomScreen> {
           countdownSeconds = 0;
           isCountingDown = false;
         });
-        // start autonomous playback via provider
+        // start autonomous playback
+        final roomId = ref.read(roomProvider).roomId!;
         ref
             .read(playbackControllerProvider.notifier)
-            .startAutonomousPlayback(serverStartTime);
+            .startAutonomousPlayback(serverStartTime, roomId: roomId);
       } else {
         setState(() {
           countdownSeconds = (remaining / 1000).ceil();
@@ -154,7 +155,10 @@ class _PocRoomScreenState extends ConsumerState<PocRoomScreen> {
 
             // Box Grid (shown when playing)
             if (playbackState.isPlaying) ...[
-              BoxGridWidget(currentBox: playbackState.currentBoxIndex),
+              BoxGridWidget(
+                currentBox: playbackState.currentBoxIndex,
+                progress: playbackState.playbackProgress,
+              ),
               16.height,
               Text(
                 'Position: ${playbackState.currentPositionMs}ms',
@@ -203,6 +207,10 @@ class _PocRoomScreenState extends ConsumerState<PocRoomScreen> {
             ),
             Text(
               'Room ID: ${roomState.roomId}',
+              style: TextStyle(color: Colors.grey[600], fontSize: 12),
+            ),
+            Text(
+              'hot reload test',
               style: TextStyle(color: Colors.grey[600], fontSize: 12),
             ),
           ],

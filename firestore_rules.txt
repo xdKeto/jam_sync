@@ -49,5 +49,12 @@ service cloud.firestore {
         allow create: if isAuthenticated() && isProjectParticipant(projectId);
       }
     }
+    match /poc_sessions/{sessionId} {
+      allow read, write: if isAuthenticated();
+      
+      match /logs/{logId} {
+        allow read, write: if isAuthenticated();
+      }
+    }
   }
 }

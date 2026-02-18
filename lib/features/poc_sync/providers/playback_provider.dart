@@ -3,9 +3,11 @@ import 'dart:async';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
+import 'package:jam_sync/features/poc_sync/services/poc_mad_logger_service.dart';
 import 'package:jam_sync/features/poc_sync/services/sync_provider.dart';
 
 final playbackServiceProvider = Provider((ref) => PlaybackService(ref));
+final pocMadLoggerProvider = Provider((ref) => PocMadLoggerService(ref));
 
 class PlaybackService {
   final Ref ref;
@@ -31,22 +33,34 @@ class PlaybackState {
   final int currentBoxIndex;
   final bool isPlaying;
   final int currentPositionMs;
+  final double playbackProgress;
+  final double smoothedPositionMs;
+  final double alpha;
 
   const PlaybackState({
     this.currentBoxIndex = -1,
     this.isPlaying = false,
     this.currentPositionMs = 0,
+    this.playbackProgress = 0.0,
+    this.smoothedPositionMs = 0.0,
+    this.alpha = 0.15, // faktor smooth, butuh tuning
   });
 
   PlaybackState copyWith({
     int? currentBoxIndex,
     bool? isPlaying,
     int? currentPositionMs,
+    double? playbackProgress,
+    double? smoothedPositionMs,
+    double? alpha,
   }) {
     return PlaybackState(
       currentBoxIndex: currentBoxIndex ?? this.currentBoxIndex,
       isPlaying: isPlaying ?? this.isPlaying,
       currentPositionMs: currentPositionMs ?? this.currentPositionMs,
+      playbackProgress: playbackProgress ?? this.playbackProgress,
+      smoothedPositionMs: smoothedPositionMs ?? this.smoothedPositionMs,
+      alpha: alpha ?? this.alpha,
     );
   }
 }
@@ -58,17 +72,29 @@ final playbackControllerProvider =
 
 class PlaybackController extends StateNotifier<PlaybackState> {
   final Ref ref;
+  final DatabaseReference rtdb = FirebaseDatabase.instance.ref();
   Timer? playbackTimer;
   int serverStartTime = 0;
+  String? currentRoomId;
 
   static const int totalBoxes = 64;
   static const double beatDurationMs = 545.45; // 60000 / 110 BPM
 
   PlaybackController(this.ref) : super(const PlaybackState());
 
-  void startAutonomousPlayback(int startTime) {
+  void startAutonomousPlayback(int startTime, {required String roomId}) async {
     serverStartTime = startTime;
-    state = state.copyWith(isPlaying: true, currentBoxIndex: 0);
+    currentRoomId = roomId;
+    state = state.copyWith(
+      isPlaying: true,
+      currentBoxIndex: 0,
+      smoothedPositionMs: 0.0,
+    );
+
+    // start log untuk MAD
+    final logger = ref.read(pocMadLoggerProvider);
+    final sessionId = await createLogSession(currentRoomId!);
+    logger.startLog(sessionId, serverStartTime);
 
     final syncService = ref.read(pocSyncServiceProvider);
 
@@ -78,16 +104,29 @@ class PlaybackController extends StateNotifier<PlaybackState> {
         return;
       }
 
+      // hitung untuk logging
       final currentPositionMs =
           syncService.getEstimatedServerTime() - serverStartTime;
-      final currentBoxIndex = calculateBoxIndex(currentPositionMs);
+
+      // interpolasi smoothing cursor
+      final targetPositionMs = currentPositionMs.toDouble();
+      final smoothedPositionMs =
+          state.smoothedPositionMs +
+          state.alpha * (targetPositionMs - state.smoothedPositionMs);
+
+      // smoothed cursor
+      final totalDurationMs = totalBoxes * beatDurationMs;
+      final currentBoxIndex = (smoothedPositionMs / beatDurationMs).floor();
+      final progress = (smoothedPositionMs / totalDurationMs).clamp(0.0, 1.0);
 
       state = state.copyWith(
         currentBoxIndex: currentBoxIndex,
         currentPositionMs: currentPositionMs,
+        playbackProgress: progress,
+        smoothedPositionMs: smoothedPositionMs,
       );
 
-      // s`top jika sudah selesai
+      // stop jika sudah selesai
       if (currentBoxIndex >= totalBoxes) {
         stopPlayback();
       }
@@ -100,8 +139,29 @@ class PlaybackController extends StateNotifier<PlaybackState> {
 
   void stopPlayback() {
     playbackTimer?.cancel();
-    state = state.copyWith(isPlaying: false);
+    state = state.copyWith(isPlaying: false, smoothedPositionMs: 0.0);
+
+    // stop log MAD
+    ref.read(pocMadLoggerProvider).stopLog();
+
+    if (currentRoomId != null) {
+      rtdb.child('playback_sessions/$currentRoomId').update({
+        'isPlaying': false,
+        'serverStartTime': 0,
+      });
+    }
   }
+
+  // void updatePosition(double smoothedPositionMs, double alpha) {
+  //   final syncService = ref.read(pocSyncServiceProvider);
+  //   final targetPositionMs =
+  //       (syncService.getEstimatedServerTime() - serverStartTime).toDouble();
+
+  //   smoothedPositionMs =
+  //       smoothedPositionMs + alpha * (targetPositionMs - smoothedPositionMs);
+
+  //   final currentBoxIndex = (smoothedPositionMs / 545.45).floor();
+  // }
 
   @override
   void dispose() {

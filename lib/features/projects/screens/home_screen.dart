@@ -26,6 +26,7 @@ class HomeScreen extends ConsumerWidget {
         builder: (context) => AlertDialog(
           title: Text('Join Room', style: AppStyles.staticBodyMedium),
           content: TextField(
+            keyboardType: TextInputType.number,
             controller: codeController,
             decoration: const InputDecoration(
               labelText: 'Room Code',
