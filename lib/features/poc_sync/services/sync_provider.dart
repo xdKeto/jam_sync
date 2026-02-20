@@ -9,11 +9,26 @@ final pocSyncServiceProvider = Provider<PocSyncService>((ref) {
 
 class PocSyncService {
   final DatabaseReference rtdb = FirebaseDatabase.instance.ref();
+  final List<int> offsetSample = [];
   int serverTimeOffset = 0;
 
+  // void initService() {
+  //   rtdb.child('.info/serverTimeOffset').onValue.listen((event) {
+  //     serverTimeOffset = (event.snapshot.value as int?) ?? 0;
+  //     print("server offset: $serverTimeOffset");
+  //   });
+  // }
   void initService() {
     rtdb.child('.info/serverTimeOffset').onValue.listen((event) {
-      serverTimeOffset = (event.snapshot.value as int?) ?? 0;
+      final raw = (event.snapshot.value as int?) ?? 0;
+      offsetSample.add(raw);
+
+      // sample 10 offset
+      if (offsetSample.length > 10) offsetSample.removeAt(0);
+
+      final sorted = List<int>.from(offsetSample)..sort();
+      serverTimeOffset = sorted[sorted.length ~/ 2]; //ambil median
+
       print("server offset: $serverTimeOffset");
     });
   }

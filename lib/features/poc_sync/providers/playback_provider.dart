@@ -18,6 +18,9 @@ class PlaybackService {
   Future<void> startPlayback(String roomId) async {
     final syncService = ref.read(pocSyncServiceProvider);
 
+    // leader buat shared log session dulu sebelum countdown
+    await createSharedLogSession(roomId);
+
     // time now + buffer (5 detik)
     final serverStartTime = syncService.getEstimatedServerTime() + 5000;
 
@@ -91,10 +94,13 @@ class PlaybackController extends StateNotifier<PlaybackState> {
       smoothedPositionMs: 0.0,
     );
 
-    // start log untuk MAD
+    // start log
     final logger = ref.read(pocMadLoggerProvider);
-    final sessionId = await createLogSession(currentRoomId!);
-    logger.startLog(sessionId, serverStartTime);
+    final sessionId = await getSharedLogSession(currentRoomId!);
+
+    if (sessionId != null) {
+      logger.startLog(sessionId, serverStartTime);
+    }
 
     final syncService = ref.read(pocSyncServiceProvider);
 
@@ -126,7 +132,7 @@ class PlaybackController extends StateNotifier<PlaybackState> {
         smoothedPositionMs: smoothedPositionMs,
       );
 
-      // stop jika sudah selesai
+      // stop
       if (currentBoxIndex >= totalBoxes) {
         stopPlayback();
       }
@@ -141,7 +147,7 @@ class PlaybackController extends StateNotifier<PlaybackState> {
     playbackTimer?.cancel();
     state = state.copyWith(isPlaying: false, smoothedPositionMs: 0.0);
 
-    // stop log MAD
+    // stop log
     ref.read(pocMadLoggerProvider).stopLog();
 
     if (currentRoomId != null) {
