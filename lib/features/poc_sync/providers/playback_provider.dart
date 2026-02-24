@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
+import 'package:jam_sync/features/poc_sync/providers/room_provider.dart';
 import 'package:jam_sync/features/poc_sync/services/poc_mad_logger_service.dart';
 import 'package:jam_sync/features/poc_sync/services/sync_provider.dart';
 
@@ -39,6 +40,7 @@ class PlaybackState {
   final double playbackProgress;
   final double smoothedPositionMs;
   final double alpha;
+  final double correctionOffsetMs;
 
   const PlaybackState({
     this.currentBoxIndex = -1,
@@ -47,6 +49,7 @@ class PlaybackState {
     this.playbackProgress = 0.0,
     this.smoothedPositionMs = 0.0,
     this.alpha = 0.15, // faktor smooth, butuh tuning
+    this.correctionOffsetMs = 0.0,
   });
 
   PlaybackState copyWith({
@@ -56,6 +59,7 @@ class PlaybackState {
     double? playbackProgress,
     double? smoothedPositionMs,
     double? alpha,
+    double? correctionOffsetMs,
   }) {
     return PlaybackState(
       currentBoxIndex: currentBoxIndex ?? this.currentBoxIndex,
@@ -64,6 +68,7 @@ class PlaybackState {
       playbackProgress: playbackProgress ?? this.playbackProgress,
       smoothedPositionMs: smoothedPositionMs ?? this.smoothedPositionMs,
       alpha: alpha ?? this.alpha,
+      correctionOffsetMs: correctionOffsetMs ?? this.correctionOffsetMs,
     );
   }
 }
@@ -79,6 +84,9 @@ class PlaybackController extends StateNotifier<PlaybackState> {
   Timer? playbackTimer;
   int serverStartTime = 0;
   String? currentRoomId;
+  bool firstResync = false;
+
+  static const double decay = 0.98;
 
   static const int totalBoxes = 64;
   static const double beatDurationMs = 545.45; // 60000 / 110 BPM
@@ -115,7 +123,8 @@ class PlaybackController extends StateNotifier<PlaybackState> {
           syncService.getEstimatedServerTime() - serverStartTime;
 
       // interpolasi smoothing cursor
-      final targetPositionMs = currentPositionMs.toDouble();
+      final decayedOffset = state.correctionOffsetMs * decay;
+      final targetPositionMs = currentPositionMs.toDouble() + decayedOffset;
       final smoothedPositionMs =
           state.smoothedPositionMs +
           state.alpha * (targetPositionMs - state.smoothedPositionMs);
@@ -130,6 +139,7 @@ class PlaybackController extends StateNotifier<PlaybackState> {
         currentPositionMs: currentPositionMs,
         playbackProgress: progress,
         smoothedPositionMs: smoothedPositionMs,
+        correctionOffsetMs: decayedOffset,
       );
 
       // stop
@@ -137,6 +147,22 @@ class PlaybackController extends StateNotifier<PlaybackState> {
         stopPlayback();
       }
     });
+
+    // ===== resinkronisasi =====
+    final resyncService = ref.read(pocResyncServiceProvider);
+    final roomState = ref.read(roomProvider);
+
+    // leader broadcast, follower listen
+    if (roomState.isLeader) {
+      resyncService.startBroadcast(currentRoomId!, serverStartTime);
+    } else {
+      firstResync = false;
+      resyncService.listenToLeaderPosition(
+        currentRoomId!,
+        onLeaderPositionUpdate,
+      );
+    }
+    // ===== resinkronisasi =====
   }
 
   int calculateBoxIndex(int positionMs) {
@@ -144,18 +170,64 @@ class PlaybackController extends StateNotifier<PlaybackState> {
   }
 
   void stopPlayback() {
+    // stop resync
+    final resyncService = ref.read(pocResyncServiceProvider);
+    final roomState = ref.read(roomProvider);
+    if (roomState.isLeader) {
+      resyncService.stopBroadcast(currentRoomId!);
+    }
+    resyncService.stopListening();
+
+    // stop playback
     playbackTimer?.cancel();
-    state = state.copyWith(isPlaying: false, smoothedPositionMs: 0.0);
+    playbackTimer = null;
+
+    state = state.copyWith(
+      isPlaying: false,
+      smoothedPositionMs: 0.0,
+      correctionOffsetMs: 0.0,
+    );
 
     // stop log
     ref.read(pocMadLoggerProvider).stopLog();
 
-    if (currentRoomId != null) {
+    if (currentRoomId != null && roomState.isLeader) {
       rtdb.child('playback_sessions/$currentRoomId').update({
         'isPlaying': false,
         'serverStartTime': 0,
       });
     }
+  }
+
+  void onLeaderPositionUpdate(int position, int broadcastTime) {
+    // skip initial snapshot dari RTDB (data lama)
+    if (!firstResync) {
+      firstResync = true;
+      return;
+    }
+
+    final syncService = ref.read(pocSyncServiceProvider);
+    final now = syncService.getEstimatedServerTime();
+
+    // nyesuain ke leader latency
+    final latency = now - broadcastTime;
+    final leaderPosition = position + latency;
+
+    // lokal
+    final localPosition = now - serverStartTime;
+    final delta = leaderPosition - localPosition;
+
+    // smoothing posisi
+    final smoothFactor = 0.3; // hrs tuning lagi
+    if (latency < 0 || latency > 1000) return;
+    if (delta.abs() < 5) return;
+    final clampDelta = delta.clamp(-200, 200); //koreksi
+    final smoothing = clampDelta * smoothFactor;
+
+    // update state
+    state = state.copyWith(
+      correctionOffsetMs: state.correctionOffsetMs + smoothing,
+    );
   }
 
   // void updatePosition(double smoothedPositionMs, double alpha) {
@@ -172,6 +244,7 @@ class PlaybackController extends StateNotifier<PlaybackState> {
   @override
   void dispose() {
     playbackTimer?.cancel();
+    playbackTimer = null;
     super.dispose();
   }
 }

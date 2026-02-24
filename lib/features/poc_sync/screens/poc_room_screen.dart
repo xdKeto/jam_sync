@@ -23,7 +23,8 @@ class _PocRoomScreenState extends ConsumerState<PocRoomScreen> {
   StreamSubscription? playbackSubscription;
   Timer? countdownTimer;
   int countdownSeconds = 0;
-  bool isCountingDown = false;
+  bool isCounting = false;
+  bool isStartPressed = false;
 
   @override
   void initState() {
@@ -38,25 +39,26 @@ class _PocRoomScreenState extends ConsumerState<PocRoomScreen> {
     final roomId = ref.read(roomProvider).roomId;
     if (roomId == null) return;
 
+    // listen serverStartTime
     playbackSubscription = rtdb
-        .child('playback_sessions/$roomId')
+        .child('playback_sessions/$roomId/serverStartTime')
         .onValue
         .listen((event) {
           if (!event.snapshot.exists) return;
 
-          final data = event.snapshot.value as Map<dynamic, dynamic>;
-          final isPlaying = data['isPlaying'] as bool? ?? false;
-          final serverStartTime = data['serverStartTime'] as int? ?? 0;
+          final serverStartTime = (event.snapshot.value as int?) ?? 0;
 
-          if (isPlaying && serverStartTime > 0 && !isCountingDown) {
+          if (serverStartTime > 0 && !isCounting) {
+            isCounting = true;
             startCountdown(serverStartTime);
+          } else if (serverStartTime == 0) {
+            isStartPressed = false;
           }
         });
   }
 
   void startCountdown(int serverStartTime) {
     countdownTimer?.cancel();
-    isCountingDown = true;
 
     countdownTimer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
       final now = ref.read(pocSyncServiceProvider).getEstimatedServerTime();
@@ -66,7 +68,7 @@ class _PocRoomScreenState extends ConsumerState<PocRoomScreen> {
         timer.cancel();
         setState(() {
           countdownSeconds = 0;
-          isCountingDown = false;
+          isCounting = false;
         });
         // start autonomous playback
         final roomId = ref.read(roomProvider).roomId!;
@@ -82,9 +84,11 @@ class _PocRoomScreenState extends ConsumerState<PocRoomScreen> {
   }
 
   Future<void> onStartPressed() async {
+    if (isStartPressed || isCounting) return;
     final roomId = ref.read(roomProvider).roomId;
     if (roomId == null) return;
 
+    isStartPressed = true;
     await ref.read(playbackServiceProvider).startPlayback(roomId);
   }
 
@@ -170,7 +174,7 @@ class _PocRoomScreenState extends ConsumerState<PocRoomScreen> {
               ),
             ]
             // Countdown Display
-            else if (isCountingDown)
+            else if (isCounting)
               Text(
                 '$countdownSeconds',
                 style: const TextStyle(

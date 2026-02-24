@@ -46,7 +46,7 @@ class PocMadLoggerService {
     final syncService = ref.read(pocSyncServiceProvider);
 
     sessionId = session;
-  
+
     logTimer = Timer.periodic(const Duration(milliseconds: 500), (timer) {
       final now = DateTime.now().millisecondsSinceEpoch;
       final positionMs = syncService.getEstimatedServerTime() - serverStartTime;
@@ -56,9 +56,7 @@ class PocMadLoggerService {
       final logSequence = (positionMs / 500).floor();
 
       // raw offset terakhir untuk debugging
-      final rawOffset = syncService.offsetSample.isNotEmpty
-          ? syncService.offsetSample.last
-          : 0;
+      final rawOffset = syncService.serverTimeOffset;
 
       FirebaseFirestore.instance
           .collection('poc_sessions')

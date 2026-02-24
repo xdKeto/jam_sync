@@ -10,7 +10,7 @@ import 'package:jam_sync/shared/utils/gap_helper.dart';
 import 'package:jam_sync/shared/widgets/the_button.dart';
 
 Future<void> _exportMadLogs() async {
-  const sessionId = 'y1wIkrR3wBSWgbRABRJi';
+  const sessionId = '1fcIAxA7w5EefbSX81hm';
 
   debugPrint('\n========== SESSION: $sessionId ==========');
 
@@ -90,6 +90,10 @@ class HomeScreen extends ConsumerWidget {
                       .read(roomProvider.notifier)
                       .joinRoom(codeController.text);
 
+                  // pop dialog
+                  if (!context.mounted) return;
+                  Navigator.pop(context);
+
                   // push room screen
                   if (!context.mounted) return;
                   Navigator.push(
@@ -112,97 +116,103 @@ class HomeScreen extends ConsumerWidget {
 
     return Scaffold(
       body: SafeArea(
-        child: Center(
-          child: authState.when(
-            data: (user) {
-              if (user == null) return const Text('Not logged in');
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Center(
+            child: authState.when(
+              data: (user) {
+                if (user == null) return const Text('Not logged in');
 
-              final userData = ref.watch(userProvider(user.uid));
+                final userData = ref.watch(userProvider(user.uid));
 
-              return userData.when(
-                data: (data) {
-                  final photoURL = data?['photoURL'] ?? '';
-                  final displayName = data?['displayName'] ?? 'User';
+                return userData.when(
+                  data: (data) {
+                    final photoURL = data?['photoURL'] ?? '';
+                    final displayName = data?['displayName'] ?? 'User';
 
-                  return Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      // Avatar
-                      CircleAvatar(
-                        radius: 64,
-                        backgroundImage: photoURL.startsWith('assets/')
-                            ? AssetImage(photoURL) as ImageProvider
-                            : NetworkImage(photoURL),
-                      ),
-                      16.height,
-                      // Name
-                      Text(
-                        displayName,
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
+                    return Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        // Avatar
+                        CircleAvatar(
+                          radius: 64,
+                          backgroundImage: photoURL.startsWith('assets/')
+                              ? AssetImage(photoURL) as ImageProvider
+                              : NetworkImage(photoURL),
                         ),
-                      ),
-                      8.height,
-                      Text(user.email ?? ''),
-                      8.height,
-                      GestureDetector(
-                        onTap: () async {
-                          try {
-                            await ref.read(roomProvider.notifier).createRoom();
+                        16.height,
+                        // Name
+                        Text(
+                          displayName,
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        8.height,
+                        Text(user.email ?? ''),
+                        8.height,
+                        GestureDetector(
+                          onTap: () async {
+                            try {
+                              await ref
+                                  .read(roomProvider.notifier)
+                                  .createRoom();
 
-                            // push room screen
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => PocRoomScreen(),
-                              ),
-                            );
-                          } catch (e) {
-                            if (!context.mounted) return;
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text(e.toString())),
-                            );
-                          }
-                        },
-                        child: TheButton(
-                          text: "Create Room",
-                          color: AppStyles.lightTeal,
+                              // push room screen
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => PocRoomScreen(),
+                                ),
+                              );
+                            } catch (e) {
+                              if (!context.mounted) return;
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text(e.toString())),
+                              );
+                            }
+                          },
+                          child: TheButton(
+                            text: "Create Room",
+                            color: AppStyles.lightTeal,
+                          ),
                         ),
-                      ),
-                      8.height,
-                      GestureDetector(
-                        onTap: () => joinRoom(context, ref),
-                        child: TheButton(
-                          text: "Join Room",
-                          color: AppStyles.lightTeal,
+                        8.height,
+                        GestureDetector(
+                          onTap: () => joinRoom(context, ref),
+                          child: TheButton(
+                            text: "Join Room",
+                            color: AppStyles.lightTeal,
+                          ),
                         ),
-                      ),
-                      8.height,
-                      GestureDetector(
-                        onTap: () => _exportMadLogs(),
-                        child: TheButton(
-                          text: "Export MAD Logs",
-                          color: AppStyles.darkNavy,
+                        8.height,
+                        GestureDetector(
+                          onTap: () => _exportMadLogs(),
+                          child: TheButton(
+                            text: "Export MAD Logs",
+                            color: AppStyles.darkNavy,
+                            textColor: AppStyles.white,
+                          ),
                         ),
-                      ),
-                      32.height, // Logout Button
-                      ElevatedButton.icon(
-                        onPressed: () {
-                          ref.read(authNotifierProvider.notifier).signOut();
-                        },
-                        icon: const Icon(Icons.logout),
-                        label: const Text('Logout'),
-                      ),
-                    ],
-                  );
-                },
-                loading: () => const CircularProgressIndicator(),
-                error: (e, s) => Text('Error: $e'),
-              );
-            },
-            loading: () => const CircularProgressIndicator(),
-            error: (e, s) => Text('Error: $e'),
+                        32.height, // Logout Button
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            ref.read(authNotifierProvider.notifier).signOut();
+                          },
+                          icon: const Icon(Icons.logout),
+                          label: const Text('Logout'),
+                        ),
+                      ],
+                    );
+                  },
+                  loading: () => const CircularProgressIndicator(),
+                  error: (e, s) => Text('Error: $e'),
+                );
+              },
+              loading: () => const CircularProgressIndicator(),
+              error: (e, s) => Text('Error: $e'),
+            ),
           ),
         ),
       ),
