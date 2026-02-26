@@ -15,7 +15,14 @@ class PocSyncService {
   StreamSubscription? subOffset;
   int serverTimeOffset = 0;
 
+  // ===== TOGGLE: ganti true/false untuk testing =====
+  // true = pakai NTP multi-sample, false = pakai Firebase .info/serverTimeOffset
+  static const bool useNtpCalibration = true;
+  // ================================================
+
   void initService() {
+    if (useNtpCalibration) return; // skip Firebase offset, pakai NTP nanti
+
     subOffset?.cancel();
     subOffset = rtdb.child('.info/serverTimeOffset').onValue.listen((event) {
       serverTimeOffset = (event.snapshot.value as int?) ?? 0;
@@ -37,6 +44,38 @@ class PocSyncService {
   //     print("server offset: $serverTimeOffset");
   //   });
   // }
+
+  // NTP-style multi-sample calibration
+  // 7x round-trip ke RTDB, ambil 3 dengan RTT terendah, rata-rata offset
+  Future<void> calibrate() async {
+    final samples = <({int offset, int rtt})>[];
+
+    for (int i = 0; i < 7; i++) {
+      final t1 = DateTime.now().millisecondsSinceEpoch;
+      final pingRef = rtdb.child('_ping').push();
+      await pingRef.set(ServerValue.timestamp);
+      final snapshot = await pingRef.get();
+      final t3 = DateTime.now().millisecondsSinceEpoch;
+      final serverTime = snapshot.value as int;
+
+      final rtt = t3 - t1;
+      final offset = serverTime - t1 - (rtt ~/ 2);
+      samples.add((offset: offset, rtt: rtt));
+
+      await pingRef.remove();
+      await Future.delayed(const Duration(milliseconds: 300));
+    }
+
+    samples.sort((a, b) => a.rtt.compareTo(b.rtt));
+
+    final best = samples.take(3).map((s) => s.offset).toList();
+    serverTimeOffset = best.reduce((a, b) => a + b) ~/ best.length;
+
+    print("NTP calibrated offset: $serverTimeOffset");
+    print(
+      "RTT samples: ${samples.map((s) => '${s.rtt}ms(${s.offset})').join(', ')}",
+    );
+  }
 
   int getEstimatedServerTime() {
     return DateTime.now().millisecondsSinceEpoch + serverTimeOffset;
@@ -64,7 +103,7 @@ class PocResyncService {
   PocResyncService(this.syncService);
 
   void startBroadcast(String roomID, int serverTime) {
-    resyncTimer = Timer.periodic(Duration(seconds: 3), (timer) {
+    resyncTimer = Timer.periodic(Duration(milliseconds: 1500), (timer) {
       final now = syncService.getEstimatedServerTime();
       final position = now - serverTime;
 

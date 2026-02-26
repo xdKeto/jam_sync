@@ -12,6 +12,10 @@
         ".write": "auth != null"
       }
     },
+    "_ping": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
     "presence": {
       "$userId": {
         ".read": "auth != null",

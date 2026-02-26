@@ -10,7 +10,7 @@ import 'package:jam_sync/shared/utils/gap_helper.dart';
 import 'package:jam_sync/shared/widgets/the_button.dart';
 
 Future<void> _exportMadLogs() async {
-  const sessionId = '1fcIAxA7w5EefbSX81hm';
+  const sessionId = 'hyx1O1jnYxS67RcBIcSt';
 
   debugPrint('\n========== SESSION: $sessionId ==========');
 
@@ -39,8 +39,8 @@ Future<void> _exportMadLogs() async {
     debugPrint('|logSequence|currentPosition|serverTimeOffset|rawOffset|');
     for (final d in entry.value) {
       debugPrint(
-        '|${d['logSequence']}|${d['currentPosition']}|${d['serverTimeOffset']}|${d['rawOffset']}|',
-        // '${d['currentPosition']}',
+        // '|${d['logSequence']}|${d['currentPosition']}|${d['serverTimeOffset']}|${d['rawOffset']}|',
+        '${d['currentPosition']}',
       );
     }
     clientNum++;

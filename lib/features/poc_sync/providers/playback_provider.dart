@@ -19,6 +19,11 @@ class PlaybackService {
   Future<void> startPlayback(String roomId) async {
     final syncService = ref.read(pocSyncServiceProvider);
 
+    // NTP calibration sebelum mulai (jika aktif)
+    if (PocSyncService.useNtpCalibration) {
+      await syncService.calibrate();
+    }
+
     // leader buat shared log session dulu sebelum countdown
     await createSharedLogSession(roomId);
 
@@ -85,6 +90,12 @@ class PlaybackController extends StateNotifier<PlaybackState> {
   int serverStartTime = 0;
   String? currentRoomId;
   bool firstResync = false;
+  List<int> recentDelta = [];
+
+  // ===== TOGGLE: ganti true/false untuk testing =====
+  // true = resync aktif, false = tanpa resync
+  static const bool enableResync = false;
+  // ================================================
 
   static const double decay = 0.98;
 
@@ -96,6 +107,7 @@ class PlaybackController extends StateNotifier<PlaybackState> {
   void startAutonomousPlayback(int startTime, {required String roomId}) async {
     serverStartTime = startTime;
     currentRoomId = roomId;
+    recentDelta = [];
     state = state.copyWith(
       isPlaying: true,
       currentBoxIndex: 0,
@@ -125,9 +137,11 @@ class PlaybackController extends StateNotifier<PlaybackState> {
       // interpolasi smoothing cursor
       final decayedOffset = state.correctionOffsetMs * decay;
       final targetPositionMs = currentPositionMs.toDouble() + decayedOffset;
+      final error = (targetPositionMs - state.smoothedPositionMs).abs();
+      final flexAlpa = error > 50 ? 0.3 : state.alpha;
       final smoothedPositionMs =
           state.smoothedPositionMs +
-          state.alpha * (targetPositionMs - state.smoothedPositionMs);
+          flexAlpa * (targetPositionMs - state.smoothedPositionMs);
 
       // smoothed cursor
       final totalDurationMs = totalBoxes * beatDurationMs;
@@ -149,18 +163,20 @@ class PlaybackController extends StateNotifier<PlaybackState> {
     });
 
     // ===== resinkronisasi =====
-    final resyncService = ref.read(pocResyncServiceProvider);
-    final roomState = ref.read(roomProvider);
+    if (enableResync) {
+      final resyncService = ref.read(pocResyncServiceProvider);
+      final roomState = ref.read(roomProvider);
 
-    // leader broadcast, follower listen
-    if (roomState.isLeader) {
-      resyncService.startBroadcast(currentRoomId!, serverStartTime);
-    } else {
-      firstResync = false;
-      resyncService.listenToLeaderPosition(
-        currentRoomId!,
-        onLeaderPositionUpdate,
-      );
+      // leader broadcast, follower listen
+      if (roomState.isLeader) {
+        resyncService.startBroadcast(currentRoomId!, serverStartTime);
+      } else {
+        firstResync = false;
+        resyncService.listenToLeaderPosition(
+          currentRoomId!,
+          onLeaderPositionUpdate,
+        );
+      }
     }
     // ===== resinkronisasi =====
   }
@@ -182,6 +198,7 @@ class PlaybackController extends StateNotifier<PlaybackState> {
     playbackTimer?.cancel();
     playbackTimer = null;
 
+    recentDelta = [];
     state = state.copyWith(
       isPlaying: false,
       smoothedPositionMs: 0.0,
@@ -209,24 +226,35 @@ class PlaybackController extends StateNotifier<PlaybackState> {
     final syncService = ref.read(pocSyncServiceProvider);
     final now = syncService.getEstimatedServerTime();
 
-    // nyesuain ke leader latency
+    // cek latency
     final latency = now - broadcastTime;
-    final leaderPosition = position + latency;
+    // final leaderPosition = position + latency;
+    if (latency < 0 || latency > 350) return;
 
     // lokal
-    final localPosition = now - serverStartTime;
-    final delta = leaderPosition - localPosition;
+    final localPosition = broadcastTime - serverStartTime;
+    final delta = position - localPosition; //selisih leader
 
-    // smoothing posisi
+    // sampling delta
+    recentDelta.add(delta);
+    if (recentDelta.length > 3) recentDelta.removeAt(0);
+    if (recentDelta.length < 2) return;
+
+    final sorted = List<int>.from(recentDelta)..sort();
+    final median = sorted[sorted.length ~/ 2];
+
+    // hitung smoothing posisi
     final smoothFactor = 0.3; // hrs tuning lagi
-    if (latency < 0 || latency > 1000) return;
-    if (delta.abs() < 5) return;
-    final clampDelta = delta.clamp(-200, 200); //koreksi
+    if (median.abs() < 5) return;
+    final clampDelta = median.clamp(-200, 200); // guard tuk delta
     final smoothing = clampDelta * smoothFactor;
 
     // update state
     state = state.copyWith(
-      correctionOffsetMs: state.correctionOffsetMs + smoothing,
+      correctionOffsetMs: (state.correctionOffsetMs + smoothing).clamp(
+        -100,
+        100,
+      ),
     );
   }
 

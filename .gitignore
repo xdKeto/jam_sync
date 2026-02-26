@@ -45,3 +45,9 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Misc Documents
+*.pdf
+*.csv
+riverpod_setup.md
+PRD - Aplikasi Skripsi.md

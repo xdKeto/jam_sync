@@ -60,6 +60,17 @@ class _PocRoomScreenState extends ConsumerState<PocRoomScreen> {
   void startCountdown(int serverStartTime) {
     countdownTimer?.cancel();
 
+    // follower juga perlu calibrate sebelum playback
+    if (PocSyncService.useNtpCalibration) {
+      ref.read(pocSyncServiceProvider).calibrate().then((_) {
+        _runCountdown(serverStartTime);
+      });
+    } else {
+      _runCountdown(serverStartTime);
+    }
+  }
+
+  void _runCountdown(int serverStartTime) {
     countdownTimer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
       final now = ref.read(pocSyncServiceProvider).getEstimatedServerTime();
       final remaining = serverStartTime - now;
@@ -214,7 +225,7 @@ class _PocRoomScreenState extends ConsumerState<PocRoomScreen> {
               style: TextStyle(color: Colors.grey[600], fontSize: 12),
             ),
             Text(
-              'hot reload test',
+              'i really hope this works guys :))',
               style: TextStyle(color: Colors.grey[600], fontSize: 12),
             ),
           ],
