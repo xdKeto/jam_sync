@@ -10,7 +10,7 @@ import 'package:jam_sync/shared/utils/gap_helper.dart';
 import 'package:jam_sync/shared/widgets/the_button.dart';
 
 Future<void> _exportMadLogs() async {
-  const sessionId = 'hyx1O1jnYxS67RcBIcSt';
+  const sessionId = '4jayB3GMq1LiTdtPfwfF';
 
   debugPrint('\n========== SESSION: $sessionId ==========');
 

@@ -46,11 +46,71 @@ class PocSyncService {
   // }
 
   // NTP-style multi-sample calibration
-  // 7x round-trip ke RTDB, ambil 3 dengan RTT terendah, rata-rata offset
-  Future<void> calibrate() async {
+  // 10x round-trip ke RTDB, ambil 3 dengan RTT terendah, rata-rata offset
+  Future<void> calibrate({bool isRetry = false}) async {
     final samples = <({int offset, int rtt})>[];
 
-    for (int i = 0; i < 7; i++) {
+    for (int i = 0; i < 10; i++) {
+      final t1 = DateTime.now().millisecondsSinceEpoch;
+      final pingRef = rtdb.child('_ping').push();
+      await pingRef.set(ServerValue.timestamp);
+      final snapshot = await pingRef.get();
+      final t3 = DateTime.now().millisecondsSinceEpoch;
+      final serverTime = snapshot.value as int;
+
+      final rtt = t3 - t1;
+      final offset = serverTime - t1 - (rtt ~/ 2);
+      samples.add((offset: offset, rtt: rtt));
+
+      await pingRef.remove();
+      await Future.delayed(const Duration(milliseconds: 500));
+    }
+
+    samples.sort((a, b) => a.rtt.compareTo(b.rtt));
+
+    final best = samples.take(3).toList();
+    serverTimeOffset =
+        best.map((s) => s.offset).reduce((a, b) => a + b) ~/ best.length;
+
+    // RTT quality gate
+    final avgRtt = best.map((s) => s.rtt).reduce((a, b) => a + b) / 3;
+    if (avgRtt > 400) {
+      print(
+        "WARNING: Poor network quality, avg RTT: ${avgRtt.toStringAsFixed(0)}ms",
+      );
+    }
+
+    print("NTP calibrated offset: $serverTimeOffset");
+    print(
+      "RTT samples: ${samples.map((s) => '${s.rtt}ms(${s.offset})').join(', ')}",
+    );
+
+    // verification round (skip on retry to avoid infinite loop)
+    if (!isRetry) {
+      final t1 = DateTime.now().millisecondsSinceEpoch;
+      final verifyRef = rtdb.child('_ping').push();
+      await verifyRef.set(ServerValue.timestamp);
+      final snap = await verifyRef.get();
+      final t3 = DateTime.now().millisecondsSinceEpoch;
+      final serverTime = snap.value as int;
+      await verifyRef.remove();
+
+      final verifyRtt = t3 - t1;
+      final verifyOffset = serverTime - t1 - (verifyRtt ~/ 2);
+      final diff = (verifyOffset - serverTimeOffset).abs();
+
+      if (diff > 20 && verifyRtt < 200) {
+        print("Calibration drift detected: ${diff}ms, recalibrating...");
+        await calibrate(isRetry: true);
+      }
+    }
+  }
+
+  // Quick re-calibration: 3 samples, fine-tune (weighted blend, BUKAN overwrite)
+  Future<void> calibrateQuick() async {
+    final samples = <({int offset, int rtt})>[];
+
+    for (int i = 0; i < 3; i++) {
       final t1 = DateTime.now().millisecondsSinceEpoch;
       final pingRef = rtdb.child('_ping').push();
       await pingRef.set(ServerValue.timestamp);
@@ -68,13 +128,26 @@ class PocSyncService {
 
     samples.sort((a, b) => a.rtt.compareTo(b.rtt));
 
-    final best = samples.take(3).map((s) => s.offset).toList();
-    serverTimeOffset = best.reduce((a, b) => a + b) ~/ best.length;
+    final best = samples.take(2).toList();
+    final quickOffset =
+        best.map((s) => s.offset).reduce((a, b) => a + b) ~/ best.length;
+    final bestRtt =
+        best.map((s) => s.rtt).reduce((a, b) => a + b) / best.length;
+    final diff = (quickOffset - serverTimeOffset).abs();
 
-    print("NTP calibrated offset: $serverTimeOffset");
-    print(
-      "RTT samples: ${samples.map((s) => '${s.rtt}ms(${s.offset})').join(', ')}",
-    );
+    // hanya update jika drift signifikan DAN RTT cukup bagus
+    if (diff > 10 && bestRtt < 200) {
+      // weighted blend: 70% existing (robust), 30% quick
+      serverTimeOffset = ((serverTimeOffset * 0.7) + (quickOffset * 0.3))
+          .round();
+      print(
+        "NTP quick-calibrated (blended): $serverTimeOffset (quickOffset=$quickOffset, diff=$diff, avgRtt=${bestRtt.toStringAsFixed(0)})",
+      );
+    } else {
+      print(
+        "NTP quick-calibrate skipped: diff=${diff}ms, avgRtt=${bestRtt.toStringAsFixed(0)}ms (keeping existing: $serverTimeOffset)",
+      );
+    }
   }
 
   int getEstimatedServerTime() {
@@ -139,6 +212,57 @@ class PocResyncService {
   void stopListening() {
     streamSub?.cancel();
     streamSub = null;
+  }
+
+  // One-time broadcast: leader sends position once after delay
+  void broadcastOnce(String roomID, int serverStartTime, {int delayMs = 2000}) {
+    Future.delayed(Duration(milliseconds: delayMs), () {
+      final now = syncService.getEstimatedServerTime();
+      final position = now - serverStartTime;
+
+      rtdb.child('playback_sessions/$roomID/startupCorrection').set({
+        'positionMs': position,
+        'broadcastTime': now,
+      });
+
+      print("One-time broadcast: position=$position, time=$now");
+    });
+  }
+
+  // One-time listen: follower receives correction once then stops
+  void listenOnce(
+    String roomID,
+    Function(int position, int broadcastTime) callback,
+  ) {
+    StreamSubscription? sub;
+    bool hasReceived = false;
+
+    sub = rtdb
+        .child('playback_sessions/$roomID/startupCorrection')
+        .onValue
+        .listen((event) {
+          if (!event.snapshot.exists) return;
+          // skip stale data — only process once
+          if (hasReceived) return;
+          hasReceived = true;
+
+          final data = event.snapshot.value as Map<dynamic, dynamic>;
+          final position = data['positionMs'] as int;
+          final broadcastTime = data['broadcastTime'] as int;
+
+          callback(position, broadcastTime);
+
+          // auto-stop after receiving
+          sub?.cancel();
+        });
+
+    // timeout: cancel after 3s if nothing received
+    Future.delayed(const Duration(seconds: 3), () {
+      if (!hasReceived) {
+        sub?.cancel();
+        print("One-time listen timed out, continuing without correction");
+      }
+    });
   }
 
   void dispose() {

@@ -19,16 +19,16 @@ class PlaybackService {
   Future<void> startPlayback(String roomId) async {
     final syncService = ref.read(pocSyncServiceProvider);
 
-    // NTP calibration sebelum mulai (jika aktif)
+    // NTP quick re-calibration sebelum mulai (jika aktif)
     if (PocSyncService.useNtpCalibration) {
-      await syncService.calibrate();
+      await syncService.calibrateQuick();
     }
 
     // leader buat shared log session dulu sebelum countdown
     await createSharedLogSession(roomId);
 
-    // time now + buffer (5 detik)
-    final serverStartTime = syncService.getEstimatedServerTime() + 5000;
+    // time now + buffer (8 detik)
+    final serverStartTime = syncService.getEstimatedServerTime() + 8000;
 
     // trigger server playback status
     await rtdb.child('playback_sessions/$roomId').update({
@@ -95,6 +95,8 @@ class PlaybackController extends StateNotifier<PlaybackState> {
   // ===== TOGGLE: ganti true/false untuk testing =====
   // true = resync aktif, false = tanpa resync
   static const bool enableResync = false;
+  // true = one-time startup correction aktif
+  static const bool enableStartupCorrection = true;
   // ================================================
 
   static const double decay = 0.98;
@@ -179,6 +181,19 @@ class PlaybackController extends StateNotifier<PlaybackState> {
       }
     }
     // ===== resinkronisasi =====
+
+    // ===== one-time startup correction =====
+    if (enableStartupCorrection) {
+      final resyncService = ref.read(pocResyncServiceProvider);
+      final roomState = ref.read(roomProvider);
+
+      if (roomState.isLeader) {
+        resyncService.broadcastOnce(currentRoomId!, serverStartTime);
+      } else {
+        resyncService.listenOnce(currentRoomId!, onStartupCorrectionReceived);
+      }
+    }
+    // ===== one-time startup correction =====
   }
 
   int calculateBoxIndex(int positionMs) {
@@ -255,6 +270,35 @@ class PlaybackController extends StateNotifier<PlaybackState> {
         -100,
         100,
       ),
+    );
+  }
+
+  void onStartupCorrectionReceived(int leaderPosition, int broadcastTime) {
+    final syncService = ref.read(pocSyncServiceProvider);
+    final now = syncService.getEstimatedServerTime();
+
+    // cek latency wajar
+    final latency = now - broadcastTime;
+    if (latency < 0 || latency > 200) {
+      print("Startup correction skipped: bad latency ${latency}ms");
+      return;
+    }
+
+    // posisi lokal pada saat leader broadcast
+    final localPosition = broadcastTime - serverStartTime;
+    final delta = leaderPosition - localPosition;
+
+    // skip jika sudah cukup akurat
+    if (delta.abs() < 5) {
+      print("Startup correction skipped: delta ${delta}ms (already good)");
+      return;
+    }
+
+    // clamp delta agar tidak over-correct
+    final clampedDelta = delta.clamp(-30, 30);
+    syncService.serverTimeOffset += clampedDelta;
+    print(
+      "Startup correction applied: rawDelta=${delta}ms, clamped=${clampedDelta}ms, new offset=${syncService.serverTimeOffset}",
     );
   }
 

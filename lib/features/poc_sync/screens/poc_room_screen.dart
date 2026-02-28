@@ -24,6 +24,7 @@ class _PocRoomScreenState extends ConsumerState<PocRoomScreen> {
   Timer? countdownTimer;
   int countdownSeconds = 0;
   bool isCounting = false;
+  bool isSyncing = false;
   bool isStartPressed = false;
 
   @override
@@ -31,7 +32,15 @@ class _PocRoomScreenState extends ConsumerState<PocRoomScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       setupPlaybackListener();
+      _preCalibrate();
     });
+  }
+
+  Future<void> _preCalibrate() async {
+    if (!PocSyncService.useNtpCalibration) return;
+    setState(() => isSyncing = true);
+    await ref.read(pocSyncServiceProvider).calibrate();
+    if (mounted) setState(() => isSyncing = false);
   }
 
   // listen pergantian status habis ditambah buffer
@@ -60,10 +69,14 @@ class _PocRoomScreenState extends ConsumerState<PocRoomScreen> {
   void startCountdown(int serverStartTime) {
     countdownTimer?.cancel();
 
-    // follower juga perlu calibrate sebelum playback
+    // quick re-calibrate sebelum countdown (sudah pre-calibrate saat join)
     if (PocSyncService.useNtpCalibration) {
-      ref.read(pocSyncServiceProvider).calibrate().then((_) {
-        _runCountdown(serverStartTime);
+      setState(() => isSyncing = true);
+      ref.read(pocSyncServiceProvider).calibrateQuick().then((_) {
+        if (mounted) {
+          setState(() => isSyncing = false);
+          _runCountdown(serverStartTime);
+        }
       });
     } else {
       _runCountdown(serverStartTime);
@@ -95,11 +108,11 @@ class _PocRoomScreenState extends ConsumerState<PocRoomScreen> {
   }
 
   Future<void> onStartPressed() async {
-    if (isStartPressed || isCounting) return;
+    if (isStartPressed || isCounting || isSyncing) return;
     final roomId = ref.read(roomProvider).roomId;
     if (roomId == null) return;
 
-    isStartPressed = true;
+    setState(() => isStartPressed = true);
     await ref.read(playbackServiceProvider).startPlayback(roomId);
   }
 
@@ -184,8 +197,18 @@ class _PocRoomScreenState extends ConsumerState<PocRoomScreen> {
                 style: TextStyle(color: Colors.grey[600], fontSize: 12),
               ),
             ]
+            // Syncing indicator
+            else if (isSyncing) ...[
+              const SizedBox(height: 16),
+              const CircularProgressIndicator(),
+              const SizedBox(height: 12),
+              const Text(
+                'Syncing...',
+                style: TextStyle(fontSize: 16, color: Colors.orange),
+              ),
+            ]
             // Countdown Display
-            else if (isCounting)
+            else if (isCounting && countdownSeconds > 0)
               Text(
                 '$countdownSeconds',
                 style: const TextStyle(
@@ -195,7 +218,7 @@ class _PocRoomScreenState extends ConsumerState<PocRoomScreen> {
                 ),
               )
             // Start button (leader only)
-            else if (roomState.isLeader)
+            else if (roomState.isLeader && !isStartPressed)
               GestureDetector(
                 onTap: onStartPressed,
                 child: TheButton(
@@ -225,7 +248,7 @@ class _PocRoomScreenState extends ConsumerState<PocRoomScreen> {
               style: TextStyle(color: Colors.grey[600], fontSize: 12),
             ),
             Text(
-              'i really hope this works guys :))',
+              'testing mobile data with NTP scheduled start',
               style: TextStyle(color: Colors.grey[600], fontSize: 12),
             ),
           ],
