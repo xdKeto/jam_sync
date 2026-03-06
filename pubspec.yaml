@@ -51,6 +51,7 @@ dependencies:
   uuid: ^4.5.2
   loading_animation_widget: ^1.3.0
   modal_bottom_sheet: ^3.0.0
+  flutter_native_splash: ^2.4.7
 
 dev_dependencies:
   flutter_test:
@@ -70,6 +71,15 @@ dev_dependencies:
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
+
+flutter_native_splash:
+  color: "#bee9e8"
+  image: assets/images/splash_image.png
+  android_12:
+    color: "#bee9e8"
+    image: assets/images/splash_image2.png
+  ios: true
+  web: false
 
 # The following section is specific to Flutter packages.
 flutter:

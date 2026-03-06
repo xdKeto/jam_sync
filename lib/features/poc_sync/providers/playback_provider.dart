@@ -89,14 +89,13 @@ class PlaybackController extends StateNotifier<PlaybackState> {
   Timer? playbackTimer;
   int serverStartTime = 0;
   String? currentRoomId;
-  bool firstResync = false;
-  List<int> recentDelta = [];
+  bool _halfwaySyncDone = false;
 
   // ===== TOGGLE: ganti true/false untuk testing =====
-  // true = resync aktif, false = tanpa resync
-  static const bool enableResync = false;
   // true = one-time startup correction aktif
   static const bool enableStartupCorrection = true;
+  // true = one-time halfway resync (kotak ke-32)
+  static const bool enableHalfwayResync = true;
   // ================================================
 
   static const double decay = 0.98;
@@ -109,7 +108,7 @@ class PlaybackController extends StateNotifier<PlaybackState> {
   void startAutonomousPlayback(int startTime, {required String roomId}) async {
     serverStartTime = startTime;
     currentRoomId = roomId;
-    recentDelta = [];
+    _halfwaySyncDone = false;
     state = state.copyWith(
       isPlaying: true,
       currentBoxIndex: 0,
@@ -158,29 +157,19 @@ class PlaybackController extends StateNotifier<PlaybackState> {
         correctionOffsetMs: decayedOffset,
       );
 
+      // halfway resync trigger
+      if (enableHalfwayResync &&
+          !_halfwaySyncDone &&
+          currentBoxIndex >= totalBoxes ~/ 2) {
+        _halfwaySyncDone = true;
+        _triggerHalfwayResync();
+      }
+
       // stop
       if (currentBoxIndex >= totalBoxes) {
         stopPlayback();
       }
     });
-
-    // ===== resinkronisasi =====
-    if (enableResync) {
-      final resyncService = ref.read(pocResyncServiceProvider);
-      final roomState = ref.read(roomProvider);
-
-      // leader broadcast, follower listen
-      if (roomState.isLeader) {
-        resyncService.startBroadcast(currentRoomId!, serverStartTime);
-      } else {
-        firstResync = false;
-        resyncService.listenToLeaderPosition(
-          currentRoomId!,
-          onLeaderPositionUpdate,
-        );
-      }
-    }
-    // ===== resinkronisasi =====
 
     // ===== one-time startup correction =====
     if (enableStartupCorrection) {
@@ -201,19 +190,10 @@ class PlaybackController extends StateNotifier<PlaybackState> {
   }
 
   void stopPlayback() {
-    // stop resync
-    final resyncService = ref.read(pocResyncServiceProvider);
-    final roomState = ref.read(roomProvider);
-    if (roomState.isLeader) {
-      resyncService.stopBroadcast(currentRoomId!);
-    }
-    resyncService.stopListening();
-
     // stop playback
     playbackTimer?.cancel();
     playbackTimer = null;
 
-    recentDelta = [];
     state = state.copyWith(
       isPlaying: false,
       smoothedPositionMs: 0.0,
@@ -223,54 +203,13 @@ class PlaybackController extends StateNotifier<PlaybackState> {
     // stop log
     ref.read(pocMadLoggerProvider).stopLog();
 
+    final roomState = ref.read(roomProvider);
     if (currentRoomId != null && roomState.isLeader) {
       rtdb.child('playback_sessions/$currentRoomId').update({
         'isPlaying': false,
         'serverStartTime': 0,
       });
     }
-  }
-
-  void onLeaderPositionUpdate(int position, int broadcastTime) {
-    // skip initial snapshot dari RTDB (data lama)
-    if (!firstResync) {
-      firstResync = true;
-      return;
-    }
-
-    final syncService = ref.read(pocSyncServiceProvider);
-    final now = syncService.getEstimatedServerTime();
-
-    // cek latency
-    final latency = now - broadcastTime;
-    // final leaderPosition = position + latency;
-    if (latency < 0 || latency > 350) return;
-
-    // lokal
-    final localPosition = broadcastTime - serverStartTime;
-    final delta = position - localPosition; //selisih leader
-
-    // sampling delta
-    recentDelta.add(delta);
-    if (recentDelta.length > 3) recentDelta.removeAt(0);
-    if (recentDelta.length < 2) return;
-
-    final sorted = List<int>.from(recentDelta)..sort();
-    final median = sorted[sorted.length ~/ 2];
-
-    // hitung smoothing posisi
-    final smoothFactor = 0.3; // hrs tuning lagi
-    if (median.abs() < 5) return;
-    final clampDelta = median.clamp(-200, 200); // guard tuk delta
-    final smoothing = clampDelta * smoothFactor;
-
-    // update state
-    state = state.copyWith(
-      correctionOffsetMs: (state.correctionOffsetMs + smoothing).clamp(
-        -100,
-        100,
-      ),
-    );
   }
 
   void onStartupCorrectionReceived(int leaderPosition, int broadcastTime) {
@@ -300,6 +239,22 @@ class PlaybackController extends StateNotifier<PlaybackState> {
     print(
       "Startup correction applied: rawDelta=${delta}ms, clamped=${clampedDelta}ms, new offset=${syncService.serverTimeOffset}",
     );
+  }
+
+  void _triggerHalfwayResync() {
+    final resyncService = ref.read(pocResyncServiceProvider);
+    final roomState = ref.read(roomProvider);
+
+    if (roomState.isLeader) {
+      // leader broadcast posisi sekarang di halfway path
+      final syncService = ref.read(pocSyncServiceProvider);
+      final now = syncService.getEstimatedServerTime();
+      final position = now - serverStartTime;
+      resyncService.broadcastHalfway(currentRoomId!, position, now);
+    } else {
+      // member listen correction di halfway
+      resyncService.listenHalfway(currentRoomId!, onStartupCorrectionReceived);
+    }
   }
 
   // void updatePosition(double smoothedPositionMs, double alpha) {

@@ -170,49 +170,8 @@ final pocResyncServiceProvider = Provider<PocResyncService>((ref) {
 class PocResyncService {
   final DatabaseReference rtdb = FirebaseDatabase.instance.ref();
   final PocSyncService syncService;
-  Timer? resyncTimer;
-  StreamSubscription? streamSub;
 
   PocResyncService(this.syncService);
-
-  void startBroadcast(String roomID, int serverTime) {
-    resyncTimer = Timer.periodic(Duration(milliseconds: 1500), (timer) {
-      final now = syncService.getEstimatedServerTime();
-      final position = now - serverTime;
-
-      rtdb.child('playback_sessions/$roomID/leaderPosition').set({
-        'positionMs': position,
-        'broadcastTime': now,
-      });
-    });
-  }
-
-  void stopBroadcast(String roomID) {
-    resyncTimer?.cancel();
-  }
-
-  void listenToLeaderPosition(String roomID, Function callback) {
-    streamSub?.cancel();
-
-    // subscribe ke stream posisi leader
-    streamSub = rtdb
-        .child('playback_sessions/$roomID/leaderPosition')
-        .onValue
-        .listen((event) {
-          if (!event.snapshot.exists) return;
-
-          final data = event.snapshot.value as Map<dynamic, dynamic>;
-          final position = data['positionMs'] as int;
-          final broadcastTime = data['broadcastTime'] as int;
-
-          callback(position, broadcastTime);
-        });
-  }
-
-  void stopListening() {
-    streamSub?.cancel();
-    streamSub = null;
-  }
 
   // One-time broadcast: leader sends position once after delay
   void broadcastOnce(String roomID, int serverStartTime, {int delayMs = 2000}) {
@@ -265,9 +224,46 @@ class PocResyncService {
     });
   }
 
-  void dispose() {
-    resyncTimer?.cancel();
-    resyncTimer = null;
-    stopListening();
+  void broadcastHalfway(String roomID, int positionMs, int broadcastTime) {
+    rtdb.child('playback_sessions/$roomID/halfwayCorrection').set({
+      'positionMs': positionMs,
+      'broadcastTime': broadcastTime,
+    });
+    print("Halfway broadcast: position=$positionMs, time=$broadcastTime");
   }
+
+  void listenHalfway(
+    String roomID,
+    Function(int position, int broadcastTime) callback,
+  ) {
+    StreamSubscription? sub;
+    bool hasReceived = false;
+
+    sub = rtdb
+        .child('playback_sessions/$roomID/halfwayCorrection')
+        .onValue
+        .listen((event) {
+          if (!event.snapshot.exists) return;
+          if (hasReceived) return;
+          hasReceived = true;
+
+          final data = event.snapshot.value as Map<dynamic, dynamic>;
+          final position = data['positionMs'] as int;
+          final broadcastTime = data['broadcastTime'] as int;
+
+          callback(position, broadcastTime);
+
+          sub?.cancel();
+        });
+
+    // timeout: cancel after 3s if nothing received
+    Future.delayed(const Duration(seconds: 3), () {
+      if (!hasReceived) {
+        sub?.cancel();
+        print("Halfway listen timed out, continuing without correction");
+      }
+    });
+  }
+
+  void dispose() {}
 }

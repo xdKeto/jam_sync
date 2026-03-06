@@ -248,7 +248,7 @@ class _PocRoomScreenState extends ConsumerState<PocRoomScreen> {
               style: TextStyle(color: Colors.grey[600], fontSize: 12),
             ),
             Text(
-              'testing mobile data with NTP scheduled start',
+              'testing mobile data with halfway resync',
               style: TextStyle(color: Colors.grey[600], fontSize: 12),
             ),
           ],

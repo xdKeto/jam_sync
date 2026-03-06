@@ -1,22 +1,21 @@
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jam_sync/features/auth/providers/auth_provider.dart';
 import 'package:jam_sync/features/auth/screens/login_screen.dart';
 import 'package:jam_sync/features/auth/screens/profile_form_screen.dart';
+import 'package:jam_sync/shared/utils/app_init_provider.dart';
 import 'package:jam_sync/shared/widgets/error_screen.dart';
 import 'package:jam_sync/shared/widgets/splash_screen.dart';
 import 'package:jam_sync/features/projects/screens/home_screen.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
-void main() async {
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
-  await Supabase.initialize(
-    url: 'https://hulqxdpctueedviciken.supabase.co',
-    anonKey:
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1bHF4ZHBjdHVlZWR2aWNpa2VuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg4NzY4NDksImV4cCI6MjA4NDQ1Mjg0OX0.Mk5hFfizbXzZYgJWik4x1TeiKtZ050JVGVEc7CcA1Ds',
-  );
+  // await Firebase.initializeApp();
+  // await Supabase.initialize(
+  //   url: 'https://hulqxdpctueedviciken.supabase.co',
+  //   anonKey:
+  //       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1bHF4ZHBjdHVlZWR2aWNpa2VuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg4NzY4NDksImV4cCI6MjA4NDQ1Mjg0OX0.Mk5hFfizbXzZYgJWik4x1TeiKtZ050JVGVEc7CcA1Ds',
+  // );
 
   runApp(const ProviderScope(child: MyApp()));
 }
@@ -26,7 +25,7 @@ class MyApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final authState = ref.watch(authStateProvider);
+    final appInit = ref.watch(appInitProvider);
 
     return MaterialApp(
       title: 'Jam Sync',
@@ -35,29 +34,25 @@ class MyApp extends ConsumerWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: authState.when(
-        data: (user) {
-          if (user == null) return LoginScreen();
+      home: appInit.when(
+        loading: () => const SplashScreen(),
+        error: (e, s) => const ErrorScreen(),
+        data: (_) {
+          final authState = ref.watch(authStateProvider);
+          return authState.when(
+            data: (user) {
+              if (user == null) return LoginScreen();
 
-          final isNewUser = ref.watch(isNewUserProvider);
-          return isNewUser.when(
-            data: (isNew) => isNew ? ProfileFormScreen() : HomeScreen(),
-            error: (e, s) {
-              return ErrorScreen();
+              final isNewUser = ref.watch(isNewUserProvider);
+              return isNewUser.when(
+                data: (isNew) => isNew ? ProfileFormScreen() : HomeScreen(),
+                error: (e, s) => const ErrorScreen(),
+                loading: () => const SplashScreen(),
+              );
             },
-            loading: () {
-              Future.delayed(const Duration(seconds: 5));
-
-              return SplashScreen();
-            },
+            loading: () => const SplashScreen(),
+            error: (e, s) => const ErrorScreen(),
           );
-        },
-
-        loading: () {
-          return SplashScreen();
-        },
-        error: (e, s) {
-          return ErrorScreen();
         },
       ),
     );
