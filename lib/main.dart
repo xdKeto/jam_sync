@@ -6,7 +6,7 @@ import 'package:jam_sync/features/auth/screens/profile_form_screen.dart';
 import 'package:jam_sync/shared/utils/app_init_provider.dart';
 import 'package:jam_sync/shared/widgets/error_screen.dart';
 import 'package:jam_sync/shared/widgets/splash_screen.dart';
-import 'package:jam_sync/features/projects/screens/home_screen.dart';
+import 'package:jam_sync/shared/widgets/home_nav.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -45,7 +45,7 @@ class MyApp extends ConsumerWidget {
 
               final isNewUser = ref.watch(isNewUserProvider);
               return isNewUser.when(
-                data: (isNew) => isNew ? ProfileFormScreen() : HomeScreen(),
+                data: (isNew) => isNew ? ProfileFormScreen() : const HomeNav(),
                 error: (e, s) => const ErrorScreen(),
                 loading: () => const SplashScreen(),
               );

@@ -12,53 +12,67 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authStateProvider);
 
-    return Scaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Center(
-            child: authState.when(
-              data: (user) {
-                if (user == null) return const Text('Not logged in');
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppStyles.paleBlue,
+            AppStyles.lightTeal,
+            // AppStyles.mediumBlue,
+          ],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+      ),
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Center(
+              child: authState.when(
+                data: (user) {
+                  if (user == null) return const Text('Not logged in');
 
-                final userData = ref.watch(userProvider(user.uid));
+                  final userData = ref.watch(userProvider(user.uid));
 
-                return userData.when(
-                  data: (data) {
-                    final photoURL = data?['photoURL'] ?? '';
-                    final displayName = data?['displayName'] ?? 'User';
+                  return userData.when(
+                    data: (data) {
+                      final photoURL = data?['photoURL'] ?? '';
+                      final displayName = data?['displayName'] ?? 'User';
 
-                    return Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        // Avatar
-                        CircleAvatar(
-                          radius: 64,
-                          backgroundImage: photoURL.startsWith('assets/')
-                              ? AssetImage(photoURL) as ImageProvider
-                              : NetworkImage(photoURL),
-                        ),
-                        16.height,
-                        // Name
-                        Text(
-                          displayName,
-                          style: const TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
+                      return Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          // Avatar
+                          CircleAvatar(
+                            radius: 64,
+                            backgroundImage: photoURL.startsWith('assets/')
+                                ? AssetImage(photoURL) as ImageProvider
+                                : NetworkImage(photoURL),
                           ),
-                        ),
-                        8.height,
-                        Text(user.email ?? ''),
-                        8.height,
-                      ],
-                    );
-                  },
-                  loading: () => const CircularProgressIndicator(),
-                  error: (e, s) => Text('Error: $e'),
-                );
-              },
-              loading: () => const CircularProgressIndicator(),
-              error: (e, s) => Text('Error: $e'),
+                          16.height,
+                          // Name
+                          Text(
+                            displayName,
+                            style: const TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          8.height,
+                          Text(user.email ?? ''),
+                          8.height,
+                        ],
+                      );
+                    },
+                    loading: () => const CircularProgressIndicator(),
+                    error: (e, s) => Text('Error: $e'),
+                  );
+                },
+                loading: () => const CircularProgressIndicator(),
+                error: (e, s) => Text('Error: $e'),
+              ),
             ),
           ),
         ),
