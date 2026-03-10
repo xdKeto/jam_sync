@@ -4,6 +4,7 @@ import 'package:jam_sync/features/auth/providers/auth_provider.dart';
 import 'package:jam_sync/features/auth/screens/login_screen.dart';
 import 'package:jam_sync/features/auth/screens/profile_form_screen.dart';
 import 'package:jam_sync/shared/utils/app_init_provider.dart';
+import 'package:jam_sync/shared/utils/app_styles.dart';
 import 'package:jam_sync/shared/widgets/error_screen.dart';
 import 'package:jam_sync/shared/widgets/splash_screen.dart';
 import 'package:jam_sync/shared/widgets/home_nav.dart';
@@ -31,7 +32,8 @@ class MyApp extends ConsumerWidget {
       title: 'Jam Sync',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        fontFamily: 'SansFrancisco',
+        colorScheme: ColorScheme.fromSeed(seedColor: AppStyles.darkNavy),
         useMaterial3: true,
       ),
       home: appInit.when(

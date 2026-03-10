@@ -4,6 +4,7 @@ import 'package:jam_sync/features/auth/providers/auth_provider.dart';
 import 'package:jam_sync/features/auth/widgets/google_button.dart';
 import 'package:jam_sync/shared/utils/app_styles.dart';
 import 'package:jam_sync/shared/utils/gap_helper.dart';
+import 'package:jam_sync/shared/widgets/background_gradient.dart';
 import 'package:jam_sync/shared/widgets/loading_screen.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -23,10 +24,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       await ref.read(authNotifierProvider.notifier).signInWithGoogle();
     } catch (e) {
       if (mounted) {
-        setState(() => _isLoading = false);
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('Sign in failed: $e')));
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
       }
     }
   }
@@ -35,42 +39,44 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        Scaffold(
-          backgroundColor: AppStyles.lightTeal,
-          body: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Center(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 160),
-                      child: Image.asset(
-                        'assets/images/logo.png',
-                        fit: BoxFit.contain,
+        BackgroundGradient(
+          child: Scaffold(
+            backgroundColor: AppStyles.lightTeal,
+            body: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Center(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 160),
+                        child: Image.asset(
+                          'assets/images/logo.png',
+                          fit: BoxFit.contain,
+                        ),
                       ),
                     ),
-                  ),
-                  6.height,
-                  Text('Welcome to JamSync', style: AppStyles.h1(context)),
-                  6.height,
-                  Text(
-                    'Collaborate on music in real-time with digital music sheet.',
-                    style: AppStyles.bodyMedium(context),
-                    textAlign: TextAlign.center,
-                  ),
-                  16.height,
-                  ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 280),
-                    child: InkWell(
-                      onTap: _isLoading ? null : _handleSignIn,
-                      child: GoogleButton(),
+                    6.height,
+                    Text('Welcome to JamSync', style: AppStyles.h2(context)),
+                    6.height,
+                    Text(
+                      'Collaborate on music in real-time with digital music sheet.',
+                      style: AppStyles.bodyMedium(context),
+                      textAlign: TextAlign.center,
                     ),
-                  ),
-                ],
+                    16.height,
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 280),
+                      child: InkWell(
+                        onTap: _isLoading ? null : _handleSignIn,
+                        child: GoogleButton(),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:animated_bottom_navigation_bar/animated_bottom_navigation_bar.dart';
-import 'package:jam_sync/features/projects/screens/home_screen.dart';
-import 'package:jam_sync/features/profile/screens/profile_screen.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
+import 'package:jam_sync/features/home/screens/home_screen.dart';
+import 'package:jam_sync/features/home/screens/profile_screen.dart';
 import 'package:jam_sync/shared/utils/app_styles.dart';
 
 class HomeNav extends StatefulWidget {
@@ -14,9 +15,9 @@ class HomeNav extends StatefulWidget {
 class _HomeNavState extends State<HomeNav> {
   var _bottomNavIndex = 0;
 
-  final iconList = <IconData>[Icons.home_outlined, Icons.person_outline];
+  final iconList = <IconData>[Iconsax.home_1, Iconsax.music_library_2];
 
-  final activeIconList = <IconData>[Icons.home, Icons.person];
+  final activeIconList = <IconData>[Iconsax.home_2, Iconsax.music_library_2];
 
   final List<Widget> _screens = [const HomeScreen(), const ProfileScreen()];
 
@@ -28,17 +29,17 @@ class _HomeNavState extends State<HomeNav> {
       floatingActionButton: FloatingActionButton(
         shape: const CircleBorder(),
         elevation: 3,
-        backgroundColor: Colors.white,
+        backgroundColor: AppStyles.black,
         onPressed: () {
           // TODO: Implement add project
         },
-        child: const Icon(Icons.add, color: Colors.black, size: 32),
+        child: const Icon(Icons.add, color: AppStyles.white, size: 32),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: AnimatedBottomNavigationBar.builder(
         itemCount: iconList.length,
         tabBuilder: (int index, bool isActive) {
-          final color = isActive ? Colors.black : Colors.grey;
+          final color = isActive ? AppStyles.black : AppStyles.grey600;
           return Column(
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
@@ -50,10 +51,10 @@ class _HomeNavState extends State<HomeNav> {
               ),
               const SizedBox(height: 2),
               Text(
-                index == 0 ? "Home" : "Profile",
+                index == 0 ? "Home" : "Projects",
                 style: TextStyle(
                   color: color,
-                  fontSize: 10,
+                  fontSize: isActive ? 12 : 10,
                   fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
                 ),
               ),

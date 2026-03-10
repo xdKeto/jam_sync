@@ -68,6 +68,20 @@ class AppStyles {
     );
   }
 
+  static BoxDecoration whiteBox() {
+    return BoxDecoration(
+      borderRadius: BorderRadius.circular(10),
+      color: AppStyles.white,
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.1),
+          spreadRadius: 1,
+          blurRadius: 1,
+        ),
+      ],
+    );
+  }
+
   // Gradient
   // static const LinearGradient primaryGradient = LinearGradient(
   //   begin: Alignment.topLeft,
