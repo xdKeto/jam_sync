@@ -53,6 +53,7 @@ dependencies:
   flutter_native_splash: ^2.4.7
   animated_bottom_navigation_bar: ^1.4.0
   iconsax_flutter: ^1.0.1
+  syncfusion_flutter_sliders: ^32.2.9
 
 dev_dependencies:
   flutter_test:

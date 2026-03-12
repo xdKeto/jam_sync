@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:jam_sync/features/auth/providers/auth_provider.dart';
 import 'package:jam_sync/features/home/widgets/home_top_bar.dart';
 import 'package:jam_sync/features/home/widgets/project_card.dart';
