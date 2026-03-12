@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:animated_bottom_navigation_bar/animated_bottom_navigation_bar.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:jam_sync/features/home/screens/home_screen.dart';
+import 'package:jam_sync/features/home/screens/new_project_screen.dart';
 import 'package:jam_sync/features/projects/screens/project_screen.dart';
 import 'package:jam_sync/shared/utils/app_styles.dart';
 
@@ -33,7 +34,12 @@ class _HomeNavState extends State<HomeNav> {
           elevation: 3,
           backgroundColor: AppStyles.black,
           onPressed: () {
-            // TODO: Implement add project
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const NewProjectScreen(),
+              ),
+            );
           },
           child: const Icon(Icons.add, color: AppStyles.white, size: 32),
         ),

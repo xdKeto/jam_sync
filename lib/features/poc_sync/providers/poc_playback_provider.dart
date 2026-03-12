@@ -3,18 +3,18 @@ import 'dart:async';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
-import 'package:jam_sync/features/poc_sync/providers/room_provider.dart';
+import 'package:jam_sync/features/poc_sync/providers/poc_room_provider.dart';
 import 'package:jam_sync/features/poc_sync/services/poc_mad_logger_service.dart';
-import 'package:jam_sync/features/poc_sync/services/sync_provider.dart';
+import 'package:jam_sync/features/poc_sync/services/poc_sync_provider.dart';
 
-final playbackServiceProvider = Provider((ref) => PlaybackService(ref));
+final playbackServiceProvider = Provider((ref) => PocPlaybackService(ref));
 final pocMadLoggerProvider = Provider((ref) => PocMadLoggerService(ref));
 
-class PlaybackService {
+class PocPlaybackService {
   final Ref ref;
   final DatabaseReference rtdb = FirebaseDatabase.instance.ref();
 
-  PlaybackService(this.ref);
+  PocPlaybackService(this.ref);
 
   Future<void> startPlayback(String roomId) async {
     final syncService = ref.read(pocSyncServiceProvider);
@@ -38,7 +38,7 @@ class PlaybackService {
   }
 }
 
-class PlaybackState {
+class PocPlaybackState {
   final int currentBoxIndex;
   final bool isPlaying;
   final int currentPositionMs;
@@ -47,7 +47,7 @@ class PlaybackState {
   final double alpha;
   final double correctionOffsetMs;
 
-  const PlaybackState({
+  const PocPlaybackState({
     this.currentBoxIndex = -1,
     this.isPlaying = false,
     this.currentPositionMs = 0,
@@ -57,7 +57,7 @@ class PlaybackState {
     this.correctionOffsetMs = 0.0,
   });
 
-  PlaybackState copyWith({
+  PocPlaybackState copyWith({
     int? currentBoxIndex,
     bool? isPlaying,
     int? currentPositionMs,
@@ -66,7 +66,7 @@ class PlaybackState {
     double? alpha,
     double? correctionOffsetMs,
   }) {
-    return PlaybackState(
+    return PocPlaybackState(
       currentBoxIndex: currentBoxIndex ?? this.currentBoxIndex,
       isPlaying: isPlaying ?? this.isPlaying,
       currentPositionMs: currentPositionMs ?? this.currentPositionMs,
@@ -79,11 +79,11 @@ class PlaybackState {
 }
 
 final playbackControllerProvider =
-    StateNotifierProvider<PlaybackController, PlaybackState>(
-      (ref) => PlaybackController(ref),
+    StateNotifierProvider<PocPlaybackController, PocPlaybackState>(
+      (ref) => PocPlaybackController(ref),
     );
 
-class PlaybackController extends StateNotifier<PlaybackState> {
+class PocPlaybackController extends StateNotifier<PocPlaybackState> {
   final Ref ref;
   final DatabaseReference rtdb = FirebaseDatabase.instance.ref();
   Timer? playbackTimer;
@@ -103,7 +103,7 @@ class PlaybackController extends StateNotifier<PlaybackState> {
   static const int totalBoxes = 64;
   static const double beatDurationMs = 545.45; // 60000 / 110 BPM
 
-  PlaybackController(this.ref) : super(const PlaybackState());
+  PocPlaybackController(this.ref) : super(const PocPlaybackState());
 
   void startAutonomousPlayback(int startTime, {required String roomId}) async {
     serverStartTime = startTime;
@@ -174,7 +174,7 @@ class PlaybackController extends StateNotifier<PlaybackState> {
     // ===== one-time startup correction =====
     if (enableStartupCorrection) {
       final resyncService = ref.read(pocResyncServiceProvider);
-      final roomState = ref.read(roomProvider);
+      final roomState = ref.read(pocRoomProvider);
 
       if (roomState.isLeader) {
         resyncService.broadcastOnce(currentRoomId!, serverStartTime);
@@ -203,7 +203,7 @@ class PlaybackController extends StateNotifier<PlaybackState> {
     // stop log
     ref.read(pocMadLoggerProvider).stopLog();
 
-    final roomState = ref.read(roomProvider);
+    final roomState = ref.read(pocRoomProvider);
     if (currentRoomId != null && roomState.isLeader) {
       rtdb.child('playback_sessions/$currentRoomId').update({
         'isPlaying': false,
@@ -243,7 +243,7 @@ class PlaybackController extends StateNotifier<PlaybackState> {
 
   void _triggerHalfwayResync() {
     final resyncService = ref.read(pocResyncServiceProvider);
-    final roomState = ref.read(roomProvider);
+    final roomState = ref.read(pocRoomProvider);
 
     if (roomState.isLeader) {
       // leader broadcast posisi sekarang di halfway path

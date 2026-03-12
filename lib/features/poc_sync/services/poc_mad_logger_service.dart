@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:jam_sync/features/poc_sync/services/sync_provider.dart';
+import 'package:jam_sync/features/poc_sync/services/poc_sync_provider.dart';
 import 'package:uuid/uuid.dart';
 
 // Leader creates session and stores in RTDB agar semua client pakai session yang sama

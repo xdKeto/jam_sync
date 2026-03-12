@@ -11,11 +11,11 @@ String generateRoomCode() {
   return List.generate(6, (_) => random.nextInt(10)).join();
 }
 
-final roomProvider = StateNotifierProvider<RoomNotifier, RoomState>(
-  (ref) => RoomNotifier(ref),
+final pocRoomProvider = StateNotifierProvider<PocRoomNotifier, PocRoomState>(
+  (ref) => PocRoomNotifier(ref),
 );
 
-class RoomState {
+class PocRoomState {
   final String? roomId;
   final String? roomCode;
   final String? leaderId;
@@ -25,7 +25,7 @@ class RoomState {
   final bool isLeader;
   final bool isLoading;
 
-  const RoomState({
+  const PocRoomState({
     this.roomId,
     this.roomCode,
     this.leaderId,
@@ -36,7 +36,7 @@ class RoomState {
     this.isLoading = false,
   });
 
-  RoomState copyWith({
+  PocRoomState copyWith({
     String? roomId,
     String? roomCode,
     String? leaderId,
@@ -46,7 +46,7 @@ class RoomState {
     bool? isLeader,
     bool? isLoading,
   }) {
-    return RoomState(
+    return PocRoomState(
       roomId: roomId ?? this.roomId,
       roomCode: roomCode ?? this.roomCode,
       leaderId: leaderId ?? this.leaderId,
@@ -59,11 +59,11 @@ class RoomState {
   }
 }
 
-class RoomNotifier extends StateNotifier<RoomState> {
+class PocRoomNotifier extends StateNotifier<PocRoomState> {
   final DatabaseReference rtdb = FirebaseDatabase.instance.ref();
   final Ref ref;
 
-  RoomNotifier(this.ref) : super(RoomState());
+  PocRoomNotifier(this.ref) : super(PocRoomState());
 
   StreamSubscription? roomSubscription;
 

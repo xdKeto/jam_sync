@@ -3,10 +3,10 @@ import 'dart:async';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:jam_sync/features/poc_sync/providers/playback_provider.dart';
-import 'package:jam_sync/features/poc_sync/providers/room_provider.dart';
-import 'package:jam_sync/features/poc_sync/services/sync_provider.dart';
-import 'package:jam_sync/features/poc_sync/widgets/box_grid_widget.dart';
+import 'package:jam_sync/features/poc_sync/providers/poc_playback_provider.dart';
+import 'package:jam_sync/features/poc_sync/providers/poc_room_provider.dart';
+import 'package:jam_sync/features/poc_sync/services/poc_sync_provider.dart';
+import 'package:jam_sync/features/poc_sync/widgets/poc_box_grid_widget.dart';
 import 'package:jam_sync/shared/utils/app_styles.dart';
 import 'package:jam_sync/shared/utils/gap_helper.dart';
 import 'package:jam_sync/shared/widgets/the_button.dart';
@@ -45,7 +45,7 @@ class _PocRoomScreenState extends ConsumerState<PocRoomScreen> {
 
   // listen pergantian status habis ditambah buffer
   void setupPlaybackListener() {
-    final roomId = ref.read(roomProvider).roomId;
+    final roomId = ref.read(pocRoomProvider).roomId;
     if (roomId == null) return;
 
     // listen serverStartTime
@@ -95,7 +95,7 @@ class _PocRoomScreenState extends ConsumerState<PocRoomScreen> {
           isCounting = false;
         });
         // start autonomous playback
-        final roomId = ref.read(roomProvider).roomId!;
+        final roomId = ref.read(pocRoomProvider).roomId!;
         ref
             .read(playbackControllerProvider.notifier)
             .startAutonomousPlayback(serverStartTime, roomId: roomId);
@@ -109,7 +109,7 @@ class _PocRoomScreenState extends ConsumerState<PocRoomScreen> {
 
   Future<void> onStartPressed() async {
     if (isStartPressed || isCounting || isSyncing) return;
-    final roomId = ref.read(roomProvider).roomId;
+    final roomId = ref.read(pocRoomProvider).roomId;
     if (roomId == null) return;
 
     setState(() => isStartPressed = true);
@@ -125,7 +125,7 @@ class _PocRoomScreenState extends ConsumerState<PocRoomScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final roomState = ref.watch(roomProvider);
+    final roomState = ref.watch(pocRoomProvider);
     final playbackState = ref.watch(playbackControllerProvider);
 
     return Scaffold(
@@ -183,7 +183,7 @@ class _PocRoomScreenState extends ConsumerState<PocRoomScreen> {
 
             // Box Grid (shown when playing)
             if (playbackState.isPlaying) ...[
-              BoxGridWidget(
+              PocBoxGridWidget(
                 currentBox: playbackState.currentBoxIndex,
                 progress: playbackState.playbackProgress,
               ),

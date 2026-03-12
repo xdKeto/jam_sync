@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:jam_sync/shared/utils/app_styles.dart';
 
-class BoxGridWidget extends StatelessWidget {
-  const BoxGridWidget({
+class PocBoxGridWidget extends StatelessWidget {
+  const PocBoxGridWidget({
     super.key,
     required this.currentBox,
     required this.progress,

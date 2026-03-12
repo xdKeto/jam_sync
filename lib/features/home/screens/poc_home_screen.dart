@@ -2,8 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jam_sync/features/auth/providers/auth_provider.dart';
-import 'package:jam_sync/features/poc_sync/providers/room_provider.dart';
-import 'package:jam_sync/features/poc_sync/services/sync_provider.dart';
+import 'package:jam_sync/features/poc_sync/providers/poc_room_provider.dart';
+import 'package:jam_sync/features/poc_sync/services/poc_sync_provider.dart';
 import 'package:jam_sync/features/poc_sync/screens/poc_room_screen.dart';
 import 'package:jam_sync/shared/utils/app_styles.dart';
 import 'package:jam_sync/shared/utils/gap_helper.dart';
@@ -87,7 +87,7 @@ class PocHomeScreen extends ConsumerWidget {
               onTap: () async {
                 try {
                   await ref
-                      .read(roomProvider.notifier)
+                      .read(pocRoomProvider.notifier)
                       .joinRoom(codeController.text);
 
                   // pop dialog
@@ -156,7 +156,7 @@ class PocHomeScreen extends ConsumerWidget {
                           onTap: () async {
                             try {
                               await ref
-                                  .read(roomProvider.notifier)
+                                  .read(pocRoomProvider.notifier)
                                   .createRoom();
 
                               // push room screen
