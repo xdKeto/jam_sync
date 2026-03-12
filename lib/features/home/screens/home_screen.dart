@@ -41,22 +41,19 @@ class HomeScreen extends ConsumerWidget {
                         children: [
                           UserCard(name: displayName, photoURL: photoURL),
                           16.height,
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                "Recent Projects",
-                                style: AppStyles.h2(context),
-                              ),
-                              Text(
-                                "See all",
-                                style: AppStyles.bodySmall(context).copyWith(
-                                  color: AppStyles.grey600,
-                                  decoration: TextDecoration.underline,
-                                ),
-                              ),
-                            ],
-                          ),
+                          Text("Recent Projects", style: AppStyles.h2(context)),
+                          // Row(
+                          //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          //   children: [
+                          //     Text(
+                          //       "See all",
+                          //       style: AppStyles.bodySmall(context).copyWith(
+                          //         color: AppStyles.grey600,
+                          //         decoration: TextDecoration.underline,
+                          //       ),
+                          //     ),
+                          //   ],
+                          // ),
                           12.height,
                           ...List.generate(3, (index) {
                             final projects = [
