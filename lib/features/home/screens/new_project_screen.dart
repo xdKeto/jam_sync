@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:jam_sync/features/home/providers/create_project_provider.dart';
 import 'package:jam_sync/shared/utils/app_styles.dart';
 import 'package:jam_sync/shared/utils/gap_helper.dart';
 import 'package:jam_sync/shared/widgets/background_gradient.dart';
 import 'package:jam_sync/shared/widgets/the_button.dart';
+import 'package:quickalert/quickalert.dart';
 import 'package:syncfusion_flutter_sliders/sliders.dart';
 
 class NewProjectScreen extends ConsumerStatefulWidget {
@@ -20,6 +22,7 @@ class _NewProjectScreenState extends ConsumerState<NewProjectScreen> {
   double _tempoValue = 120.0;
   final projectTimeSigController = TextEditingController(text: '4/4');
   bool? useSongTemplate = true;
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -29,8 +32,40 @@ class _NewProjectScreenState extends ConsumerState<NewProjectScreen> {
     super.dispose();
   }
 
+  Future<void> _handleCreateProject() async {
+    if (!formKey.currentState!.validate()) return;
+
+    setState(() => _isLoading = true);
+
+    final success = await ref
+        .read(createProjectProvider.notifier)
+        .createProject(
+          title: projectTitleController.text.trim(),
+          songTitle: defaultSongTitleController.text.trim(),
+          tempo: _tempoValue,
+          timeSignature: projectTimeSigController.text,
+          useTemplate: useSongTemplate ?? true,
+        );
+
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
+    if (success) {
+      Navigator.of(context).pop();
+    } else {
+      final error = ref.read(createProjectProvider).error;
+      QuickAlert.show(
+        context: context,
+        type: QuickAlertType.error,
+        title: 'Error',
+        text: error ?? 'Failed to create project',
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+
     return BackgroundGradient(
       child: Scaffold(
         backgroundColor: Colors.transparent,
@@ -53,11 +88,20 @@ class _NewProjectScreenState extends ConsumerState<NewProjectScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                TheButton(
-                  text: "Create Project",
-                  color: AppStyles.darkNavy,
-                  textColor: AppStyles.white,
-                  vertPadding: 12,
+                GestureDetector(
+                  onTap: _isLoading ? null : _handleCreateProject,
+                  child: _isLoading
+                      ? const Center(
+                          child: CircularProgressIndicator(
+                            color: AppStyles.darkNavy,
+                          ),
+                        )
+                      : TheButton(
+                          text: "Create Project",
+                          color: AppStyles.darkNavy,
+                          textColor: AppStyles.white,
+                          vertPadding: 12,
+                        ),
                 ),
               ],
             ),

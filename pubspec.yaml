@@ -54,6 +54,7 @@ dependencies:
   animated_bottom_navigation_bar: ^1.4.0
   iconsax_flutter: ^1.0.1
   syncfusion_flutter_sliders: ^32.2.9
+  quickalert: ^1.1.0
 
 dev_dependencies:
   flutter_test:

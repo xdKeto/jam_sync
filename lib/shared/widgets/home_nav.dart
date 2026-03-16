@@ -3,6 +3,7 @@ import 'package:animated_bottom_navigation_bar/animated_bottom_navigation_bar.da
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:jam_sync/features/home/screens/home_screen.dart';
 import 'package:jam_sync/features/home/screens/new_project_screen.dart';
+import 'package:jam_sync/features/home/screens/join_room_screen.dart';
 import 'package:jam_sync/features/projects/screens/project_screen.dart';
 import 'package:jam_sync/shared/utils/app_styles.dart';
 
@@ -29,19 +30,68 @@ class _HomeNavState extends State<HomeNav> {
       child: Scaffold(
         extendBody: true,
         body: _screens[_bottomNavIndex],
-        floatingActionButton: FloatingActionButton(
-          shape: const CircleBorder(),
-          elevation: 3,
-          backgroundColor: AppStyles.black,
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const NewProjectScreen(),
-              ),
-            );
+        floatingActionButton: PopupMenuButton<int>(
+          offset: const Offset(0, -120),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          color: AppStyles.white,
+          elevation: 4,
+          onSelected: (value) {
+            if (value == 1) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const JoinRoomScreen(),
+                ),
+              );
+            } else if (value == 2) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const NewProjectScreen(),
+                ),
+              );
+            }
           },
-          child: const Icon(Icons.add, color: AppStyles.white, size: 32),
+          itemBuilder: (context) => [
+            PopupMenuItem(
+              value: 1,
+              child: Row(
+                children: [
+                  const Icon(Iconsax.login_1, color: AppStyles.black),
+                  const SizedBox(width: 12),
+                  Text('Join Room', style: AppStyles.bodyMedium(context)),
+                ],
+              ),
+            ),
+            PopupMenuItem(
+              value: 2,
+              child: Row(
+                children: [
+                  const Icon(Iconsax.add_circle, color: AppStyles.black),
+                  const SizedBox(width: 12),
+                  Text('Create Project', style: AppStyles.bodyMedium(context)),
+                ],
+              ),
+            ),
+          ],
+          child: Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: AppStyles.black,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: const Icon(Icons.add, color: AppStyles.white, size: 32),
+          ),
         ),
         floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
         bottomNavigationBar: AnimatedBottomNavigationBar.builder(

@@ -1,25 +1,34 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:jam_sync/features/auth/providers/auth_provider.dart';
 import 'package:jam_sync/shared/utils/app_styles.dart';
 import 'package:jam_sync/shared/utils/gap_helper.dart';
 
-class ProjectCard extends StatelessWidget {
+class ProjectCard extends ConsumerWidget {
   final String title;
-  final int bpm;
-  final String timeSignature;
+  final String creatorId;
+  final String roomCode;
   final String timeAgo;
   final List<String> participantAvatarUrls;
 
   const ProjectCard({
     super.key,
     required this.title,
-    required this.bpm,
-    required this.timeSignature,
+    required this.creatorId,
+    required this.roomCode,
     required this.timeAgo,
     required this.participantAvatarUrls,
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final creatorData = ref.watch(userProvider(creatorId));
+    final creatorName = creatorData.when(
+      data: (data) => data?['displayName'] as String? ?? 'Unknown User',
+      loading: () => '...',
+      error: (_, _) => 'Error',
+    );
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: AppStyles.whiteBox(),
@@ -36,13 +45,13 @@ class ProjectCard extends StatelessWidget {
           Row(
             children: [
               Icon(
-                Icons.music_note_rounded,
+                Icons.person_rounded,
                 size: 16,
                 color: AppStyles.skyBlue,
               ),
               const SizedBox(width: 4),
               Text(
-                '$bpm BPM • $timeSignature',
+                '$creatorName • $roomCode',
                 style: AppStyles.bodySmall(context),
               ),
             ],
@@ -99,7 +108,7 @@ class ProjectCard extends StatelessWidget {
                         width: avatarSize,
                         height: avatarSize,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => _defaultAvatar(),
+                        errorBuilder: (_, _, _) => _defaultAvatar(),
                       )
                     : _defaultAvatar(),
               ),

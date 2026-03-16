@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:jam_sync/features/home/providers/projects_provider.dart';
 import 'package:jam_sync/features/home/widgets/project_card.dart';
 import 'package:jam_sync/shared/utils/app_styles.dart';
 import 'package:jam_sync/shared/utils/gap_helper.dart';
+import 'package:jam_sync/shared/utils/time_ago_helper.dart';
 import 'package:jam_sync/shared/widgets/background_gradient.dart';
 
 class ProjectScreen extends ConsumerWidget {
@@ -21,39 +23,39 @@ class ProjectScreen extends ConsumerWidget {
                 16.height,
                 Text("Your Projects", style: AppStyles.h2(context)),
                 12.height,
-                ...List.generate(3, (index) {
-                  final projects = [
-                    {
-                      'title': 'Summer Vibes Jam',
-                      'bpm': 120,
-                      'ts': '4/4',
-                      'time': '2 hours ago',
+                Expanded(
+                  child: ref.watch(projectsProvider).when(
+                    data: (projects) {
+                      if (projects.isEmpty) {
+                        return Center(
+                          child: Text(
+                            "No projects yet.",
+                            style: AppStyles.bodyLarge(context),
+                          ),
+                        );
+                      }
+                      
+                      return ListView.builder(
+                        itemCount: projects.length,
+                        itemBuilder: (context, index) {
+                          final p = projects[index];
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 10),
+                            child: ProjectCard(
+                              title: p.title,
+                              creatorId: p.createdBy,
+                              roomCode: p.roomCode,
+                              timeAgo: timeAgoFromDate(p.createdAt ?? DateTime.now()),
+                              participantAvatarUrls: const [], 
+                            ),
+                          );
+                        },
+                      );
                     },
-                    {
-                      'title': 'Chill Lofi Beat',
-                      'bpm': 85,
-                      'ts': '4/4',
-                      'time': '5 hours ago',
-                    },
-                    {
-                      'title': 'Rock Anthem Draft',
-                      'bpm': 140,
-                      'ts': '3/4',
-                      'time': '1 day ago',
-                    },
-                  ];
-                  final p = projects[index];
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
-                    child: ProjectCard(
-                      title: p['title'] as String,
-                      bpm: p['bpm'] as int,
-                      timeSignature: p['ts'] as String,
-                      timeAgo: p['time'] as String,
-                      participantAvatarUrls: [],
-                    ),
-                  );
-                }),
+                    loading: () => const Center(child: CircularProgressIndicator()),
+                    error: (e, s) => Center(child: Text('Error: $e')),
+                  ),
+                ),
               ],
             ),
           ),
