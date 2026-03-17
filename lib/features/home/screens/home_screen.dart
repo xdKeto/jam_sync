@@ -5,6 +5,7 @@ import 'package:jam_sync/features/home/providers/projects_provider.dart';
 import 'package:jam_sync/features/home/widgets/home_top_bar.dart';
 import 'package:jam_sync/features/home/widgets/project_card.dart';
 import 'package:jam_sync/features/home/widgets/user_card.dart';
+import 'package:jam_sync/features/score_canvas/screens/score_canvas_screen.dart';
 import 'package:jam_sync/shared/utils/app_styles.dart';
 import 'package:jam_sync/shared/utils/gap_helper.dart';
 import 'package:jam_sync/shared/utils/time_ago_helper.dart';
@@ -49,10 +50,7 @@ class HomeScreen extends ConsumerWidget {
                               children: [
                                 UserCard(name: displayName, photoURL: photoURL),
                                 16.height,
-                                Text(
-                                  "Recent Projects",
-                                  style: AppStyles.h2(context),
-                                ),
+                                Text("Recent Projects", style: AppStyles.h2(context)),
                                 // Row(
                                 //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 //   children: [
@@ -72,49 +70,44 @@ class HomeScreen extends ConsumerWidget {
                                       data: (projects) {
                                         if (projects.isEmpty) {
                                           return Padding(
-                                            padding: const EdgeInsets.only(
-                                              top: 20,
-                                            ),
+                                            padding: const EdgeInsets.only(top: 20),
                                             child: Text(
                                               "No projects found. Create one or join a room!",
-                                              style: AppStyles.bodyMedium(
-                                                context,
-                                              ),
+                                              style: AppStyles.bodyMedium(context),
                                             ),
                                           );
                                         }
-                                        final recentProjects = projects
-                                            .take(3)
-                                            .toList();
+                                        final recentProjects = projects.take(3).toList();
                                         return Column(
                                           children: recentProjects
                                               .map(
                                                 (p) => Padding(
-                                                  padding:
-                                                      const EdgeInsets.only(
-                                                        bottom: 10,
-                                                      ),
-                                                  child: ProjectCard(
-                                                    title: p.title,
-                                                    creatorId: p.createdBy,
-                                                    roomCode: p.roomCode,
-                                                    timeAgo: timeAgoFromDate(
-                                                      p.createdAt ??
-                                                          DateTime.now(),
+                                                  padding: const EdgeInsets.only(bottom: 10),
+                                                  child: GestureDetector(
+                                                    onTap: () {
+                                                      debugPrint("Project tapped: ${p.title}");
+                                                      Navigator.push(
+                                                        context,
+                                                        MaterialPageRoute(
+                                                          builder: (context) => const ScoreCanvasScreen(),
+                                                        ),
+                                                      );
+                                                    },
+                                                    child: ProjectCard(
+                                                      title: p.title,
+                                                      creatorId: p.createdBy,
+                                                      roomCode: p.roomCode,
+                                                      timeAgo: timeAgoFromDate(p.createdAt ?? DateTime.now()),
+                                                      participants: p.participants,
                                                     ),
-                                                    participants:
-                                                        p.participants,
                                                   ),
                                                 ),
                                               )
                                               .toList(),
                                         );
                                       },
-                                      loading: () => const Center(
-                                        child: CircularProgressIndicator(),
-                                      ),
-                                      error: (e, s) =>
-                                          Text('Error loading projects: $e'),
+                                      loading: () => const Center(child: CircularProgressIndicator()),
+                                      error: (e, s) => Text('Error loading projects: $e'),
                                     ),
                               ],
                             ),
