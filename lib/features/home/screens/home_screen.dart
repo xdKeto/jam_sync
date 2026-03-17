@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jam_sync/features/auth/providers/auth_provider.dart';
@@ -37,54 +36,90 @@ class HomeScreen extends ConsumerWidget {
                       final photoURL = data?['photoURL'] ?? '';
                       final displayName = data?['displayName'] ?? 'User';
 
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          UserCard(name: displayName, photoURL: photoURL),
-                          16.height,
-                          Text("Recent Projects", style: AppStyles.h2(context)),
-                          // Row(
-                          //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          //   children: [
-                          //     Text(
-                          //       "See all",
-                          //       style: AppStyles.bodySmall(context).copyWith(
-                          //         color: AppStyles.grey600,
-                          //         decoration: TextDecoration.underline,
-                          //       ),
-                          //     ),
-                          //   ],
-                          // ),
-                          12.height,
-                          ref.watch(projectsProvider).when(
-                            data: (projects) {
-                              if (projects.isEmpty) {
-                                return Padding(
-                                  padding: const EdgeInsets.only(top: 20),
-                                  child: Text(
-                                    "No projects found. Create one or join a room!",
-                                    style: AppStyles.bodyMedium(context),
-                                  ),
-                                );
-                              }
-                              final recentProjects = projects.take(3).toList();
-                              return Column(
-                                children: recentProjects.map((p) => Padding(
-                                  padding: const EdgeInsets.only(bottom: 10),
-                                  child: ProjectCard(
-                                    title: p.title,
-                                    creatorId: p.createdBy,
-                                    roomCode: p.roomCode,
-                                    timeAgo: timeAgoFromDate(p.createdAt ?? DateTime.now()),
-                                    participantAvatarUrls: [photoURL], // Temporarily using currentUser's photo as participant
-                                  ),
-                                )).toList(),
-                              );
-                            },
-                            loading: () => const Center(child: CircularProgressIndicator()),
-                            error: (e, s) => Text('Error loading projects: $e'),
-                          ),
-                        ],
+                      return RefreshIndicator(
+                        onRefresh: () async {
+                          ref.invalidate(userProvider(user.uid));
+                          ref.invalidate(projectsProvider);
+                        },
+                        child: ListView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                UserCard(name: displayName, photoURL: photoURL),
+                                16.height,
+                                Text(
+                                  "Recent Projects",
+                                  style: AppStyles.h2(context),
+                                ),
+                                // Row(
+                                //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                //   children: [
+                                //     Text(
+                                //       "See all",
+                                //       style: AppStyles.bodySmall(context).copyWith(
+                                //         color: AppStyles.grey600,
+                                //         decoration: TextDecoration.underline,
+                                //       ),
+                                //     ),
+                                //   ],
+                                // ),
+                                12.height,
+                                ref
+                                    .watch(projectsProvider)
+                                    .when(
+                                      data: (projects) {
+                                        if (projects.isEmpty) {
+                                          return Padding(
+                                            padding: const EdgeInsets.only(
+                                              top: 20,
+                                            ),
+                                            child: Text(
+                                              "No projects found. Create one or join a room!",
+                                              style: AppStyles.bodyMedium(
+                                                context,
+                                              ),
+                                            ),
+                                          );
+                                        }
+                                        final recentProjects = projects
+                                            .take(3)
+                                            .toList();
+                                        return Column(
+                                          children: recentProjects
+                                              .map(
+                                                (p) => Padding(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                        bottom: 10,
+                                                      ),
+                                                  child: ProjectCard(
+                                                    title: p.title,
+                                                    creatorId: p.createdBy,
+                                                    roomCode: p.roomCode,
+                                                    timeAgo: timeAgoFromDate(
+                                                      p.createdAt ??
+                                                          DateTime.now(),
+                                                    ),
+                                                    participants:
+                                                        p.participants,
+                                                  ),
+                                                ),
+                                              )
+                                              .toList(),
+                                        );
+                                      },
+                                      loading: () => const Center(
+                                        child: CircularProgressIndicator(),
+                                      ),
+                                      error: (e, s) =>
+                                          Text('Error loading projects: $e'),
+                                    ),
+                              ],
+                            ),
+                          ],
+                        ),
                       );
                     },
                     loading: () => const CircularProgressIndicator(),

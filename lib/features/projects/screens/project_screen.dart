@@ -24,37 +24,60 @@ class ProjectScreen extends ConsumerWidget {
                 Text("Your Projects", style: AppStyles.h2(context)),
                 12.height,
                 Expanded(
-                  child: ref.watch(projectsProvider).when(
-                    data: (projects) {
-                      if (projects.isEmpty) {
-                        return Center(
-                          child: Text(
-                            "No projects yet.",
-                            style: AppStyles.bodyLarge(context),
-                          ),
-                        );
-                      }
-                      
-                      return ListView.builder(
-                        itemCount: projects.length,
-                        itemBuilder: (context, index) {
-                          final p = projects[index];
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 10),
-                            child: ProjectCard(
-                              title: p.title,
-                              creatorId: p.createdBy,
-                              roomCode: p.roomCode,
-                              timeAgo: timeAgoFromDate(p.createdAt ?? DateTime.now()),
-                              participantAvatarUrls: const [], 
-                            ),
+                  child: ref
+                      .watch(projectsProvider)
+                      .when(
+                        data: (projects) {
+                          return RefreshIndicator(
+                            onRefresh: () async {
+                              ref.invalidate(projectsProvider);
+                            },
+                            child: projects.isEmpty
+                                ? ListView(
+                                    physics:
+                                        const AlwaysScrollableScrollPhysics(),
+                                    children: [
+                                      SizedBox(
+                                        height:
+                                            MediaQuery.of(context).size.height *
+                                            0.4,
+                                        child: Center(
+                                          child: Text(
+                                            "No projects yet.",
+                                            style: AppStyles.bodyLarge(context),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  )
+                                : ListView.builder(
+                                    physics:
+                                        const AlwaysScrollableScrollPhysics(),
+                                    itemCount: projects.length,
+                                    itemBuilder: (context, index) {
+                                      final p = projects[index];
+                                      return Padding(
+                                        padding: const EdgeInsets.only(
+                                          bottom: 10,
+                                        ),
+                                        child: ProjectCard(
+                                          title: p.title,
+                                          creatorId: p.createdBy,
+                                          roomCode: p.roomCode,
+                                          timeAgo: timeAgoFromDate(
+                                            p.createdAt ?? DateTime.now(),
+                                          ),
+                                          participants: p.participants,
+                                        ),
+                                      );
+                                    },
+                                  ),
                           );
                         },
-                      );
-                    },
-                    loading: () => const Center(child: CircularProgressIndicator()),
-                    error: (e, s) => Center(child: Text('Error: $e')),
-                  ),
+                        loading: () =>
+                            const Center(child: CircularProgressIndicator()),
+                        error: (e, s) => Center(child: Text('Error: $e')),
+                      ),
                 ),
               ],
             ),

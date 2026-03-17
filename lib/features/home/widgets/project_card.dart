@@ -9,7 +9,7 @@ class ProjectCard extends ConsumerWidget {
   final String creatorId;
   final String roomCode;
   final String timeAgo;
-  final List<String> participantAvatarUrls;
+  final List<String> participants;
 
   const ProjectCard({
     super.key,
@@ -17,7 +17,7 @@ class ProjectCard extends ConsumerWidget {
     required this.creatorId,
     required this.roomCode,
     required this.timeAgo,
-    required this.participantAvatarUrls,
+    required this.participants,
   });
 
   @override
@@ -44,11 +44,7 @@ class ProjectCard extends ConsumerWidget {
           8.height,
           Row(
             children: [
-              Icon(
-                Icons.person_rounded,
-                size: 16,
-                color: AppStyles.skyBlue,
-              ),
+              Icon(Icons.person_rounded, size: 16, color: AppStyles.skyBlue),
               const SizedBox(width: 4),
               Text(
                 '$creatorName • $roomCode',
@@ -78,7 +74,7 @@ class ProjectCard extends ConsumerWidget {
   Widget _buildAvatarStack() {
     const double avatarSize = 28;
     const double overlap = 10;
-    final int count = participantAvatarUrls.length;
+    final int count = participants.length;
 
     if (count == 0) return const SizedBox.shrink();
 
@@ -89,40 +85,73 @@ class ProjectCard extends ConsumerWidget {
       height: avatarSize,
       child: Stack(
         children: List.generate(count, (index) {
-          final url = participantAvatarUrls[index];
+          final uid = participants[index];
           return Positioned(
             left: index * (avatarSize - overlap),
-            child: Container(
-              width: avatarSize,
-              height: avatarSize,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: AppStyles.white, width: 2),
-              ),
-              child: ClipOval(
-                child: url.isNotEmpty
-                    ? Image(
-                        image: url.startsWith('assets/')
-                            ? AssetImage(url)
-                            : NetworkImage(url),
-                        width: avatarSize,
-                        height: avatarSize,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, _, _) => _defaultAvatar(),
-                      )
-                    : _defaultAvatar(),
-              ),
-            ),
+            child: ParticipantAvatar(uid: uid, size: avatarSize),
           );
         }),
       ),
     );
   }
+}
 
-  Widget _defaultAvatar() {
-    return Container(
-      color: AppStyles.grey300,
-      child: const Icon(Icons.person, size: 14, color: Colors.white),
+class ParticipantAvatar extends ConsumerWidget {
+  final String uid;
+  final double size;
+
+  const ParticipantAvatar({super.key, required this.uid, required this.size});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final userData = ref.watch(userProvider(uid));
+
+    return userData.when(
+      data: (data) {
+        final url = data?['photoURL'] as String? ?? '';
+        return Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: AppStyles.white, width: 2),
+            color: AppStyles.grey300,
+          ),
+          child: ClipOval(
+            child: url.isNotEmpty
+                ? Image(
+                    image: url.startsWith('assets/')
+                        ? AssetImage(url) as ImageProvider
+                        : NetworkImage(url),
+                    width: size,
+                    height: size,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) =>
+                        const Icon(Icons.person, size: 14, color: Colors.white),
+                  )
+                : const Icon(Icons.person, size: 14, color: Colors.white),
+          ),
+        );
+      },
+      loading: () => Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(color: AppStyles.white, width: 2),
+          color: AppStyles.grey300,
+        ),
+      ),
+      error: (error, stackTrace) => Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(color: AppStyles.white, width: 2),
+          color: AppStyles.grey300,
+        ),
+        child: const Icon(Icons.error_outline, size: 14, color: Colors.white),
+      ),
     );
   }
 }

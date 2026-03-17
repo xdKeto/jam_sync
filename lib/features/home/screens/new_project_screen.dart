@@ -19,10 +19,10 @@ class _NewProjectScreenState extends ConsumerState<NewProjectScreen> {
   final formKey = GlobalKey<FormState>();
   final projectTitleController = TextEditingController();
   final defaultSongTitleController = TextEditingController();
-  double _tempoValue = 120.0;
+  double tempoValue = 120.0;
   final projectTimeSigController = TextEditingController(text: '4/4');
   bool? useSongTemplate = true;
-  bool _isLoading = false;
+  bool isLoading = false;
 
   @override
   void dispose() {
@@ -32,23 +32,23 @@ class _NewProjectScreenState extends ConsumerState<NewProjectScreen> {
     super.dispose();
   }
 
-  Future<void> _handleCreateProject() async {
+  Future<void> handleCreateProject() async {
     if (!formKey.currentState!.validate()) return;
 
-    setState(() => _isLoading = true);
+    setState(() => isLoading = true);
 
     final success = await ref
         .read(createProjectProvider.notifier)
         .createProject(
           title: projectTitleController.text.trim(),
           songTitle: defaultSongTitleController.text.trim(),
-          tempo: _tempoValue,
+          tempo: tempoValue,
           timeSignature: projectTimeSigController.text,
           useTemplate: useSongTemplate ?? true,
         );
 
     if (!mounted) return;
-    setState(() => _isLoading = false);
+    setState(() => isLoading = false);
 
     if (success) {
       Navigator.of(context).pop();
@@ -89,8 +89,8 @@ class _NewProjectScreenState extends ConsumerState<NewProjectScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 GestureDetector(
-                  onTap: _isLoading ? null : _handleCreateProject,
-                  child: _isLoading
+                  onTap: isLoading ? null : handleCreateProject,
+                  child: isLoading
                       ? const Center(
                           child: CircularProgressIndicator(
                             color: AppStyles.darkNavy,
@@ -223,7 +223,7 @@ class _NewProjectScreenState extends ConsumerState<NewProjectScreen> {
                                     child: SfSlider(
                                       min: 40.0,
                                       max: 200.0,
-                                      value: _tempoValue,
+                                      value: tempoValue,
                                       interval: 40,
                                       stepSize: 1.0,
                                       showTicks: true,
@@ -251,7 +251,7 @@ class _NewProjectScreenState extends ConsumerState<NewProjectScreen> {
                                           },
                                       onChanged: (dynamic value) {
                                         setState(() {
-                                          _tempoValue = (value as double)
+                                          tempoValue = (value as double)
                                               .roundToDouble();
                                         });
                                       },
@@ -269,15 +269,15 @@ class _NewProjectScreenState extends ConsumerState<NewProjectScreen> {
                                           size: 32,
                                         ),
                                         onPressed: () {
-                                          if (_tempoValue < 200.0) {
+                                          if (tempoValue < 200.0) {
                                             setState(() {
-                                              _tempoValue += 1.0;
+                                              tempoValue += 1.0;
                                             });
                                           }
                                         },
                                       ),
                                       Text(
-                                        _tempoValue.round().toString(),
+                                        tempoValue.round().toString(),
                                         style: AppStyles.h3(context),
                                       ),
                                       IconButton(
@@ -288,9 +288,9 @@ class _NewProjectScreenState extends ConsumerState<NewProjectScreen> {
                                           size: 32,
                                         ),
                                         onPressed: () {
-                                          if (_tempoValue > 40.0) {
+                                          if (tempoValue > 40.0) {
                                             setState(() {
-                                              _tempoValue -= 1.0;
+                                              tempoValue -= 1.0;
                                             });
                                           }
                                         },

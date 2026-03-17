@@ -139,6 +139,32 @@ class ProjectRepository {
     return ProjectModel.fromFirestore(doc);
   }
 
+  Future<ProjectModel> joinRoom(String roomCode) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) throw Exception('User not logged in');
+
+    final snapshot = await _projectsRef
+        .where('roomCode', isEqualTo: roomCode.trim())
+        .limit(1)
+        .get();
+
+    if (snapshot.docs.isEmpty) throw Exception('Room not found');
+
+    final doc = snapshot.docs.first;
+    final project = ProjectModel.fromFirestore(doc);
+
+    if (project.participants.contains(user.uid)) {
+      throw Exception('You are already a participant of this project');
+    }
+
+    await doc.reference.update({
+      'participants': FieldValue.arrayUnion([user.uid]),
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+
+    return project;
+  }
+
   Future<void> deleteProject(String projectId) async {
     await _projectsRef.doc(projectId).delete();
   }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:jam_sync/features/home/providers/join_room_provider.dart';
 import 'package:jam_sync/shared/utils/app_styles.dart';
 import 'package:jam_sync/shared/utils/gap_helper.dart';
 import 'package:jam_sync/shared/widgets/background_gradient.dart';
@@ -22,8 +23,33 @@ class _JoinRoomScreenState extends ConsumerState<JoinRoomScreen> {
     super.dispose();
   }
 
+  Future<void> handleJoinRoom() async {
+    if (!formKey.currentState!.validate()) return;
+
+    final success = await ref
+        .read(joinRoomProvider.notifier)
+        .joinRoom(roomCodeController.text);
+
+    if (!mounted) return;
+
+    if (success) {
+      ref.read(joinRoomProvider.notifier).reset();
+      Navigator.of(context).pop(true);
+    } else {
+      final error = ref.read(joinRoomProvider).error;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error ?? 'Failed to join room'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final isLoading = ref.watch(joinRoomProvider).isLoading;
+
     return BackgroundGradient(
       child: Scaffold(
         backgroundColor: Colors.transparent,
@@ -43,11 +69,20 @@ class _JoinRoomScreenState extends ConsumerState<JoinRoomScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                TheButton(
-                  text: "Join Room",
-                  color: AppStyles.darkNavy,
-                  textColor: AppStyles.white,
-                  vertPadding: 12,
+                GestureDetector(
+                  onTap: isLoading ? null : handleJoinRoom,
+                  child: isLoading
+                      ? Center(
+                          child: CircularProgressIndicator(
+                            color: AppStyles.darkNavy,
+                          ),
+                        )
+                      : TheButton(
+                          text: "Join Room",
+                          color: AppStyles.darkNavy,
+                          textColor: AppStyles.white,
+                          vertPadding: 12,
+                        ),
                 ),
               ],
             ),
@@ -55,7 +90,7 @@ class _JoinRoomScreenState extends ConsumerState<JoinRoomScreen> {
         ),
         body: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.symmetric(vertical: 8),
             child: Center(
               child: ListView(
                 children: [
@@ -78,17 +113,20 @@ class _JoinRoomScreenState extends ConsumerState<JoinRoomScreen> {
                               8.height,
                               Text(
                                 "Ask your friend for the room code to join their project.",
-                                style: AppStyles.bodyMedium(context).copyWith(
-                                  color: AppStyles.grey600,
-                                ),
+                                style: AppStyles.bodyMedium(
+                                  context,
+                                ).copyWith(color: AppStyles.grey600),
                               ),
                               16.height,
                               TextFormField(
+                                controller: roomCodeController,
                                 cursorColor: AppStyles.black,
+                                keyboardType: TextInputType.number,
                                 decoration: AppStyles.formBox.copyWith(
-                                  hintText: 'e.g., 123-456',
-                                  hintStyle: AppStyles.bodyMedium(context)
-                                      .copyWith(color: AppStyles.grey500),
+                                  hintText: 'e.g., 123456',
+                                  hintStyle: AppStyles.bodyMedium(
+                                    context,
+                                  ).copyWith(color: AppStyles.grey500),
                                   enabledBorder: const OutlineInputBorder(
                                     borderSide: BorderSide(
                                       color: AppStyles.darkNavy,
@@ -101,8 +139,6 @@ class _JoinRoomScreenState extends ConsumerState<JoinRoomScreen> {
                                   }
                                   return null;
                                 },
-                                onChanged: (value) =>
-                                    roomCodeController.text = value,
                               ),
                             ],
                           ),
