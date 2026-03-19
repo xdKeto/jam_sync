@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:jam_sync/shared/utils/app_styles.dart';
+import 'package:jam_sync/features/score_canvas/widgets/chord_widget.dart';
+import 'package:jam_sync/features/score_canvas/widgets/circle_of_fifths_dialog.dart';
+import 'package:jam_sync/features/score_canvas/widgets/chord_modifier_dialog.dart';
 
 class BarWidget extends StatelessWidget {
   const BarWidget({
@@ -17,82 +20,83 @@ class BarWidget extends StatelessWidget {
   final bool isCornerRight;
   final bool isCornerLeft;
 
-  // Render chord characters with intelligent sizing and vertical alignment
-  List<InlineSpan> _buildChordSpans(BuildContext context, String chord, {bool isPassing = false}) {
-    if (chord.isEmpty) return [const TextSpan(text: '')];
+  Future<void> showChordPickerFlow(BuildContext context, String currentChord) async {
+    final renderBox = context.findRenderObject() as RenderBox;
+    final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
+    final position = RelativeRect.fromRect(
+      Rect.fromPoints(
+        renderBox.localToGlobal(Offset.zero, ancestor: overlay),
+        renderBox.localToGlobal(renderBox.size.bottomRight(Offset.zero), ancestor: overlay),
+      ),
+      Offset.zero & overlay.size,
+    );
 
-    final double baseSize = isPassing ? 14 : 24;
-    final double accidentalSize = isPassing ? 12 : 16;
-    final double modifierSize = isPassing ? 10 : 14;
-    final Color textColor = isPassing ? AppStyles.textSecondary : AppStyles.textPrimary;
+    final bool hasChord = currentChord.isNotEmpty;
 
-    List<InlineSpan> spans = [];
-    for (int i = 0; i < chord.length; i++) {
-      String char = chord[i];
-
-      // A-G atau / (bass note separator) -> teks besar
-      if (RegExp(r'[A-G/]').hasMatch(char)) {
-        spans.add(
-          TextSpan(
-            text: char,
-            style: (isPassing ? AppStyles.labelSmall(context) : AppStyles.h3(context)).copyWith(
-              fontWeight: FontWeight.bold,
-              color: textColor,
-              fontSize: baseSize,
-            ),
-          ),
-        );
-      }
-      // # (sharp) atau b (flat) -> agak ke atas dan lebih rapat (nyelip)
-      else if (char == '#' || char == 'b') {
-        final displayChar = char == '#' ? '♯' : '♭';
-        spans.add(
-          WidgetSpan(
-            alignment: PlaceholderAlignment.top,
-            child: Transform.translate(
-              offset: Offset(0, isPassing ? 0 : 2),
-              child: Text(
-                displayChar,
-                style: AppStyles.h4(context).copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: textColor,
-                  fontSize: accidentalSize,
-                  letterSpacing: -1.0, // Negatif agar modifier setelahnya nyelip
-                ),
+    final action = await showMenu<String>(
+      context: context,
+      position: position,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      color: AppStyles.darkNavy,
+      items: [
+        PopupMenuItem(
+          value: 'add_change',
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(hasChord ? Icons.swap_horiz : Icons.add, color: AppStyles.white, size: 18),
+              const SizedBox(width: 8),
+              Text(
+                hasChord ? 'Change' : 'Add',
+                style: const TextStyle(color: AppStyles.white, fontSize: 14),
               ),
+            ],
+          ),
+        ),
+        if (hasChord)
+          PopupMenuItem(
+            value: 'edit',
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.edit, color: AppStyles.white, size: 18),
+                const SizedBox(width: 8),
+                Text('Edit', style: const TextStyle(color: AppStyles.white, fontSize: 14)),
+              ],
             ),
           ),
-        );
+      ],
+    );
+
+    if (action == null || !context.mounted) return;
+
+    // Loop allows back navigation from modifier → circle of fifths
+    while (true) {
+      final result = await CircleOfFifthsDialog.show(context);
+      if (result == null || !context.mounted) return;
+      final (rootNote, isMinor) = result;
+
+      final finalChord = await ChordModifierDialog.show(context, rootNote, isMinor: isMinor);
+      if (finalChord == '__BACK__') continue; // back to circle of fifths
+      if (finalChord != null) {
+        debugPrint('✅ Chord selected: $finalChord');
       }
-      // Modifiers lainnya (m, dim, maj, 7, dll) -> normal, teks kecil
-      else {
-        spans.add(
-          TextSpan(
-            text: char,
-            style: AppStyles.h4(
-              context,
-            ).copyWith(fontWeight: FontWeight.w600, color: textColor, fontSize: modifierSize),
-          ),
-        );
-      }
+      return;
     }
-    return spans;
   }
 
   @override
   Widget build(BuildContext context) {
-    // Menentukan jumlah beat (kolom) dalam satu bar berdasarkan time signature
     int beats = 4;
     final parts = timeSig.split('/');
     if (parts.isNotEmpty) {
       beats = int.tryParse(parts[0]) ?? 4;
     }
 
-    return Container(
-      height: 60, // Tinggi tetap untuk konsistensi bar
-      decoration: BoxDecoration(
-        color: AppStyles.white,
-        border: Border.all(color: AppStyles.black, width: 1),
+    return Material(
+      color: AppStyles.white,
+      shape: RoundedRectangleBorder(
+        side: const BorderSide(color: AppStyles.black, width: 1),
         borderRadius: (isCornerRight && isCornerLeft)
             ? const BorderRadius.all(Radius.circular(12))
             : isCornerRight
@@ -104,61 +108,58 @@ class BarWidget extends StatelessWidget {
             ? const BorderRadius.only(topLeft: Radius.circular(12), bottomLeft: Radius.circular(12))
             : BorderRadius.zero,
       ),
-      child: Row(
-        // Membagi ruang bar menjadi kolom-kolom (beats) yang sama besar
-        children: List.generate(beats, (index) {
-          String rawMainChord = '';
-          if (chords != null && index < chords!.length) {
-            rawMainChord = chords![index];
-          }
+      child: SizedBox(
+        height: 60,
+        child: Row(
+          children: List.generate(beats, (index) {
+            String rawMainChord = '';
+            if (chords != null && index < chords!.length) {
+              rawMainChord = chords![index];
+            }
 
-          String passingChord = '';
-          if (passingChords != null && index < passingChords!.length) {
-            passingChord = passingChords![index];
-          }
+            String passingChord = '';
+            if (passingChords != null && index < passingChords!.length) {
+              passingChord = passingChords![index];
+            }
 
-          return Expanded(
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                // Render Main Chord di tengah block-nya menggunakan RichText
-                Center(
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 2),
-                      child: RichText(
-                        text: TextSpan(children: _buildChordSpans(context, rawMainChord)),
+            return Expanded(
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  // Main Chord
+                  Positioned.fill(
+                    child: Builder(
+                      builder: (innerContext) => InkWell(
+                        onTap: () => showChordPickerFlow(innerContext, rawMainChord),
+                        child: ChordWidget(chord: rawMainChord),
                       ),
                     ),
                   ),
-                ),
-                // Render Passing Chord agak ke atas dan di pojok kanan block
-                if (passingChord.isNotEmpty)
-                  Positioned(
-                    top: 4,
-                    right: 4,
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: RichText(
-                        text: TextSpan(
-                          children: _buildChordSpans(context, passingChord, isPassing: true),
+                  // Passing Chord
+                  if (passingChord.isNotEmpty)
+                    Positioned(
+                      top: 4,
+                      right: 4,
+                      child: Builder(
+                        builder: (innerContext) => InkWell(
+                          onTap: () => showChordPickerFlow(innerContext, passingChord),
+                          child: ChordWidget(chord: passingChord, isPassing: true),
                         ),
                       ),
                     ),
-                  ),
-                // Garis pembatas tipis antar beat / chord full dari atas ke bawah
-                if (index < beats - 1)
-                  Positioned(
-                    right: 0,
-                    top: 0, // Sentuh border atas
-                    bottom: 0, // Sentuh border bawah
-                    child: Container(width: 1, color: AppStyles.grey400),
-                  ),
-              ],
-            ),
-          );
-        }),
+                  // Garis pembatas tipis antar beat
+                  if (index < beats - 1)
+                    Positioned(
+                      right: 0,
+                      top: 0,
+                      bottom: 0,
+                      child: Container(width: 1, color: AppStyles.grey400),
+                    ),
+                ],
+              ),
+            );
+          }),
+        ),
       ),
     );
   }

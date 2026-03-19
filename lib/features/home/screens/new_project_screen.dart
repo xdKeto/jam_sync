@@ -12,10 +12,10 @@ class NewProjectScreen extends ConsumerStatefulWidget {
   const NewProjectScreen({super.key});
 
   @override
-  ConsumerState<NewProjectScreen> createState() => _NewProjectScreenState();
+  ConsumerState<NewProjectScreen> createState() => NewProjectScreenState();
 }
 
-class _NewProjectScreenState extends ConsumerState<NewProjectScreen> {
+class NewProjectScreenState extends ConsumerState<NewProjectScreen> {
   final formKey = GlobalKey<FormState>();
   final projectTitleController = TextEditingController();
   final defaultSongTitleController = TextEditingController();

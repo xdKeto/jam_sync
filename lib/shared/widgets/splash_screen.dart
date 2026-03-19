@@ -23,25 +23,19 @@ class SplashScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 160),
-                    child: Image.asset(
-                      'assets/images/logo.png',
-                      fit: BoxFit.contain,
-                    ),
+                    child: Image.asset('assets/images/logo.png', fit: BoxFit.contain),
                   ),
                 ),
                 8.height,
                 Text('Welcome to JamSync', style: AppStyles.h2(context)),
                 6.height,
                 Text(
-                  'Collaborate on music in real-time with digital music sheet.',
+                  'Collaborate in real-time with digital music sheet.',
                   style: AppStyles.bodyMedium(context),
                   textAlign: TextAlign.center,
                 ),
                 16.height,
-                LoadingAnimationWidget.staggeredDotsWave(
-                  color: AppStyles.white,
-                  size: 32,
-                ),
+                LoadingAnimationWidget.staggeredDotsWave(color: AppStyles.white, size: 32),
               ],
             ),
           ),
