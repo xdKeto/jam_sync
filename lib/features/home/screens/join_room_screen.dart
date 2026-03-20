@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:jam_sync/features/auth/providers/auth_provider.dart';
 import 'package:jam_sync/features/home/providers/join_room_provider.dart';
+import 'package:jam_sync/features/score_canvas/providers/room_provider.dart';
+import 'package:jam_sync/features/score_canvas/screens/score_canvas_screen.dart';
 import 'package:jam_sync/shared/utils/app_styles.dart';
 import 'package:jam_sync/shared/utils/gap_helper.dart';
 import 'package:jam_sync/shared/widgets/background_gradient.dart';
@@ -33,8 +36,27 @@ class _JoinRoomScreenState extends ConsumerState<JoinRoomScreen> {
     if (!mounted) return;
 
     if (success) {
+      final project = ref.read(joinRoomProvider).joinedProject!;
+      final userId = ref.read(authNotifierProvider.notifier).getCurrentUser()!.uid;
+
+      await ref.read(roomProvider.notifier).joinExistingRoom(
+        roomCode: project.roomCode,
+        userID: userId,
+      );
+
       ref.read(joinRoomProvider.notifier).reset();
-      Navigator.of(context).pop(true);
+
+      if (!mounted) return;
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ScoreCanvasScreen(
+            projectId: project.id,
+            roomCode: project.roomCode,
+          ),
+        ),
+      );
     } else {
       final error = ref.read(joinRoomProvider).error;
       ScaffoldMessenger.of(context).showSnackBar(

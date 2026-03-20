@@ -139,6 +139,55 @@ class ProjectRepository {
     return ProjectModel.fromFirestore(doc);
   }
 
+  Stream<ProjectModel> streamProject(String projectId) {
+    return _projectsRef.doc(projectId).snapshots().map((doc) {
+      if (!doc.exists) throw Exception('Project not found');
+      return ProjectModel.fromFirestore(doc);
+    });
+  }
+
+  Stream<List<CanvasModel>> streamCanvases(String projectId) {
+    return _projectsRef
+        .doc(projectId)
+        .collection('canvases')
+        .orderBy('order')
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) => CanvasModel.fromFirestore(doc)).toList());
+  }
+
+  Stream<List<SectionModel>> streamSections(String projectId, String canvasId) {
+    return _projectsRef
+        .doc(projectId)
+        .collection('canvases')
+        .doc(canvasId)
+        .collection('sections')
+        .orderBy('order')
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) => SectionModel.fromFirestore(doc)).toList());
+  }
+
+  Stream<List<BarModel>> streamBars(String projectId, String canvasId, String sectionId) {
+    return _projectsRef
+        .doc(projectId)
+        .collection('canvases')
+        .doc(canvasId)
+        .collection('sections')
+        .doc(sectionId)
+        .collection('bars')
+        .orderBy('index')
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) => BarModel.fromFirestore(doc)).toList());
+  }
+
+  Future<List<CanvasModel>> getCanvases(String projectId) async {
+    final snapshot = await _projectsRef
+        .doc(projectId)
+        .collection('canvases')
+        .orderBy('order')
+        .get();
+    return snapshot.docs.map((doc) => CanvasModel.fromFirestore(doc)).toList();
+  }
+
   Future<ProjectModel> joinRoom(String roomCode) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) throw Exception('User not logged in');

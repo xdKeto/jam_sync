@@ -5,6 +5,7 @@ import 'package:jam_sync/features/home/providers/projects_provider.dart';
 import 'package:jam_sync/features/home/widgets/home_top_bar.dart';
 import 'package:jam_sync/features/home/widgets/project_card.dart';
 import 'package:jam_sync/features/home/widgets/user_card.dart';
+import 'package:jam_sync/features/score_canvas/providers/room_provider.dart';
 import 'package:jam_sync/features/score_canvas/screens/score_canvas_screen.dart';
 import 'package:jam_sync/shared/utils/app_styles.dart';
 import 'package:jam_sync/shared/utils/gap_helper.dart';
@@ -84,12 +85,25 @@ class HomeScreen extends ConsumerWidget {
                                                 (p) => Padding(
                                                   padding: const EdgeInsets.only(bottom: 10),
                                                   child: GestureDetector(
-                                                    onTap: () {
+                                                    onTap: () async {
                                                       debugPrint("Project tapped: ${p.title}");
+
+                                                      final userId = ref.read(authNotifierProvider.notifier).getCurrentUser()!.uid;
+
+                                                      await ref.read(roomProvider.notifier).joinExistingRoom(
+                                                        roomCode: p.roomCode,
+                                                        userID: userId,
+                                                      );
+
+                                                      if (!context.mounted) return;
+
                                                       Navigator.push(
                                                         context,
                                                         MaterialPageRoute(
-                                                          builder: (context) => const ScoreCanvasScreen(),
+                                                          builder: (context) => ScoreCanvasScreen(
+                                                            projectId: p.id,
+                                                            roomCode: p.roomCode,
+                                                          ),
                                                         ),
                                                       );
                                                     },

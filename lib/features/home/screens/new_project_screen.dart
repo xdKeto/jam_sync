@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:jam_sync/features/auth/providers/auth_provider.dart';
 import 'package:jam_sync/features/home/providers/create_project_provider.dart';
+import 'package:jam_sync/features/score_canvas/providers/room_provider.dart';
+import 'package:jam_sync/features/score_canvas/screens/score_canvas_screen.dart';
+import 'package:jam_sync/shared/repositories/project_repository.dart';
 import 'package:jam_sync/shared/utils/app_styles.dart';
 import 'package:jam_sync/shared/utils/gap_helper.dart';
 import 'package:jam_sync/shared/widgets/background_gradient.dart';
@@ -48,11 +52,32 @@ class NewProjectScreenState extends ConsumerState<NewProjectScreen> {
         );
 
     if (!mounted) return;
-    setState(() => isLoading = false);
 
     if (success) {
-      Navigator.of(context).pop();
+      final projectId = ref.read(createProjectProvider).createdProjectId!;
+      final project = await ref.read(projectRepositoryProvider).getProject(projectId);
+      final userId = ref.read(authNotifierProvider.notifier).getCurrentUser()!.uid;
+
+      await ref.read(roomProvider.notifier).createAndJoinRoom(
+        projectID: projectId,
+        roomCode: project.roomCode,
+        userID: userId,
+      );
+
+      if (!mounted) return;
+      setState(() => isLoading = false);
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ScoreCanvasScreen(
+            projectId: projectId,
+            roomCode: project.roomCode,
+          ),
+        ),
+      );
     } else {
+      setState(() => isLoading = false);
       final error = ref.read(createProjectProvider).error;
       QuickAlert.show(
         context: context,
