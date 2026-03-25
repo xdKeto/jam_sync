@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
-
+import 'package:firebase_database/firebase_database.dart';
 import 'package:jam_sync/shared/models/project_model.dart';
 import 'package:jam_sync/shared/models/canvas_model.dart';
 import 'package:jam_sync/shared/models/section_model.dart';
@@ -12,11 +12,11 @@ class ProjectRepository {
   final FirebaseFirestore _firestore;
 
   ProjectRepository({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+    : _firestore = firestore ?? FirebaseFirestore.instance;
 
   CollectionReference get _projectsRef => _firestore.collection('projects');
 
-  String _generateRoomCode() {
+  String generateRoomCode() {
     final uuid = const Uuid().v4();
     final hash = uuid.hashCode.abs();
     return (hash % 900000 + 100000).toString();
@@ -39,7 +39,7 @@ class ProjectRepository {
       id: projectId,
       title: title,
       createdBy: user.uid,
-      roomCode: _generateRoomCode(),
+      roomCode: generateRoomCode(),
       participants: [user.uid],
     );
 
@@ -68,18 +68,14 @@ class ProjectRepository {
     });
 
     if (useTemplate) {
-      _addTemplateSections(batch, canvasRef, timeSignature);
+      addTemplateSections(batch, canvasRef, timeSignature);
     }
 
     await batch.commit();
     return projectId;
   }
 
-  void _addTemplateSections(
-    WriteBatch batch,
-    DocumentReference canvasRef,
-    String timeSignature,
-  ) {
+  void addTemplateSections(WriteBatch batch, DocumentReference canvasRef, String timeSignature) {
     final slots = beatsPerBar(timeSignature);
     final emptyChords = List.filled(slots, '');
 
@@ -105,16 +101,9 @@ class ProjectRepository {
 
       for (int i = 0; i < barCount; i++) {
         final barRef = sectionRef.collection('bars').doc();
-        final bar = BarModel(
-          id: barRef.id,
-          index: startBar + i,
-          chords: List.from(emptyChords),
-        );
+        final bar = BarModel(id: barRef.id, index: startBar + i, chords: List.from(emptyChords));
 
-        batch.set(barRef, {
-          ...barToFirestore(bar),
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
+        batch.set(barRef, {...barToFirestore(bar), 'updatedAt': FieldValue.serverTimestamp()});
       }
     }
   }
@@ -128,9 +117,7 @@ class ProjectRepository {
         .orderBy('updatedAt', descending: true)
         .get();
 
-    return snapshot.docs
-        .map((doc) => ProjectModel.fromFirestore(doc))
-        .toList();
+    return snapshot.docs.map((doc) => ProjectModel.fromFirestore(doc)).toList();
   }
 
   Future<ProjectModel> getProject(String projectId) async {
@@ -152,7 +139,8 @@ class ProjectRepository {
         .collection('canvases')
         .orderBy('order')
         .snapshots()
-        .map((snapshot) => snapshot.docs.map((doc) => CanvasModel.fromFirestore(doc)).toList());
+        .map((snapshot) => snapshot.docs.map((doc) => CanvasModel.fromFirestore(doc)).toList())
+        .handleError((_) {});
   }
 
   Stream<List<SectionModel>> streamSections(String projectId, String canvasId) {
@@ -215,6 +203,15 @@ class ProjectRepository {
   }
 
   Future<void> deleteProject(String projectId) async {
+    final doc = await _projectsRef.doc(projectId).get();
+    if (doc.exists) {
+      final project = ProjectModel.fromFirestore(doc);
+      final roomCode = project.roomCode;
+      
+      final rtdb = FirebaseDatabase.instance.ref();
+      await rtdb.child('rooms/$roomCode').remove();
+      await rtdb.child('playback_sessions/$projectId').remove();
+    }
     await _projectsRef.doc(projectId).delete();
   }
 }

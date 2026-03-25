@@ -58,11 +58,9 @@ class NewProjectScreenState extends ConsumerState<NewProjectScreen> {
       final project = await ref.read(projectRepositoryProvider).getProject(projectId);
       final userId = ref.read(authNotifierProvider.notifier).getCurrentUser()!.uid;
 
-      await ref.read(roomProvider.notifier).createAndJoinRoom(
-        projectID: projectId,
-        roomCode: project.roomCode,
-        userID: userId,
-      );
+      await ref
+          .read(roomProvider.notifier)
+          .createAndJoinRoom(projectID: projectId, roomCode: project.roomCode, userID: userId);
 
       if (!mounted) return;
       setState(() => isLoading = false);
@@ -70,10 +68,7 @@ class NewProjectScreenState extends ConsumerState<NewProjectScreen> {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => ScoreCanvasScreen(
-            projectId: projectId,
-            roomCode: project.roomCode,
-          ),
+          builder: (context) => ScoreCanvasScreen(projectId: projectId, roomCode: project.roomCode),
         ),
       );
     } else {
@@ -90,7 +85,6 @@ class NewProjectScreenState extends ConsumerState<NewProjectScreen> {
 
   @override
   Widget build(BuildContext context) {
-
     return BackgroundGradient(
       child: Scaffold(
         backgroundColor: Colors.transparent,
@@ -116,11 +110,7 @@ class NewProjectScreenState extends ConsumerState<NewProjectScreen> {
                 GestureDetector(
                   onTap: isLoading ? null : handleCreateProject,
                   child: isLoading
-                      ? const Center(
-                          child: CircularProgressIndicator(
-                            color: AppStyles.darkNavy,
-                          ),
-                        )
+                      ? const Center(child: CircularProgressIndicator(color: AppStyles.darkNavy))
                       : TheButton(
                           text: "Create Project",
                           color: AppStyles.darkNavy,
@@ -146,256 +136,222 @@ class NewProjectScreenState extends ConsumerState<NewProjectScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Container(
-                          decoration: AppStyles.whiteBox(),
-                          padding: EdgeInsets.all(12),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "Project Title",
-                                style: AppStyles.h5(context),
-                              ),
-                              4.height,
-                              TextFormField(
-                                cursorColor: AppStyles.black,
-                                decoration: AppStyles.formBox.copyWith(
-                                  hintText: 'Project Title',
-                                  hintStyle: AppStyles.bodyMedium(
-                                    context,
-                                  ).copyWith(color: AppStyles.grey500),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(
-                                      color: AppStyles.darkNavy,
+                        RepaintBoundary(
+                          child: Container(
+                            decoration: AppStyles.whiteBox(),
+                            padding: EdgeInsets.all(12),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text("Project Title", style: AppStyles.h5(context)),
+                                4.height,
+                                TextFormField(
+                                  cursorColor: AppStyles.black,
+                                  decoration: AppStyles.formBox.copyWith(
+                                    hintText: 'Project Title',
+                                    hintStyle: AppStyles.bodyMedium(
+                                      context,
+                                    ).copyWith(color: AppStyles.grey500),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderSide: BorderSide(color: AppStyles.darkNavy),
                                     ),
                                   ),
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return 'Please enter a project title';
+                                    }
+                                    return null;
+                                  },
+                                  onChanged: (value) => projectTitleController.text = value,
                                 ),
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Please enter a project title';
-                                  }
-                                  return null;
-                                },
-                                onChanged: (value) =>
-                                    projectTitleController.text = value,
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                         12.height,
-                        Text(
-                          "Default Canvas Setting",
-                          style: AppStyles.h4(context),
-                        ),
+                        Text("Default Canvas Setting", style: AppStyles.h4(context)),
                         Divider(color: AppStyles.darkNavy, thickness: 1),
                         4.height,
-                        Container(
-                          decoration: AppStyles.whiteBox(),
-                          padding: EdgeInsets.all(12),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text("Song Title", style: AppStyles.h5(context)),
-                              4.height,
-                              TextFormField(
-                                cursorColor: AppStyles.black,
-                                decoration: AppStyles.formBox.copyWith(
-                                  hintText: 'Song Title',
-                                  hintStyle: AppStyles.bodyMedium(
-                                    context,
-                                  ).copyWith(color: AppStyles.grey500),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(
-                                      color: AppStyles.darkNavy,
+                        RepaintBoundary(
+                          child: Container(
+                            decoration: AppStyles.whiteBox(),
+                            padding: EdgeInsets.all(12),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text("Song Title", style: AppStyles.h5(context)),
+                                4.height,
+                                TextFormField(
+                                  cursorColor: AppStyles.black,
+                                  decoration: AppStyles.formBox.copyWith(
+                                    hintText: 'Song Title',
+                                    hintStyle: AppStyles.bodyMedium(
+                                      context,
+                                    ).copyWith(color: AppStyles.grey500),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderSide: BorderSide(color: AppStyles.darkNavy),
                                     ),
                                   ),
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return 'Please enter a project title';
+                                    }
+                                    return null;
+                                  },
+                                  onChanged: (value) => defaultSongTitleController.text = value,
                                 ),
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Please enter a project title';
-                                  }
-                                  return null;
-                                },
-                                onChanged: (value) =>
-                                    defaultSongTitleController.text = value,
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                         12.height,
-                        Container(
-                          decoration: AppStyles.whiteBox(),
-                          padding: EdgeInsets.all(12),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Text(
-                                    "Tempo (BPM)",
-                                    style: AppStyles.h5(context),
-                                  ),
-                                  Text(
-                                    " - nilai ini bisa diubah nanti",
-                                    style: AppStyles.labelSmall(context),
-                                  ),
-                                ],
-                              ),
-                              12.height,
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: SfSlider(
-                                      min: 40.0,
-                                      max: 200.0,
-                                      value: tempoValue,
-                                      interval: 40,
-                                      stepSize: 1.0,
-                                      showTicks: true,
-                                      showLabels: true,
-                                      enableTooltip: true,
-                                      minorTicksPerInterval: 3,
-                                      activeColor: AppStyles.darkNavy,
-                                      tooltipTextFormatterCallback:
-                                          (
-                                            dynamic actualValue,
-                                            String formattedText,
-                                          ) {
-                                            return (actualValue as double)
-                                                .round()
-                                                .toString();
-                                          },
-                                      labelFormatterCallback:
-                                          (
-                                            dynamic actualValue,
-                                            String formattedText,
-                                          ) {
-                                            return (actualValue as double)
-                                                .round()
-                                                .toString();
-                                          },
-                                      onChanged: (dynamic value) {
-                                        setState(() {
-                                          tempoValue = (value as double)
-                                              .roundToDouble();
-                                        });
-                                      },
+                        RepaintBoundary(
+                          child: Container(
+                            decoration: AppStyles.whiteBox(),
+                            padding: EdgeInsets.all(12),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Text("Tempo (BPM)", style: AppStyles.h5(context)),
+                                    Text(
+                                      " - nilai ini bisa diubah nanti",
+                                      style: AppStyles.labelSmall(context),
                                     ),
-                                  ),
-                                  8.width,
-                                  Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      IconButton(
-                                        padding: EdgeInsets.zero,
-                                        constraints: const BoxConstraints(),
-                                        icon: const Icon(
-                                          Icons.arrow_drop_up,
-                                          size: 32,
-                                        ),
-                                        onPressed: () {
-                                          if (tempoValue < 200.0) {
-                                            setState(() {
-                                              tempoValue += 1.0;
-                                            });
-                                          }
+                                  ],
+                                ),
+                                12.height,
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: SfSlider(
+                                        min: 40.0,
+                                        max: 200.0,
+                                        value: tempoValue,
+                                        interval: 40,
+                                        stepSize: 1.0,
+                                        showTicks: true,
+                                        showLabels: true,
+                                        enableTooltip: true,
+                                        minorTicksPerInterval: 3,
+                                        activeColor: AppStyles.darkNavy,
+                                        tooltipTextFormatterCallback:
+                                            (dynamic actualValue, String formattedText) {
+                                              return (actualValue as double).round().toString();
+                                            },
+                                        labelFormatterCallback:
+                                            (dynamic actualValue, String formattedText) {
+                                              return (actualValue as double).round().toString();
+                                            },
+                                        onChanged: (dynamic value) {
+                                          setState(() {
+                                            tempoValue = (value as double).roundToDouble();
+                                          });
                                         },
                                       ),
-                                      Text(
-                                        tempoValue.round().toString(),
-                                        style: AppStyles.h3(context),
-                                      ),
-                                      IconButton(
-                                        padding: EdgeInsets.zero,
-                                        constraints: const BoxConstraints(),
-                                        icon: const Icon(
-                                          Icons.arrow_drop_down,
-                                          size: 32,
+                                    ),
+                                    8.width,
+                                    Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        IconButton(
+                                          padding: EdgeInsets.zero,
+                                          constraints: const BoxConstraints(),
+                                          icon: const Icon(Icons.arrow_drop_up, size: 32),
+                                          onPressed: () {
+                                            if (tempoValue < 200.0) {
+                                              setState(() {
+                                                tempoValue += 1.0;
+                                              });
+                                            }
+                                          },
                                         ),
-                                        onPressed: () {
-                                          if (tempoValue > 40.0) {
-                                            setState(() {
-                                              tempoValue -= 1.0;
-                                            });
-                                          }
-                                        },
-                                      ),
-                                    ],
-                                  ),
-                                  16.width,
-                                ],
-                              ),
-                            ],
+                                        Text(
+                                          tempoValue.round().toString(),
+                                          style: AppStyles.h3(context),
+                                        ),
+                                        IconButton(
+                                          padding: EdgeInsets.zero,
+                                          constraints: const BoxConstraints(),
+                                          icon: const Icon(Icons.arrow_drop_down, size: 32),
+                                          onPressed: () {
+                                            if (tempoValue > 40.0) {
+                                              setState(() {
+                                                tempoValue -= 1.0;
+                                              });
+                                            }
+                                          },
+                                        ),
+                                      ],
+                                    ),
+                                    16.width,
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                         12.height,
-                        Container(
-                          decoration: AppStyles.whiteBox(),
-                          padding: EdgeInsets.all(12),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "Time Signature",
-                                style: AppStyles.h5(context),
-                              ),
-                              4.height,
-                              DropdownButtonFormField<String>(
-                                initialValue:
-                                    projectTimeSigController.text.isNotEmpty
-                                    ? projectTimeSigController.text
-                                    : '4/4',
-                                dropdownColor: Colors.white,
-                                decoration: AppStyles.formBox.copyWith(
-                                  enabledBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(
-                                      color: AppStyles.darkNavy,
+                        RepaintBoundary(
+                          child: Container(
+                            decoration: AppStyles.whiteBox(),
+                            padding: EdgeInsets.all(12),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text("Time Signature", style: AppStyles.h5(context)),
+                                4.height,
+                                DropdownButtonFormField<String>(
+                                  initialValue: projectTimeSigController.text.isNotEmpty
+                                      ? projectTimeSigController.text
+                                      : '4/4',
+                                  dropdownColor: Colors.white,
+                                  decoration: AppStyles.formBox.copyWith(
+                                    enabledBorder: OutlineInputBorder(
+                                      borderSide: BorderSide(color: AppStyles.darkNavy),
                                     ),
                                   ),
-                                ),
-                                items: ['4/4', '3/4', '2/4', '6/8']
-                                    .map(
-                                      (e) => DropdownMenuItem(
-                                        value: e,
-                                        child: Text(
-                                          e,
-                                          style: AppStyles.bodyMedium(context),
+                                  items: ['4/4', '3/4', '2/4', '6/8']
+                                      .map(
+                                        (e) => DropdownMenuItem(
+                                          value: e,
+                                          child: Text(e, style: AppStyles.bodyMedium(context)),
                                         ),
-                                      ),
-                                    )
-                                    .toList(),
-                                onChanged: (value) {
-                                  if (value != null) {
+                                      )
+                                      .toList(),
+                                  onChanged: (value) {
+                                    if (value != null) {
+                                      setState(() {
+                                        projectTimeSigController.text = value;
+                                      });
+                                    }
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        12.height,
+                        RepaintBoundary(
+                          child: Container(
+                            decoration: AppStyles.whiteBox(),
+                            padding: EdgeInsets.all(12),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text("Use default template", style: AppStyles.h5(context)),
+                                Switch(
+                                  value: useSongTemplate ?? true,
+                                  activeThumbColor: AppStyles.darkNavy,
+                                  onChanged: (value) {
                                     setState(() {
-                                      projectTimeSigController.text = value;
+                                      useSongTemplate = value;
                                     });
-                                  }
-                                },
-                              ),
-                            ],
-                          ),
-                        ),
-                        12.height,
-                        Container(
-                          decoration: AppStyles.whiteBox(),
-                          padding: EdgeInsets.all(12),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                "Use default template",
-                                style: AppStyles.h5(context),
-                              ),
-                              Switch(
-                                value: useSongTemplate ?? true,
-                                activeThumbColor: AppStyles.darkNavy,
-                                onChanged: (value) {
-                                  setState(() {
-                                    useSongTemplate = value;
-                                  });
-                                },
-                              ),
-                            ],
+                                  },
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ],

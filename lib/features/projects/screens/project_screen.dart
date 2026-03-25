@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jam_sync/features/home/providers/projects_provider.dart';
-import 'package:jam_sync/features/home/widgets/project_card.dart';
+import 'package:jam_sync/features/projects/widgets/project_list_card.dart';
 import 'package:jam_sync/shared/utils/app_styles.dart';
 import 'package:jam_sync/shared/utils/gap_helper.dart';
 import 'package:jam_sync/shared/utils/time_ago_helper.dart';
@@ -60,15 +60,16 @@ class ProjectScreen extends ConsumerWidget {
                                         padding: const EdgeInsets.only(
                                           bottom: 10,
                                         ),
-                                        child: ProjectCard(
-                                          title: p.title,
-                                          creatorId: p.createdBy,
-                                          roomCode: p.roomCode,
-                                          timeAgo: timeAgoFromDate(
-                                            p.createdAt ?? DateTime.now(),
+                                          child: ProjectListCard(
+                                            projectId: p.id,
+                                            title: p.title,
+                                            creatorId: p.createdBy,
+                                            roomCode: p.roomCode,
+                                            timeAgo: timeAgoFromDate(
+                                              p.createdAt ?? DateTime.now(),
+                                            ),
+                                            participants: p.participants,
                                           ),
-                                          participants: p.participants,
-                                        ),
                                       );
                                     },
                                   ),

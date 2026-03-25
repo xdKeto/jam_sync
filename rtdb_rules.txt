@@ -21,6 +21,12 @@
         ".read": "auth != null",
         ".write": "auth != null && auth.uid === $userId"
       }
+    },
+    "latency_probes": {
+      "$userId": {
+        ".read": "auth != null && auth.uid === $userId",
+        ".write": "auth != null && auth.uid === $userId"
+      }
     }
   }
 }
