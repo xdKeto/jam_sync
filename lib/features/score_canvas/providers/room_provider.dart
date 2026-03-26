@@ -210,7 +210,7 @@ class RoomNotifier extends StateNotifier<RoomState> {
     return oneWay;
   }
 
-  void startLatencyProbe(String projectID, String userID) {
+  void startLatencyProbe(String projectID, String userID) async {
     latencyTimer?.cancel();
 
     if (!kEnableLatencyProbe) {
@@ -225,6 +225,9 @@ class RoomNotifier extends StateNotifier<RoomState> {
     final latencyPath = 'playback_sessions/$projectID/participants/$userID/latencyMs';
 
     debugPrint('[LatencyProbe] Starting probe for project=$projectID user=$userID');
+
+    // delay 5 seconds, nunggu cold-start
+    await Future.delayed(Duration(seconds: 5));
 
     measureRTT(probePath)
         .then((latency) {

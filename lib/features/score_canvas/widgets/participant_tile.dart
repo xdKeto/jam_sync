@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:jam_sync/shared/models/participant_info_model.dart';
 import 'package:jam_sync/shared/utils/app_styles.dart';
+import 'package:jam_sync/shared/utils/gap_helper.dart';
 
 class ParticipantTile extends StatelessWidget {
   final ParticipantInfo participant;
@@ -98,6 +99,10 @@ class ParticipantTile extends StatelessWidget {
                           ).copyWith(color: AppStyles.darkNavy, fontWeight: FontWeight.w600),
                         ),
                       ),
+                    ],
+                    if (!participant.isLeader) ...[
+                      8.width,
+                      Icon(Icons.more_vert, color: AppStyles.grey500, size: 20),
                     ],
                   ],
                 ),
