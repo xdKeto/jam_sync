@@ -74,6 +74,7 @@ class _JoinRoomScreenState extends ConsumerState<JoinRoomScreen> {
 
     return BackgroundGradient(
       child: Scaffold(
+        resizeToAvoidBottomInset: false,
         backgroundColor: Colors.transparent,
         appBar: AppBar(
           automaticallyImplyLeading: true,

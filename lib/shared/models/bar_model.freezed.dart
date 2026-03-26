@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$BarModel {
 
- String get id; int get index; List<String> get chords; DateTime? get updatedAt; String? get updatedBy;
+ String get id; int get index; List<String> get chords; List<String> get passingChord; DateTime? get updatedAt; String? get updatedBy;
 /// Create a copy of BarModel
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $BarModelCopyWith<BarModel> get copyWith => _$BarModelCopyWithImpl<BarModel>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is BarModel&&(identical(other.id, id) || other.id == id)&&(identical(other.index, index) || other.index == index)&&const DeepCollectionEquality().equals(other.chords, chords)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.updatedBy, updatedBy) || other.updatedBy == updatedBy));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is BarModel&&(identical(other.id, id) || other.id == id)&&(identical(other.index, index) || other.index == index)&&const DeepCollectionEquality().equals(other.chords, chords)&&const DeepCollectionEquality().equals(other.passingChord, passingChord)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.updatedBy, updatedBy) || other.updatedBy == updatedBy));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,index,const DeepCollectionEquality().hash(chords),updatedAt,updatedBy);
+int get hashCode => Object.hash(runtimeType,id,index,const DeepCollectionEquality().hash(chords),const DeepCollectionEquality().hash(passingChord),updatedAt,updatedBy);
 
 @override
 String toString() {
-  return 'BarModel(id: $id, index: $index, chords: $chords, updatedAt: $updatedAt, updatedBy: $updatedBy)';
+  return 'BarModel(id: $id, index: $index, chords: $chords, passingChord: $passingChord, updatedAt: $updatedAt, updatedBy: $updatedBy)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $BarModelCopyWith<$Res>  {
   factory $BarModelCopyWith(BarModel value, $Res Function(BarModel) _then) = _$BarModelCopyWithImpl;
 @useResult
 $Res call({
- String id, int index, List<String> chords, DateTime? updatedAt, String? updatedBy
+ String id, int index, List<String> chords, List<String> passingChord, DateTime? updatedAt, String? updatedBy
 });
 
 
@@ -65,11 +65,12 @@ class _$BarModelCopyWithImpl<$Res>
 
 /// Create a copy of BarModel
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? index = null,Object? chords = null,Object? updatedAt = freezed,Object? updatedBy = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? index = null,Object? chords = null,Object? passingChord = null,Object? updatedAt = freezed,Object? updatedBy = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,index: null == index ? _self.index : index // ignore: cast_nullable_to_non_nullable
 as int,chords: null == chords ? _self.chords : chords // ignore: cast_nullable_to_non_nullable
+as List<String>,passingChord: null == passingChord ? _self.passingChord : passingChord // ignore: cast_nullable_to_non_nullable
 as List<String>,updatedAt: freezed == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,updatedBy: freezed == updatedBy ? _self.updatedBy : updatedBy // ignore: cast_nullable_to_non_nullable
 as String?,
@@ -157,10 +158,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  int index,  List<String> chords,  DateTime? updatedAt,  String? updatedBy)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  int index,  List<String> chords,  List<String> passingChord,  DateTime? updatedAt,  String? updatedBy)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _BarModel() when $default != null:
-return $default(_that.id,_that.index,_that.chords,_that.updatedAt,_that.updatedBy);case _:
+return $default(_that.id,_that.index,_that.chords,_that.passingChord,_that.updatedAt,_that.updatedBy);case _:
   return orElse();
 
 }
@@ -178,10 +179,10 @@ return $default(_that.id,_that.index,_that.chords,_that.updatedAt,_that.updatedB
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  int index,  List<String> chords,  DateTime? updatedAt,  String? updatedBy)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  int index,  List<String> chords,  List<String> passingChord,  DateTime? updatedAt,  String? updatedBy)  $default,) {final _that = this;
 switch (_that) {
 case _BarModel():
-return $default(_that.id,_that.index,_that.chords,_that.updatedAt,_that.updatedBy);case _:
+return $default(_that.id,_that.index,_that.chords,_that.passingChord,_that.updatedAt,_that.updatedBy);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -198,10 +199,10 @@ return $default(_that.id,_that.index,_that.chords,_that.updatedAt,_that.updatedB
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  int index,  List<String> chords,  DateTime? updatedAt,  String? updatedBy)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  int index,  List<String> chords,  List<String> passingChord,  DateTime? updatedAt,  String? updatedBy)?  $default,) {final _that = this;
 switch (_that) {
 case _BarModel() when $default != null:
-return $default(_that.id,_that.index,_that.chords,_that.updatedAt,_that.updatedBy);case _:
+return $default(_that.id,_that.index,_that.chords,_that.passingChord,_that.updatedAt,_that.updatedBy);case _:
   return null;
 
 }
@@ -213,7 +214,7 @@ return $default(_that.id,_that.index,_that.chords,_that.updatedAt,_that.updatedB
 @JsonSerializable()
 
 class _BarModel implements BarModel {
-  const _BarModel({required this.id, required this.index, required final  List<String> chords, this.updatedAt, this.updatedBy}): _chords = chords;
+  const _BarModel({required this.id, required this.index, required final  List<String> chords, final  List<String> passingChord = const [], this.updatedAt, this.updatedBy}): _chords = chords,_passingChord = passingChord;
   factory _BarModel.fromJson(Map<String, dynamic> json) => _$BarModelFromJson(json);
 
 @override final  String id;
@@ -223,6 +224,13 @@ class _BarModel implements BarModel {
   if (_chords is EqualUnmodifiableListView) return _chords;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableListView(_chords);
+}
+
+ final  List<String> _passingChord;
+@override@JsonKey() List<String> get passingChord {
+  if (_passingChord is EqualUnmodifiableListView) return _passingChord;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_passingChord);
 }
 
 @override final  DateTime? updatedAt;
@@ -241,16 +249,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _BarModel&&(identical(other.id, id) || other.id == id)&&(identical(other.index, index) || other.index == index)&&const DeepCollectionEquality().equals(other._chords, _chords)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.updatedBy, updatedBy) || other.updatedBy == updatedBy));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _BarModel&&(identical(other.id, id) || other.id == id)&&(identical(other.index, index) || other.index == index)&&const DeepCollectionEquality().equals(other._chords, _chords)&&const DeepCollectionEquality().equals(other._passingChord, _passingChord)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.updatedBy, updatedBy) || other.updatedBy == updatedBy));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,index,const DeepCollectionEquality().hash(_chords),updatedAt,updatedBy);
+int get hashCode => Object.hash(runtimeType,id,index,const DeepCollectionEquality().hash(_chords),const DeepCollectionEquality().hash(_passingChord),updatedAt,updatedBy);
 
 @override
 String toString() {
-  return 'BarModel(id: $id, index: $index, chords: $chords, updatedAt: $updatedAt, updatedBy: $updatedBy)';
+  return 'BarModel(id: $id, index: $index, chords: $chords, passingChord: $passingChord, updatedAt: $updatedAt, updatedBy: $updatedBy)';
 }
 
 
@@ -261,7 +269,7 @@ abstract mixin class _$BarModelCopyWith<$Res> implements $BarModelCopyWith<$Res>
   factory _$BarModelCopyWith(_BarModel value, $Res Function(_BarModel) _then) = __$BarModelCopyWithImpl;
 @override @useResult
 $Res call({
- String id, int index, List<String> chords, DateTime? updatedAt, String? updatedBy
+ String id, int index, List<String> chords, List<String> passingChord, DateTime? updatedAt, String? updatedBy
 });
 
 
@@ -278,11 +286,12 @@ class __$BarModelCopyWithImpl<$Res>
 
 /// Create a copy of BarModel
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? index = null,Object? chords = null,Object? updatedAt = freezed,Object? updatedBy = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? index = null,Object? chords = null,Object? passingChord = null,Object? updatedAt = freezed,Object? updatedBy = freezed,}) {
   return _then(_BarModel(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,index: null == index ? _self.index : index // ignore: cast_nullable_to_non_nullable
 as int,chords: null == chords ? _self._chords : chords // ignore: cast_nullable_to_non_nullable
+as List<String>,passingChord: null == passingChord ? _self._passingChord : passingChord // ignore: cast_nullable_to_non_nullable
 as List<String>,updatedAt: freezed == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
 as DateTime?,updatedBy: freezed == updatedBy ? _self.updatedBy : updatedBy // ignore: cast_nullable_to_non_nullable
 as String?,

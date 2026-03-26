@@ -1,88 +1,115 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:jam_sync/shared/utils/app_styles.dart';
 import 'package:jam_sync/features/score_canvas/widgets/chord_widget.dart';
 import 'package:jam_sync/features/score_canvas/widgets/circle_of_fifths_dialog.dart';
 import 'package:jam_sync/features/score_canvas/widgets/chord_modifier_dialog.dart';
+import 'package:jam_sync/features/score_canvas/widgets/chord_action_sheet.dart';
 
 class BarWidget extends StatelessWidget {
   const BarWidget({
     super.key,
+    this.projectId,
+    this.canvasId,
+    this.sectionId,
+    this.barId,
     this.chords,
     this.timeSig = '4/4',
     this.passingChords,
     this.isCornerRight = false,
     this.isCornerLeft = false,
+    this.highlightColor,
+    this.onChordChanged,
+    this.onChordDeleted,
+    this.onPassingChordChanged,
+    this.onPassingChordDeleted,
   });
 
+  final String? projectId;
+  final String? canvasId;
+  final String? sectionId;
+  final String? barId;
   final List<String>? chords;
   final String timeSig;
   final List<String>? passingChords;
   final bool isCornerRight;
   final bool isCornerLeft;
+  final Color? highlightColor;
+  final void Function(int beatIndex, String chord)? onChordChanged;
+  final void Function(int beatIndex)? onChordDeleted;
+  final void Function(int beatIndex, String chord)? onPassingChordChanged;
+  final void Function(int beatIndex)? onPassingChordDeleted;
 
-  Future<void> showChordPickerFlow(BuildContext context, String currentChord) async {
-    final renderBox = context.findRenderObject() as RenderBox;
-    final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
-    final position = RelativeRect.fromRect(
-      Rect.fromPoints(
-        renderBox.localToGlobal(Offset.zero, ancestor: overlay),
-        renderBox.localToGlobal(renderBox.size.bottomRight(Offset.zero), ancestor: overlay),
-      ),
-      Offset.zero & overlay.size,
+  Future<void> showChordPickerFlow(BuildContext context, int beatIndex, String mainChord, String passingChord) async {
+    final String? pId = projectId;
+    final String? cId = canvasId;
+    final String? sId = sectionId;
+    final String? bId = barId;
+    final String? userId = FirebaseAuth.instance.currentUser?.uid;
+
+    if (pId != null && cId != null && sId != null && bId != null && userId != null) {
+      await FirebaseDatabase.instance.ref('playback_sessions/$pId/editing/$userId').set({
+        'barPath': '$cId/$sId/$bId',
+        'timestamp': ServerValue.timestamp,
+      });
+    }
+
+    final action = await ChordActionSheet.show(
+      context,
+      currentChord: mainChord,
+      currentPassingChord: passingChord,
     );
-
-    final bool hasChord = currentChord.isNotEmpty;
-
-    final action = await showMenu<String>(
-      context: context,
-      position: position,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      color: AppStyles.darkNavy,
-      items: [
-        PopupMenuItem(
-          value: 'add_change',
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(hasChord ? Icons.swap_horiz : Icons.add, color: AppStyles.white, size: 18),
-              const SizedBox(width: 8),
-              Text(
-                hasChord ? 'Change' : 'Add',
-                style: const TextStyle(color: AppStyles.white, fontSize: 14),
-              ),
-            ],
-          ),
-        ),
-        if (hasChord)
-          PopupMenuItem(
-            value: 'edit',
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.edit, color: AppStyles.white, size: 18),
-                const SizedBox(width: 8),
-                Text('Edit', style: const TextStyle(color: AppStyles.white, fontSize: 14)),
-              ],
-            ),
-          ),
-      ],
-    );
-
-    if (action == null || !context.mounted) return;
-
-    // Loop allows back navigation from modifier → circle of fifths
-    while (true) {
-      final result = await CircleOfFifthsDialog.show(context);
-      if (result == null || !context.mounted) return;
-      final (rootNote, isMinor) = result;
-
-      final finalChord = await ChordModifierDialog.show(context, rootNote, isMinor: isMinor);
-      if (finalChord == '__BACK__') continue; // back to circle of fifths
-      if (finalChord != null) {
-        debugPrint('✅ Chord selected: $finalChord');
+    
+    Future<void> clearEditingPresence() async {
+      if (pId != null && userId != null) {
+        await FirebaseDatabase.instance.ref('playback_sessions/$pId/editing/$userId').remove();
       }
+    }
+
+    if (action == null || !context.mounted) {
+      await clearEditingPresence();
       return;
     }
+
+    switch (action) {
+      case ChordAction.addChord:
+      case ChordAction.changeChord:
+        while (true) {
+          final result = await CircleOfFifthsDialog.show(context);
+          if (result == null || !context.mounted) break;
+          final (rootNote, isMinor) = result;
+          final finalChord = await ChordModifierDialog.show(context, rootNote, isMinor: isMinor);
+          if (finalChord == '__BACK__') continue;
+          if (finalChord != null && onChordChanged != null) {
+            onChordChanged!(beatIndex, finalChord);
+          }
+          break;
+        }
+        break;
+      case ChordAction.deleteChord:
+        if (onChordDeleted != null) onChordDeleted!(beatIndex);
+        break;
+      case ChordAction.addPassing:
+      case ChordAction.changePassing:
+        while (true) {
+          final result = await CircleOfFifthsDialog.show(context);
+          if (result == null || !context.mounted) break;
+          final (rootNote, isMinor) = result;
+          final finalChord = await ChordModifierDialog.show(context, rootNote, isMinor: isMinor);
+          if (finalChord == '__BACK__') continue;
+          if (finalChord != null && onPassingChordChanged != null) {
+            onPassingChordChanged!(beatIndex, finalChord);
+          }
+          break;
+        }
+        break;
+      case ChordAction.deletePassing:
+        if (onPassingChordDeleted != null) onPassingChordDeleted!(beatIndex);
+        break;
+    }
+    
+    await clearEditingPresence();
   }
 
   @override
@@ -94,9 +121,12 @@ class BarWidget extends StatelessWidget {
     }
 
     return Material(
-      color: AppStyles.white,
+      color: highlightColor?.withValues(alpha: 0.15) ?? AppStyles.white,
       shape: RoundedRectangleBorder(
-        side: const BorderSide(color: AppStyles.black, width: 1),
+        side: BorderSide(
+          color: highlightColor ?? AppStyles.black, 
+          width: highlightColor != null ? 2.5 : 1,
+        ),
         borderRadius: (isCornerRight && isCornerLeft)
             ? const BorderRadius.all(Radius.circular(12))
             : isCornerRight
@@ -130,7 +160,7 @@ class BarWidget extends StatelessWidget {
                   Positioned.fill(
                     child: Builder(
                       builder: (innerContext) => InkWell(
-                        onTap: () => showChordPickerFlow(innerContext, rawMainChord),
+                        onTap: () => showChordPickerFlow(innerContext, index, rawMainChord, passingChord),
                         child: ChordWidget(chord: rawMainChord),
                       ),
                     ),
@@ -142,7 +172,7 @@ class BarWidget extends StatelessWidget {
                       right: 4,
                       child: Builder(
                         builder: (innerContext) => InkWell(
-                          onTap: () => showChordPickerFlow(innerContext, passingChord),
+                          onTap: () => showChordPickerFlow(innerContext, index, rawMainChord, passingChord),
                           child: ChordWidget(chord: passingChord, isPassing: true),
                         ),
                       ),

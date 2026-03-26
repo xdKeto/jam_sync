@@ -207,12 +207,141 @@ class ProjectRepository {
     if (doc.exists) {
       final project = ProjectModel.fromFirestore(doc);
       final roomCode = project.roomCode;
-      
+
       final rtdb = FirebaseDatabase.instance.ref();
       await rtdb.child('rooms/$roomCode').remove();
       await rtdb.child('playback_sessions/$projectId').remove();
     }
     await _projectsRef.doc(projectId).delete();
+  }
+
+  // chord stuff
+  Future<void> updateBarChord({
+    required String projectID,
+    required String canvasID,
+    required String sectionID,
+    required String barID,
+    required int beatIndex,
+    required String chord,
+    required String userID,
+  }) async {
+    final barRef = _projectsRef
+        .doc(projectID)
+        .collection('canvases')
+        .doc(canvasID)
+        .collection('sections')
+        .doc(sectionID)
+        .collection('bars')
+        .doc(barID);
+
+    final doc = await barRef.get();
+    final chords = List<String>.from(doc.data()?['chords'] ?? []);
+    if (beatIndex < chords.length) chords[beatIndex] = chord;
+
+    await barRef.update({
+      'chords': chords,
+      'updatedBy': userID,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  Future<void> deleteBarChord({
+    required String projectID,
+    required String canvasID,
+    required String sectionID,
+    required String barID,
+    required int beatIndex,
+    required String userID,
+  }) async {
+    final barRef = _projectsRef
+        .doc(projectID)
+        .collection('canvases')
+        .doc(canvasID)
+        .collection('sections')
+        .doc(sectionID)
+        .collection('bars')
+        .doc(barID);
+
+    final doc = await barRef.get();
+    final chords = List<String>.from(doc.data()?['chords'] ?? []);
+    if (beatIndex < chords.length) chords[beatIndex] = '';
+
+    await barRef.update({
+      'chords': chords,
+      'updatedBy': userID,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  Future<void> updatePassingChord({
+    required String projectID,
+    required String canvasID,
+    required String sectionID,
+    required String barID,
+    required int beatIndex,
+    required String chord,
+    required String userID,
+  }) async {
+    final barRef = _projectsRef
+        .doc(projectID)
+        .collection('canvases')
+        .doc(canvasID)
+        .collection('sections')
+        .doc(sectionID)
+        .collection('bars')
+        .doc(barID);
+
+    final doc = await barRef.get();
+    final chords = List<String>.from(doc.data()?['passingChord'] ?? []);
+    final mainChords = List<dynamic>.from(doc.data()?['chords'] ?? []);
+    final targetLength = mainChords.length > beatIndex ? mainChords.length : beatIndex + 1;
+    
+    while (chords.length < targetLength) {
+      chords.add('');
+    }
+    
+    chords[beatIndex] = chord;
+
+    await barRef.update({
+      'passingChord': chords,
+      'updatedBy': userID,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  Future<void> deletePassingChord({
+    required String projectID,
+    required String canvasID,
+    required String sectionID,
+    required String barID,
+    required int beatIndex,
+    required String userID,
+  }) async {
+    final barRef = _projectsRef
+        .doc(projectID)
+        .collection('canvases')
+        .doc(canvasID)
+        .collection('sections')
+        .doc(sectionID)
+        .collection('bars')
+        .doc(barID);
+
+    final doc = await barRef.get();
+    final chords = List<String>.from(doc.data()?['passingChord'] ?? []);
+    final mainChords = List<dynamic>.from(doc.data()?['chords'] ?? []);
+    final targetLength = mainChords.length > beatIndex ? mainChords.length : beatIndex + 1;
+    
+    while (chords.length < targetLength) {
+      chords.add('');
+    }
+    
+    chords[beatIndex] = '';
+
+    await barRef.update({
+      'passingChord': chords,
+      'updatedBy': userID,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
   }
 }
 

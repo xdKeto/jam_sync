@@ -101,6 +101,8 @@ class RoomNotifier extends StateNotifier<RoomState> {
         'latencyMs': 0,
       });
 
+      rtdb.child('playback_sessions/$probeProjectID/editing/$probeUserID').remove();
+
       rtdb
           .child('playback_sessions/$probeProjectID/participants/$probeUserID/latencyProbe')
           .remove();
@@ -144,6 +146,10 @@ class RoomNotifier extends StateNotifier<RoomState> {
 
       await participantRef.onDisconnect().cancel();
       await participantRef.onDisconnect().update({'isOnline': false});
+      
+      final editingRef = rtdb.child('playback_sessions/$projectID/editing/$userID');
+      await editingRef.onDisconnect().cancel();
+      await editingRef.onDisconnect().remove();
 
       state = state.copyWith(
         isLoading: false,
@@ -177,6 +183,10 @@ class RoomNotifier extends StateNotifier<RoomState> {
 
       await participantRef.onDisconnect().cancel();
       await participantRef.onDisconnect().update({'isOnline': false});
+
+      final editingRef = rtdb.child('playback_sessions/$roomID/editing/$userID');
+      await editingRef.onDisconnect().cancel();
+      await editingRef.onDisconnect().remove();
 
       final sessionRef = await rtdb.child('playback_sessions/$roomID').get();
       final sessionData = sessionRef.value as Map<dynamic, dynamic>;

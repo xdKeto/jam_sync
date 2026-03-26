@@ -87,6 +87,7 @@ class NewProjectScreenState extends ConsumerState<NewProjectScreen> {
   Widget build(BuildContext context) {
     return BackgroundGradient(
       child: Scaffold(
+        resizeToAvoidBottomInset: false,
         backgroundColor: Colors.transparent,
         appBar: AppBar(
           automaticallyImplyLeading: true,

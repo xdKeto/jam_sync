@@ -10,6 +10,7 @@ abstract class BarModel with _$BarModel {
     required String id,
     required int index,
     required List<String> chords,
+    @Default([]) List<String> passingChord,
     DateTime? updatedAt,
     String? updatedBy,
   }) = _BarModel;
@@ -23,6 +24,7 @@ abstract class BarModel with _$BarModel {
       id: doc.id,
       index: data['index'] as int,
       chords: List<String>.from(data['chords'] ?? []),
+      passingChord: List<String>.from(data['passingChord'] ?? []),
       updatedAt: (data['updatedAt'] as Timestamp?)?.toDate(),
       updatedBy: data['updatedBy'] as String?,
     );
@@ -33,6 +35,7 @@ Map<String, dynamic> barToFirestore(BarModel bar) {
   return {
     'index': bar.index,
     'chords': bar.chords,
+    'passingChord': bar.passingChord,
     'updatedBy': bar.updatedBy,
   };
 }

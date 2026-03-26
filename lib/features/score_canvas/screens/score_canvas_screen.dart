@@ -82,6 +82,7 @@ class _ScoreCanvasScreenState extends ConsumerState<ScoreCanvasScreen> {
         if (context.mounted) Navigator.of(context).pop();
       },
       child: Scaffold(
+        resizeToAvoidBottomInset: false,
         appBar: AppBar(
           backgroundColor: AppStyles.darkNavy,
           elevation: 8,
