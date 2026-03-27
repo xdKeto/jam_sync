@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:jam_sync/shared/utils/app_styles.dart';
+import 'package:jam_sync/shared/utils/gap_helper.dart';
 
 class BassNoteDialog extends StatefulWidget {
   const BassNoteDialog({super.key});
@@ -80,7 +81,7 @@ class _BassNoteDialogState extends State<BassNoteDialog> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  4.height,
                   const Text(
                     'Select\nBass',
                     textAlign: TextAlign.center,

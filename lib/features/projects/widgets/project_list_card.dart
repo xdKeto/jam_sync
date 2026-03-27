@@ -66,7 +66,8 @@ class ProjectListCard extends ConsumerWidget {
                         builder: (context) => AlertDialog(
                           title: const Text('Delete Project'),
                           content: const Text(
-                              'Are you sure you want to delete this project? This action cannot be undone.'),
+                            'Are you sure you want to delete this project? This action cannot be undone.',
+                          ),
                           actions: [
                             TextButton(
                               onPressed: () => Navigator.pop(context, false),
@@ -74,8 +75,7 @@ class ProjectListCard extends ConsumerWidget {
                             ),
                             TextButton(
                               onPressed: () => Navigator.pop(context, true),
-                              child: const Text('Delete',
-                                  style: TextStyle(color: Colors.red)),
+                              child: const Text('Delete', style: TextStyle(color: Colors.red)),
                             ),
                           ],
                         ),
@@ -87,9 +87,7 @@ class ProjectListCard extends ConsumerWidget {
                           ref.read(roomProvider.notifier).leaveRoom();
                         }
                         ref.invalidate(canvasesStreamProvider(projectId));
-                        await ref
-                            .read(projectRepositoryProvider)
-                            .deleteProject(projectId);
+                        await ref.read(projectRepositoryProvider).deleteProject(projectId);
 
                         if (!context.mounted) return;
                         ref.invalidate(projectsProvider);
@@ -116,28 +114,18 @@ class ProjectListCard extends ConsumerWidget {
           Row(
             children: [
               Icon(Icons.person_rounded, size: 16, color: AppStyles.skyBlue),
-              const SizedBox(width: 4),
-              Text(
-                '$creatorName • $roomCode',
-                style: AppStyles.bodySmall(context),
-              ),
+              4.width,
+              Text('$creatorName • $roomCode', style: AppStyles.bodySmall(context)),
             ],
           ),
           4.height,
           Row(
             children: [
-              Icon(
-                Icons.access_time_rounded,
-                size: 16,
-                color: AppStyles.grey500,
-              ),
-              const SizedBox(width: 4),
+              Icon(Icons.access_time_rounded, size: 16, color: AppStyles.grey500),
+              4.width,
               Text(timeAgo, style: AppStyles.bodySmall(context)),
               const Spacer(),
-              Padding(
-                padding: const EdgeInsets.only(right: 8.0),
-                child: _buildAvatarStack(),
-              ),
+              Padding(padding: const EdgeInsets.only(right: 8.0), child: _buildAvatarStack()),
             ],
           ),
         ],

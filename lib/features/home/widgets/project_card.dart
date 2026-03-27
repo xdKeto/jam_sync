@@ -46,7 +46,7 @@ class ProjectCard extends ConsumerWidget {
           Row(
             children: [
               Icon(Icons.person_rounded, size: 16, color: AppStyles.skyBlue),
-              const SizedBox(width: 4),
+              4.width,
               Text(
                 '$creatorName • $roomCode',
                 style: AppStyles.bodySmall(context),
@@ -61,7 +61,7 @@ class ProjectCard extends ConsumerWidget {
                 size: 16,
                 color: AppStyles.grey500,
               ),
-              const SizedBox(width: 4),
+              4.width,
               Text(timeAgo, style: AppStyles.bodySmall(context)),
               const Spacer(),
               _buildAvatarStack(),

@@ -52,7 +52,7 @@ class _JoinRoomScreenState extends ConsumerState<JoinRoomScreen> {
         context,
         MaterialPageRoute(
           builder: (context) => ScoreCanvasScreen(
-            projectId: project.id,
+            projectID: project.id,
             roomCode: project.roomCode,
           ),
         ),

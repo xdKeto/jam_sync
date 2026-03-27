@@ -7,14 +7,16 @@ import 'package:jam_sync/features/score_canvas/providers/canvas_provider.dart';
 import 'package:jam_sync/shared/models/canvas_model.dart';
 import 'package:jam_sync/features/score_canvas/widgets/canvas_widget.dart';
 import 'package:jam_sync/features/score_canvas/widgets/canvas_option_sheet.dart';
+import 'package:jam_sync/features/score_canvas/widgets/edit_option_sheet.dart';
+import 'package:jam_sync/shared/utils/gap_helper.dart';
 import 'package:jam_sync/shared/widgets/home_nav.dart';
 import 'package:jam_sync/features/score_canvas/providers/room_provider.dart';
 
 class ScoreCanvasScreen extends ConsumerStatefulWidget {
-  final String projectId;
+  final String projectID;
   final String roomCode;
 
-  const ScoreCanvasScreen({super.key, required this.projectId, required this.roomCode});
+  const ScoreCanvasScreen({super.key, required this.projectID, required this.roomCode});
 
   @override
   ConsumerState<ScoreCanvasScreen> createState() => _ScoreCanvasScreenState();
@@ -66,7 +68,7 @@ class _ScoreCanvasScreenState extends ConsumerState<ScoreCanvasScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final canvasesAsync = ref.watch(canvasesStreamProvider(widget.projectId));
+    final canvasesAsync = ref.watch(canvasesStreamProvider(widget.projectID));
     final canvases = canvasesAsync.value ?? [];
 
     final currentCanvas = selectedCanvas ?? (canvases.isNotEmpty ? canvases.first : null);
@@ -109,15 +111,15 @@ class _ScoreCanvasScreenState extends ConsumerState<ScoreCanvasScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 const Icon(Icons.chevron_left, color: AppStyles.white),
-                const SizedBox(width: 8),
+                8.width,
                 Flexible(
                   child: Text(
                     titleToDisplay,
                     style: AppStyles.h3(context).copyWith(color: AppStyles.white),
                     overflow: TextOverflow.ellipsis,
                   ),
-                ),
-                const SizedBox(width: 8),
+                  ),
+                8.width,
                 const Icon(Icons.chevron_right, color: AppStyles.white),
               ],
             ),
@@ -133,7 +135,7 @@ class _ScoreCanvasScreenState extends ConsumerState<ScoreCanvasScreen> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => TeamDashboard(projectId: widget.projectId),
+                      builder: (context) => TeamDashboard(projectId: widget.projectID),
                     ),
                   );
                 },
@@ -160,7 +162,7 @@ class _ScoreCanvasScreenState extends ConsumerState<ScoreCanvasScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(Iconsax.music_square, size: 64, color: AppStyles.grey400),
-                      const SizedBox(height: 16),
+                      16.height,
                       Text(
                         'Empty Canvas, create new section!',
                         style: AppStyles.h3(context).copyWith(color: AppStyles.grey400),
@@ -176,8 +178,8 @@ class _ScoreCanvasScreenState extends ConsumerState<ScoreCanvasScreen> {
                 children: [
                   Expanded(
                     child: CanvasWidget(
-                      projectId: widget.projectId,
-                      canvasId: currentCanvas.id,
+                      projectID: widget.projectID,
+                      canvasID: currentCanvas.id,
                       timeSignature: currentCanvas.timeSignature,
                     ),
                   ),
@@ -188,9 +190,28 @@ class _ScoreCanvasScreenState extends ConsumerState<ScoreCanvasScreen> {
         ),
         bottomNavigationBar: BottomAppBar(
           color: AppStyles.darkNavy,
-          child: Row(children: [
-        
-        ],),
+          child: Row(
+            children: [
+              IconButton(
+                icon: const Icon(Iconsax.edit_2, color: AppStyles.white),
+                onPressed: () {
+                  if (currentCanvas == null) return;
+                  showModalBottomSheet(
+                    context: context,
+                    backgroundColor: AppStyles.white,
+                    shape: const RoundedRectangleBorder(
+                      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+                    ),
+                    builder: (_) => EditOptionSheet(
+                      projectID: widget.projectID,
+                      canvasID: currentCanvas.id,
+                      timeSignature: currentCanvas.timeSignature,
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );

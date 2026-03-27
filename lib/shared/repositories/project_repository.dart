@@ -295,11 +295,11 @@ class ProjectRepository {
     final chords = List<String>.from(doc.data()?['passingChord'] ?? []);
     final mainChords = List<dynamic>.from(doc.data()?['chords'] ?? []);
     final targetLength = mainChords.length > beatIndex ? mainChords.length : beatIndex + 1;
-    
+
     while (chords.length < targetLength) {
       chords.add('');
     }
-    
+
     chords[beatIndex] = chord;
 
     await barRef.update({
@@ -330,15 +330,255 @@ class ProjectRepository {
     final chords = List<String>.from(doc.data()?['passingChord'] ?? []);
     final mainChords = List<dynamic>.from(doc.data()?['chords'] ?? []);
     final targetLength = mainChords.length > beatIndex ? mainChords.length : beatIndex + 1;
-    
+
     while (chords.length < targetLength) {
       chords.add('');
     }
-    
+
     chords[beatIndex] = '';
 
     await barRef.update({
       'passingChord': chords,
+      'updatedBy': userID,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  // section steuff
+  Future<void> addSection({
+    required String projectID,
+    required String canvasID,
+    required String name,
+    required int order,
+    required int barCount,
+    required int startBar,
+    required String timeSignature,
+  }) async {
+    final batch = _firestore.batch();
+    final sectionRef = _projectsRef
+        .doc(projectID)
+        .collection('canvases')
+        .doc(canvasID)
+        .collection('sections')
+        .doc();
+
+    batch.set(
+      sectionRef,
+      sectionToFirestore(
+        SectionModel(
+          id: sectionRef.id,
+          name: name,
+          order: order,
+          barCount: barCount,
+          startBar: startBar,
+        ),
+      ),
+    );
+
+    // bar kosong
+    final slot = beatsPerBar(timeSignature);
+    final empty = List.filled(slot, '');
+
+    for (int i = 0; i < barCount; i++) {
+      final barRef = sectionRef.collection('bars').doc();
+      batch.set(barRef, {
+        ...barToFirestore(BarModel(id: barRef.id, index: startBar + i, chords: List.from(empty))),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    }
+    await batch.commit();
+  }
+
+  Future<void> updateSection({
+    required String projectID,
+    required String canvasID,
+    required String sectionID,
+    required Map<String, dynamic> data,
+  }) async {
+    await _projectsRef
+        .doc(projectID)
+        .collection('canvases')
+        .doc(canvasID)
+        .collection('sections')
+        .doc(sectionID)
+        .update(data);
+  }
+
+  Future<void> deleteSection({
+    required String projectID,
+    required String canvasID,
+    required String sectionID,
+  }) async {
+    final sectionRef = _projectsRef
+        .doc(projectID)
+        .collection('canvases')
+        .doc(canvasID)
+        .collection('sections')
+        .doc(sectionID);
+
+    final barSnap = await sectionRef.collection('bars').get();
+    final batch = _firestore.batch();
+
+    for (final doc in barSnap.docs) {
+      batch.delete(doc.reference);
+    }
+
+    batch.delete(sectionRef);
+    await batch.commit();
+  }
+
+  Future<void> reorderSections({
+    required String projectID,
+    required String canvasID,
+    required List<SectionModel> reordered,
+  }) async {
+    final batch = _firestore.batch();
+    int runningStartBar = 0;
+    for (int i = 0; i < reordered.length; i++) {
+      final section = reordered[i];
+      final ref = _projectsRef
+          .doc(projectID)
+          .collection('canvases')
+          .doc(canvasID)
+          .collection('sections')
+          .doc(section.id);
+
+      batch.update(ref, {'order': i, 'startBar': runningStartBar});
+
+      runningStartBar += section.barCount;
+    }
+    await batch.commit();
+  }
+
+  Future<void> recalculateSectionMetadata({
+    required String projectID,
+    required String canvasID,
+  }) async {
+    final sectionsSnap = await _projectsRef
+        .doc(projectID)
+        .collection('canvases')
+        .doc(canvasID)
+        .collection('sections')
+        .orderBy('order')
+        .get();
+
+    final batch = _firestore.batch();
+    int runningStart = 0;
+
+    for (final doc in sectionsSnap.docs) {
+      final barsCount = await doc.reference.collection('bars').count().get();
+      final count = barsCount.count ?? 0;
+      batch.update(doc.reference, {'startBar': runningStart, 'barCount': count});
+      runningStart += count;
+    }
+    await batch.commit();
+  }
+
+  //  bar stuefff
+  Future<void> addBar({
+    required String projectID,
+    required String canvasID,
+    required String sectionID,
+    required int index,
+    required int beatCount,
+    required String timeSignature,
+  }) async {
+    final sectionRef = _projectsRef
+        .doc(projectID)
+        .collection('canvases')
+        .doc(canvasID)
+        .collection('sections')
+        .doc(sectionID);
+
+    final empty = List.filled(beatCount, '');
+    final barRef = sectionRef.collection('bars').doc();
+
+    await barRef.set({
+      ...barToFirestore(BarModel(id: barRef.id, index: index, chords: empty)),
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+
+    await sectionRef.update({'barCount': FieldValue.increment(1)});
+    await recalculateSectionMetadata(projectID: projectID, canvasID: canvasID);
+  }
+
+  Future<void> deleteBar({
+    required String projectID,
+    required String canvasID,
+    required String sectionID,
+    required String barID,
+  }) async {
+    final sectionRef = _projectsRef
+        .doc(projectID)
+        .collection('canvases')
+        .doc(canvasID)
+        .collection('sections')
+        .doc(sectionID);
+
+    await sectionRef.collection('bars').doc(barID).delete();
+    await sectionRef.update({'barCount': FieldValue.increment(-1)});
+    await recalculateSectionMetadata(projectID: projectID, canvasID: canvasID);
+  }
+
+  Future<void> reorderBars({
+    required String projectID,
+    required String canvasID,
+    required String sectionID,
+    required List<BarModel> reordered,
+  }) async {
+    final batch = _firestore.batch();
+    for (int i = 0; i < reordered.length; i++) {
+      final bar = reordered[i];
+      final ref = _projectsRef
+          .doc(projectID)
+          .collection('canvases')
+          .doc(canvasID)
+          .collection('sections')
+          .doc(sectionID)
+          .collection('bars')
+          .doc(bar.id);
+
+      batch.update(ref, {'index': i});
+    }
+    await batch.commit();
+  }
+
+  Future<void> updateBarBeatCount({
+    required String projectID,
+    required String canvasID,
+    required String sectionID,
+    required String barID,
+    required int newBeatCount,
+    required String userID,
+  }) async {
+    final barRef = _projectsRef
+        .doc(projectID)
+        .collection('canvases')
+        .doc(canvasID)
+        .collection('sections')
+        .doc(sectionID)
+        .collection('bars')
+        .doc(barID);
+
+    final doc = await barRef.get();
+    final currentChords = List<String>.from(doc.data()?['chords'] ?? []);
+    final currentPassing = List<String>.from(doc.data()?['passingChord'] ?? []);
+
+    List<String> newChords;
+    List<String> newPassing;
+
+    if (newBeatCount > currentChords.length) {
+      newChords = [...currentChords, ...List.filled(newBeatCount - currentChords.length, '')];
+      newPassing = [...currentPassing, ...List.filled(newBeatCount - currentPassing.length, '')];
+    } else {
+      newChords = currentChords.sublist(0, newBeatCount);
+      newPassing = currentPassing.sublist(0, newBeatCount.clamp(0, currentPassing.length));
+    }
+
+    await barRef.update({
+      'chords': newChords,
+      'passingChord': newPassing,
+      'beatCount': newBeatCount,
       'updatedBy': userID,
       'updatedAt': FieldValue.serverTimestamp(),
     });

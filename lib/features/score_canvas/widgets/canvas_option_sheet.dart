@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jam_sync/shared/models/canvas_model.dart';
 import 'package:jam_sync/shared/utils/app_styles.dart';
+import 'package:jam_sync/shared/utils/gap_helper.dart';
 
 class CanvasOptionSheet extends ConsumerStatefulWidget {
   final List<CanvasModel> canvases;
@@ -29,7 +30,7 @@ class _CanvasOptionSheetState extends ConsumerState<CanvasOptionSheet> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text("Pilih Canvas", style: AppStyles.h3(context).copyWith(color: AppStyles.darkNavy)),
-          const SizedBox(height: 4),
+          4.height,
           ...widget.canvases.map((canvas) {
             final isSelected =
                 widget.selectedCanvas?.id == canvas.id ||

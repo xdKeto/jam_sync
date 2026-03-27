@@ -5,27 +5,27 @@ import 'package:jam_sync/shared/models/bar_model.dart';
 import 'package:jam_sync/shared/models/project_model.dart';
 import 'package:jam_sync/shared/repositories/project_repository.dart';
 
-final projectStreamProvider = StreamProvider.family<ProjectModel, String>((ref, projectId) {
+final projectStreamProvider = StreamProvider.family<ProjectModel, String>((ref, projectID) {
   final repository = ref.watch(projectRepositoryProvider);
-  return repository.streamProject(projectId);
+  return repository.streamProject(projectID);
 });
 
-final canvasesStreamProvider = StreamProvider.family<List<CanvasModel>, String>((ref, projectId) {
+final canvasesStreamProvider = StreamProvider.family<List<CanvasModel>, String>((ref, projectID) {
   final repository = ref.watch(projectRepositoryProvider);
-  return repository.streamCanvases(projectId);
+  return repository.streamCanvases(projectID);
 });
 
 final sectionsStreamProvider =
-    StreamProvider.family<List<SectionModel>, ({String projectId, String canvasId})>((ref, params) {
+    StreamProvider.family<List<SectionModel>, ({String projectID, String canvasID})>((ref, params) {
       final repository = ref.watch(projectRepositoryProvider);
-      return repository.streamSections(params.projectId, params.canvasId);
+      return repository.streamSections(params.projectID, params.canvasID);
     });
 
 final barsStreamProvider =
-    StreamProvider.family<List<BarModel>, ({String projectId, String canvasId, String sectionId})>((
+    StreamProvider.family<List<BarModel>, ({String projectID, String canvasID, String sectionID})>((
       ref,
       params,
     ) {
       final repository = ref.watch(projectRepositoryProvider);
-      return repository.streamBars(params.projectId, params.canvasId, params.sectionId);
+      return repository.streamBars(params.projectID, params.canvasID, params.sectionID);
     });

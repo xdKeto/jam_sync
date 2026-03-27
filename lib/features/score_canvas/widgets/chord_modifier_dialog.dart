@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:jam_sync/shared/utils/app_styles.dart';
 import 'package:jam_sync/features/score_canvas/widgets/bass_note_dialog.dart';
+import 'package:jam_sync/shared/utils/gap_helper.dart';
 
 class ChordModifierDialog extends StatefulWidget {
   const ChordModifierDialog({super.key, required this.rootNote, required this.isMinor});
@@ -170,7 +171,7 @@ class _ChordModifierDialogState extends State<ChordModifierDialog> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  4.height,
                   Text(
                     currentChordDisplay,
                     style: const TextStyle(
@@ -180,7 +181,7 @@ class _ChordModifierDialogState extends State<ChordModifierDialog> {
                       decoration: TextDecoration.none,
                     ),
                   ),
-                  const SizedBox(height: 6),
+                  6.height,
                   SizedBox(
                     height: 30,
                     child: ElevatedButton(

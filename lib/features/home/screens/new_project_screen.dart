@@ -68,7 +68,7 @@ class NewProjectScreenState extends ConsumerState<NewProjectScreen> {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => ScoreCanvasScreen(projectId: projectId, roomCode: project.roomCode),
+          builder: (context) => ScoreCanvasScreen(projectID: projectId, roomCode: project.roomCode),
         ),
       );
     } else {

@@ -10,10 +10,10 @@ import 'package:jam_sync/features/score_canvas/widgets/chord_action_sheet.dart';
 class BarWidget extends StatelessWidget {
   const BarWidget({
     super.key,
-    this.projectId,
-    this.canvasId,
-    this.sectionId,
-    this.barId,
+    this.projectID,
+    this.canvasID,
+    this.sectionID,
+    this.barID,
     this.chords,
     this.timeSig = '4/4',
     this.passingChords,
@@ -26,10 +26,10 @@ class BarWidget extends StatelessWidget {
     this.onPassingChordDeleted,
   });
 
-  final String? projectId;
-  final String? canvasId;
-  final String? sectionId;
-  final String? barId;
+  final String? projectID;
+  final String? canvasID;
+  final String? sectionID;
+  final String? barID;
   final List<String>? chords;
   final String timeSig;
   final List<String>? passingChords;
@@ -42,10 +42,10 @@ class BarWidget extends StatelessWidget {
   final void Function(int beatIndex)? onPassingChordDeleted;
 
   Future<void> showChordPickerFlow(BuildContext context, int beatIndex, String mainChord, String passingChord) async {
-    final String? pId = projectId;
-    final String? cId = canvasId;
-    final String? sId = sectionId;
-    final String? bId = barId;
+    final String? pId = projectID;
+    final String? cId = canvasID;
+    final String? sId = sectionID;
+    final String? bId = barID;
     final String? userId = FirebaseAuth.instance.currentUser?.uid;
 
     if (pId != null && cId != null && sId != null && bId != null && userId != null) {

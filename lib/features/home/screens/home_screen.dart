@@ -101,7 +101,7 @@ class HomeScreen extends ConsumerWidget {
                                                         context,
                                                         MaterialPageRoute(
                                                           builder: (context) => ScoreCanvasScreen(
-                                                            projectId: p.id,
+                                                            projectID: p.id,
                                                             roomCode: p.roomCode,
                                                           ),
                                                         ),

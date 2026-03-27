@@ -6,6 +6,7 @@ import 'package:jam_sync/features/home/screens/new_project_screen.dart';
 import 'package:jam_sync/features/home/screens/join_room_screen.dart';
 import 'package:jam_sync/features/projects/screens/project_screen.dart';
 import 'package:jam_sync/shared/utils/app_styles.dart';
+import 'package:jam_sync/shared/utils/gap_helper.dart';
 
 class HomeNav extends StatefulWidget {
   const HomeNav({super.key});
@@ -60,8 +61,7 @@ class _HomeNavState extends State<HomeNav> {
               child: Row(
                 children: [
                   const Icon(Iconsax.login_1, color: AppStyles.black),
-                  const SizedBox(width: 12),
-                  Text('Join Room', style: AppStyles.bodyMedium(context)),
+12.width,                  Text('Join Room', style: AppStyles.bodyMedium(context)),
                 ],
               ),
             ),
@@ -70,8 +70,7 @@ class _HomeNavState extends State<HomeNav> {
               child: Row(
                 children: [
                   const Icon(Iconsax.add_circle, color: AppStyles.black),
-                  const SizedBox(width: 12),
-                  Text('Create Project', style: AppStyles.bodyMedium(context)),
+12.width,                  Text('Create Project', style: AppStyles.bodyMedium(context)),
                 ],
               ),
             ),
@@ -107,8 +106,7 @@ class _HomeNavState extends State<HomeNav> {
                   size: 24,
                   color: color,
                 ),
-                const SizedBox(height: 2),
-                Text(
+2.height,                Text(
                   index == 0 ? "Home" : "Projects",
                   style: TextStyle(
                     color: color,

@@ -199,9 +199,9 @@ class _PocRoomScreenState extends ConsumerState<PocRoomScreen> {
             ]
             // Syncing indicator
             else if (isSyncing) ...[
-              const SizedBox(height: 16),
+              16.height,
               const CircularProgressIndicator(),
-              const SizedBox(height: 12),
+              12.height,
               const Text(
                 'Syncing...',
                 style: TextStyle(fontSize: 16, color: Colors.orange),

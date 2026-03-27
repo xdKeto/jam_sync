@@ -9,10 +9,11 @@ import 'package:jam_sync/shared/models/section_model.dart';
 import 'package:jam_sync/shared/repositories/project_repository.dart';
 import 'package:jam_sync/shared/utils/app_styles.dart';
 import 'package:jam_sync/shared/utils/collab_colors.dart';
+import 'package:jam_sync/shared/utils/gap_helper.dart';
 
 class SectionWidget extends ConsumerWidget {
-  final String projectId;
-  final String canvasId;
+  final String projectID;
+  final String canvasID;
   final String timeSignature;
   final SectionModel section;
   final bool isFirst;
@@ -20,8 +21,8 @@ class SectionWidget extends ConsumerWidget {
 
   const SectionWidget({
     super.key,
-    required this.projectId,
-    required this.canvasId,
+    required this.projectID,
+    required this.canvasID,
     required this.timeSignature,
     required this.section,
     this.isFirst = false,
@@ -30,32 +31,30 @@ class SectionWidget extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final barsAsync = ref.watch(barsStreamProvider((
-      projectId: projectId,
-      canvasId: canvasId,
-      sectionId: section.id,
-    )));
+    final barsAsync = ref.watch(
+      barsStreamProvider((projectID: projectID, canvasID: canvasID, sectionID: section.id)),
+    );
 
-    final editingPresenceAsync = ref.watch(editingPresenceProvider(projectId));
-    final participantsAsync = ref.watch(participantsStreamProvider(projectId));
+    final editingPresenceAsync = ref.watch(editingPresenceProvider(projectID));
+    final participantsAsync = ref.watch(participantsStreamProvider(projectID));
 
     return Padding(
-      padding: EdgeInsets.only(top: isFirst ? 0 : 24.0),
+      padding: EdgeInsets.only(top: isFirst ? 0 : 16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             decoration: BoxDecoration(
               color: AppStyles.darkNavy,
               borderRadius: BorderRadius.circular(16),
             ),
             child: Text(
               section.name,
-              style: AppStyles.bodyMedium(context).copyWith(color: AppStyles.white),
+              style: AppStyles.bodySmall(context).copyWith(color: AppStyles.white),
             ),
           ),
-          const SizedBox(height: 12),
+          12.height,
           barsAsync.when(
             loading: () => const Padding(
               padding: EdgeInsets.symmetric(vertical: 16),
@@ -81,12 +80,12 @@ class SectionWidget extends ConsumerWidget {
 
               final sortedOnline = participants.where((p) => p.isOnline).toList()
                 ..sort((a, b) => a.uid.compareTo(b.uid));
-              
+
               final currentUserId = FirebaseAuth.instance.currentUser?.uid;
 
               final barWidgets = List.generate(bars.length, (i) {
                 final bar = bars[i];
-                final barPath = '$canvasId/${section.id}/${bar.id}';
+                final barPath = '$canvasID/${section.id}/${bar.id}';
                 final isLeft = i % 4 == 0;
                 final isRight = i % 4 == 3 || i == bars.length - 1;
 
@@ -104,10 +103,10 @@ class SectionWidget extends ConsumerWidget {
                 return SizedBox(
                   width: barWidth,
                   child: BarWidget(
-                    projectId: projectId,
-                    canvasId: canvasId,
-                    sectionId: section.id,
-                    barId: bar.id,
+                    projectID: projectID,
+                    canvasID: canvasID,
+                    sectionID: section.id,
+                    barID: bar.id,
                     timeSig: timeSignature,
                     chords: bar.chords,
                     passingChords: bar.passingChord,
@@ -115,9 +114,11 @@ class SectionWidget extends ConsumerWidget {
                     isCornerRight: isRight,
                     highlightColor: highlightColor,
                     onChordChanged: (beatIndex, chord) {
-                      ref.read(projectRepositoryProvider).updateBarChord(
-                            projectID: projectId,
-                            canvasID: canvasId,
+                      ref
+                          .read(projectRepositoryProvider)
+                          .updateBarChord(
+                            projectID: projectID,
+                            canvasID: canvasID,
                             sectionID: section.id,
                             barID: bar.id,
                             beatIndex: beatIndex,
@@ -126,9 +127,11 @@ class SectionWidget extends ConsumerWidget {
                           );
                     },
                     onChordDeleted: (beatIndex) {
-                      ref.read(projectRepositoryProvider).deleteBarChord(
-                            projectID: projectId,
-                            canvasID: canvasId,
+                      ref
+                          .read(projectRepositoryProvider)
+                          .deleteBarChord(
+                            projectID: projectID,
+                            canvasID: canvasID,
                             sectionID: section.id,
                             barID: bar.id,
                             beatIndex: beatIndex,
@@ -136,9 +139,11 @@ class SectionWidget extends ConsumerWidget {
                           );
                     },
                     onPassingChordChanged: (beatIndex, chord) {
-                      ref.read(projectRepositoryProvider).updatePassingChord(
-                            projectID: projectId,
-                            canvasID: canvasId,
+                      ref
+                          .read(projectRepositoryProvider)
+                          .updatePassingChord(
+                            projectID: projectID,
+                            canvasID: canvasID,
                             sectionID: section.id,
                             barID: bar.id,
                             beatIndex: beatIndex,
@@ -147,9 +152,11 @@ class SectionWidget extends ConsumerWidget {
                           );
                     },
                     onPassingChordDeleted: (beatIndex) {
-                      ref.read(projectRepositoryProvider).deletePassingChord(
-                            projectID: projectId,
-                            canvasID: canvasId,
+                      ref
+                          .read(projectRepositoryProvider)
+                          .deletePassingChord(
+                            projectID: projectID,
+                            canvasID: canvasID,
                             sectionID: section.id,
                             barID: bar.id,
                             beatIndex: beatIndex,

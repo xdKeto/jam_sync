@@ -69,8 +69,7 @@ class ParticipantTile extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(width: 14),
-
+          14.width,
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -85,7 +84,7 @@ class ParticipantTile extends StatelessWidget {
                       ),
                     ),
                     if (participant.isLeader) ...[
-                      const SizedBox(width: 8),
+                      8.width,
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                         decoration: BoxDecoration(
@@ -106,7 +105,7 @@ class ParticipantTile extends StatelessWidget {
                     ],
                   ],
                 ),
-                const SizedBox(height: 2),
+                2.height,
                 Text(
                   participant.isOnline ? 'Online' : 'Offline',
                   style: AppStyles.bodySmall(context).copyWith(color: statusColor),
@@ -128,7 +127,7 @@ class ParticipantTile extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(Icons.signal_cellular_alt, size: 14, color: latencyColor),
-                    const SizedBox(width: 4),
+                    4.width,
                     Text(
                       latencyLabel,
                       style: AppStyles.labelSmall(context).copyWith(color: latencyColor),
@@ -136,8 +135,7 @@ class ParticipantTile extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(height: 6),
-              // Ready status
+              6.height, // Ready status
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -146,7 +144,7 @@ class ParticipantTile extends StatelessWidget {
                     size: 16,
                     color: participant.isReady ? AppStyles.success : AppStyles.grey600,
                   ),
-                  const SizedBox(width: 4),
+                  4.width,
                   Text(
                     participant.isReady ? 'Ready' : 'Not Ready',
                     style: AppStyles.labelSmall(

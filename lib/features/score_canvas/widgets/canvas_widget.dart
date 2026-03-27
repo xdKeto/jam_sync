@@ -4,16 +4,17 @@ import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:jam_sync/features/score_canvas/providers/canvas_provider.dart';
 import 'package:jam_sync/features/score_canvas/widgets/section_widget.dart';
 import 'package:jam_sync/shared/utils/app_styles.dart';
+import 'package:jam_sync/shared/utils/gap_helper.dart';
 
 class CanvasWidget extends ConsumerStatefulWidget {
-  final String projectId;
-  final String canvasId;
+  final String projectID;
+  final String canvasID;
   final String timeSignature;
 
   const CanvasWidget({
     super.key,
-    required this.projectId,
-    required this.canvasId,
+    required this.projectID,
+    required this.canvasID,
     required this.timeSignature,
   });
 
@@ -95,7 +96,7 @@ class CanvasWidgetState extends ConsumerState<CanvasWidget> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(Iconsax.music_square, size: 64, color: AppStyles.grey400),
-          const SizedBox(height: 16),
+          16.height,
           Text(
             'Empty Canvas, create new section!',
             style: AppStyles.h3(context).copyWith(color: AppStyles.grey400),
@@ -109,8 +110,8 @@ class CanvasWidgetState extends ConsumerState<CanvasWidget> {
   @override
   Widget build(BuildContext context) {
     final sectionsAsync = ref.watch(sectionsStreamProvider((
-      projectId: widget.projectId,
-      canvasId: widget.canvasId,
+      projectID: widget.projectID,
+      canvasID: widget.canvasID,
     )));
 
     return sectionsAsync.when(
@@ -143,8 +144,8 @@ class CanvasWidgetState extends ConsumerState<CanvasWidget> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: List.generate(sections.length, (i) {
                       return SectionWidget(
-                        projectId: widget.projectId,
-                        canvasId: widget.canvasId,
+                        projectID: widget.projectID,
+                        canvasID: widget.canvasID,
                         timeSignature: widget.timeSignature,
                         section: sections[i],
                         isFirst: i == 0,

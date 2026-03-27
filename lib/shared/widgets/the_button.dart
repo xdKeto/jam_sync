@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:jam_sync/shared/utils/app_styles.dart';
+import 'package:jam_sync/shared/utils/gap_helper.dart';
 
 class TheButton extends StatefulWidget {
   final String text;
@@ -44,10 +45,7 @@ class _TheButtonState extends State<TheButton> {
       onEnter: (_) => setState(() => isHovered = true),
       onExit: (_) => setState(() => isHovered = false),
       child: Container(
-        padding: EdgeInsets.symmetric(
-          horizontal: widget.horiPadding,
-          vertical: widget.vertPadding,
-        ),
+        padding: EdgeInsets.symmetric(horizontal: widget.horiPadding, vertical: widget.vertPadding),
         decoration: isHovered
             ? AppStyles.buttonBox(widget.color, widget.borderRad)
             : widget.border
@@ -58,12 +56,10 @@ class _TheButtonState extends State<TheButton> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
-                    isHovered && widget.hoverIcon != null
-                        ? widget.hoverIcon
-                        : widget.icon,
+                    isHovered && widget.hoverIcon != null ? widget.hoverIcon : widget.icon,
                     color: isHovered ? Colors.white : widget.iconColor,
                   ),
-                  const SizedBox(width: 8),
+                  8.width,
                   Text(
                     widget.text,
                     style: AppStyles.bodyMedium(context).copyWith(
