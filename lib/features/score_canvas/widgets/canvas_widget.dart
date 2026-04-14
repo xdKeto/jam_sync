@@ -120,7 +120,7 @@ class CanvasWidgetState extends ConsumerState<CanvasWidget> {
 
     return sectionsAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('Error: $e', style: const TextStyle(color: Colors.red))),
+      error: (e, _) => Center(child: Text('Error: $e', style: const TextStyle(color: AppStyles.error))),
       data: (sections) {
         if (sections.isEmpty) {
           return buildEmptyState();

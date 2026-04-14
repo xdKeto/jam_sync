@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:jam_sync/shared/models/bar_model.dart';
 import 'package:jam_sync/shared/models/section_model.dart';
 
@@ -79,4 +81,23 @@ int totalDurationHelper(
   // durasi
   final beatDurationMs = 60000 / tempo;
   return (totalBeats * beatDurationMs).round();
+}
+
+/// hitung posisi cursor berdasarkan partitur
+Offset barPixelPosition({
+  required int barIndex,
+  double barWidth = 250,
+  double barHeight = 60,
+  double runSpacing = 8,
+  double sectionHeaderHeight = 44,
+  int barsPerRow = 4,
+}) {
+  final rowHeight = barHeight + runSpacing;
+  final row = barIndex ~/ barsPerRow;
+  final col = barIndex % barsPerRow;
+
+  return Offset(
+    col * barWidth + barWidth / 2,        // x: tengah bar
+    sectionHeaderHeight + (row * rowHeight) + (barHeight / 2), // y: tengah bar
+  );
 }

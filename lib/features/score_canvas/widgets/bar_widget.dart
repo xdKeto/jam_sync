@@ -121,6 +121,7 @@ class BarWidget extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     Color? highlightColor;
     final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+    final double barHeight = 60;
 
     if (projectID != null && canvasID != null && sectionID != null && barID != null) {
       final barPath = '$canvasID/$sectionID/$barID';
@@ -167,7 +168,7 @@ class BarWidget extends ConsumerWidget {
             : BorderRadius.zero,
       ),
       child: SizedBox(
-        height: 60,
+        height: barHeight,
         child: Row(
           children: List.generate(beats, (index) {
             String rawMainChord = '';
