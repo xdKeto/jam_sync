@@ -32,6 +32,7 @@ class EditOptionSheet extends ConsumerWidget {
               showModalBottomSheet(
                 context: context,
                 isScrollControlled: true,
+                useSafeArea: true,
                 builder: (_) => SongStructureSheet(
                   projectID: projectID,
                   canvasID: canvasID,
@@ -49,6 +50,7 @@ class EditOptionSheet extends ConsumerWidget {
               showModalBottomSheet(
                 context: context,
                 isScrollControlled: true,
+                useSafeArea: true,
                 builder: (_) => EditSectionSheet(
                   projectID: projectID,
                   canvasID: canvasID,

@@ -27,6 +27,7 @@ class EditSectionSheet extends ConsumerStatefulWidget {
 
 class _EditSectionSheetState extends ConsumerState<EditSectionSheet> {
   SectionModel? selectedSection;
+  List<BarModel>? _localBars;
 
   Future<void> confirmDeleteBar(String barId, int index) async {
     if (selectedSection == null) return;
@@ -64,9 +65,15 @@ class _EditSectionSheetState extends ConsumerState<EditSectionSheet> {
   Future<void> editBeatCount(BarModel bar) async {
     if (selectedSection == null) return;
 
+    final currentBeatCount = bar.beatCount ?? beatsPerBar(widget.timeSignature);
+
     final result = await showDialog<int>(
       context: context,
-      builder: (_) => AddBarDialog(timeSignature: widget.timeSignature),
+      builder: (_) => AddBarDialog(
+        timeSignature: widget.timeSignature,
+        isEdit: true,
+        initialBeatCount: currentBeatCount,
+      ),
     );
 
     if (result != null && mounted) {
@@ -79,6 +86,8 @@ class _EditSectionSheetState extends ConsumerState<EditSectionSheet> {
             sectionID: selectedSection!.id,
             barID: bar.id,
             newBeatCount: result,
+            currentChords: bar.chords,
+            currentPassing: bar.passingChord,
             userID: userId,
           );
     }
@@ -90,58 +99,76 @@ class _EditSectionSheetState extends ConsumerState<EditSectionSheet> {
       sectionsStreamProvider((projectID: widget.projectID, canvasID: widget.canvasID)),
     );
 
-    return DraggableScrollableSheet(
-      initialChildSize: 1.0,
-      minChildSize: 1.0,
-      builder: (context, scrollController) {
-        return SafeArea(
-          child: Scaffold(
-            appBar: AppBar(
-              title: Text(selectedSection?.name ?? "Pilih Section"),
-              leading: IconButton(
-                icon: Icon(selectedSection != null ? Icons.arrow_back : Icons.close),
-                onPressed: () {
-                  if (selectedSection != null) {
-                    setState(() => selectedSection = null);
-                  } else {
-                    Navigator.pop(context);
-                  }
-                },
-              ),
-            ),
-            body: selectedSection == null
-                ? buildSectionPicker(sectionsAsync)
-                : buildBarEditor(selectedSection!),
-            floatingActionButton: selectedSection != null
-                ? FloatingActionButton(
-                    backgroundColor: AppStyles.darkNavy,
-                    foregroundColor: AppStyles.white,
-                    onPressed: () async {
-                      final result = await showDialog<int>(
-                        context: context,
-                        builder: (_) => AddBarDialog(timeSignature: widget.timeSignature),
-                      );
-
-                      if (result != null && mounted) {
-                        final currentBarCount = selectedSection!.barCount;
-                        await ref
-                            .read(projectRepositoryProvider)
-                            .addBar(
-                              projectID: widget.projectID,
-                              canvasID: widget.canvasID,
-                              sectionID: selectedSection!.id,
-                              index: currentBarCount,
-                              beatCount: result,
-                              timeSignature: widget.timeSignature,
-                            );
-                      }
-                    },
-                    child: const Icon(Icons.add),
-                  )
-                : null,
-          ),
-        );
+    return PopScope(
+      canPop: selectedSection == null,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        if (selectedSection != null) {
+          setState(() {
+            selectedSection = null;
+            _localBars = null;
+          });
+        } else {
+          Navigator.pop(context);
+        }
       },
+      child: DraggableScrollableSheet(
+        initialChildSize: 1.0,
+        minChildSize: 1.0,
+        builder: (context, scrollController) {
+          return SafeArea(
+            child: Scaffold(
+              resizeToAvoidBottomInset: false,
+              appBar: AppBar(
+                title: Text(selectedSection?.name ?? "Pilih Section"),
+                leading: IconButton(
+                  icon: Icon(selectedSection != null ? Icons.arrow_back : Icons.close),
+                  onPressed: () {
+                    if (selectedSection != null) {
+                      setState(() {
+                        selectedSection = null;
+                        _localBars = null;
+                      });
+                    } else {
+                      Navigator.pop(context);
+                    }
+                  },
+                ),
+              ),
+              body: selectedSection == null
+                  ? buildSectionPicker(sectionsAsync)
+                  : buildBarEditor(selectedSection!),
+              floatingActionButton: selectedSection != null
+                  ? FloatingActionButton(
+                      backgroundColor: AppStyles.darkNavy,
+                      foregroundColor: AppStyles.white,
+                      onPressed: () async {
+                        final result = await showDialog<int>(
+                          context: context,
+                          builder: (_) => AddBarDialog(timeSignature: widget.timeSignature),
+                        );
+
+                        if (result != null && mounted) {
+                          final currentBarCount = selectedSection!.barCount;
+                          await ref
+                              .read(projectRepositoryProvider)
+                              .addBar(
+                                projectID: widget.projectID,
+                                canvasID: widget.canvasID,
+                                sectionID: selectedSection!.id,
+                                index: currentBarCount,
+                                beatCount: result,
+                                timeSignature: widget.timeSignature,
+                              );
+                        }
+                      },
+                      child: const Icon(Icons.add),
+                    )
+                  : null,
+            ),
+          );
+        },
+      ),
     );
   }
 
@@ -160,7 +187,10 @@ class _EditSectionSheetState extends ConsumerState<EditSectionSheet> {
               subtitle: Text("${section.barCount} bars", style: AppStyles.bodySmall(context)),
               trailing: const Icon(Icons.chevron_right),
               onTap: () {
-                setState(() => selectedSection = section);
+                setState(() {
+                  selectedSection = section;
+                  _localBars = null;
+                });
               },
             );
           },
@@ -185,24 +215,30 @@ class _EditSectionSheetState extends ConsumerState<EditSectionSheet> {
         if (bars.isEmpty) {
           return const Center(child: Text("No bars in this section."));
         }
-        return ReorderableListView.builder(
-          onReorder: (oldIndex, newIndex) async {
-            if (oldIndex < newIndex) newIndex -= 1;
-            final item = bars.removeAt(oldIndex);
-            bars.insert(newIndex, item);
+        final displayBars = _localBars ?? bars;
 
-            await ref
+        return ReorderableListView.builder(
+          onReorder: (oldIndex, newIndex) {
+            setState(() {
+              if (oldIndex < newIndex) newIndex -= 1;
+              _localBars = List.from(displayBars);
+              final item = _localBars!.removeAt(oldIndex);
+              _localBars!.insert(newIndex, item);
+            });
+
+            // ignore: unawaited_futures
+            ref
                 .read(projectRepositoryProvider)
                 .reorderBars(
                   projectID: widget.projectID,
                   canvasID: widget.canvasID,
                   sectionID: section.id,
-                  reordered: bars,
+                  reordered: _localBars!,
                 );
           },
-          itemCount: bars.length,
+          itemCount: displayBars.length,
           itemBuilder: (context, index) {
-            final bar = bars[index];
+            final bar = displayBars[index];
             final chordSummary = bar.chords.where((c) => c.isNotEmpty).join(' | ');
             final displayBeatCount = bar.beatCount ?? beatsPerBar(widget.timeSignature);
 
@@ -212,7 +248,7 @@ class _EditSectionSheetState extends ConsumerState<EditSectionSheet> {
               title: Text("Bar ${index + 1}"),
               subtitle: Text(
                 chordSummary.isEmpty ? "Empty" : chordSummary,
-                style: AppStyles.bodyMedium(
+                style: AppStyles.bodySmall(
                   context,
                 ).copyWith(color: AppStyles.darkNavy, fontWeight: FontWeight.w600),
               ),

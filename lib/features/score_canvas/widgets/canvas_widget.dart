@@ -27,6 +27,7 @@ class CanvasWidgetState extends ConsumerState<CanvasWidget> {
   final GlobalKey canvasKey = GlobalKey();
   bool isClamping = false;
   Size viewportSize = Size.zero;
+  double cachedContentHeight = 300;
 
   static const double canvasWidth = 1000;
   static const double canvasBarWidth = canvasWidth / 4;
@@ -46,12 +47,15 @@ class CanvasWidgetState extends ConsumerState<CanvasWidget> {
     super.dispose();
   }
 
-  double getCanvasContentHeight() {
+  void updateCachedHeight() {
     final renderBox = canvasKey.currentContext?.findRenderObject() as RenderBox?;
     if (renderBox != null && renderBox.hasSize) {
-      return renderBox.size.height;
+      if (cachedContentHeight != renderBox.size.height) {
+        setState(() {
+          cachedContentHeight = renderBox.size.height;
+        });
+      }
     }
-    return 300;
   }
 
   void onTransformChanged() {
@@ -63,7 +67,7 @@ class CanvasWidgetState extends ConsumerState<CanvasWidget> {
     double ty = matrix[13];
 
     final scaledW = totalCanvasWidth * scale;
-    final scaledH = getCanvasContentHeight() * scale;
+    final scaledH = cachedContentHeight * scale;
 
     double clampedTx = tx;
     double clampedTy = ty;
@@ -126,6 +130,8 @@ class CanvasWidgetState extends ConsumerState<CanvasWidget> {
           builder: (context, constraints) {
             viewportSize = Size(constraints.maxWidth, constraints.maxHeight);
             final minScale = (viewportSize.width / totalCanvasWidth).clamp(0.1, 1.0);
+
+            WidgetsBinding.instance.addPostFrameCallback((_) => updateCachedHeight());
 
             return InteractiveViewer(
               transformationController: transformController,

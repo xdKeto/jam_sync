@@ -136,10 +136,10 @@ class PocPlaybackController extends StateNotifier<PocPlaybackState> {
           syncService.getEstimatedServerTime() - serverStartTime;
 
       // interpolasi smoothing cursor
-      final decayedOffset = state.correctionOffsetMs * decay;
+      final decayedOffset = state.correctionOffsetMs * decay; // exponential decay
       final targetPositionMs = currentPositionMs.toDouble() + decayedOffset;
       final error = (targetPositionMs - state.smoothedPositionMs).abs();
-      final flexAlpa = error > 50 ? 0.3 : state.alpha;
+      final flexAlpa = error > 50 ? 0.3 : state.alpha; // alpha interpolation
       final smoothedPositionMs =
           state.smoothedPositionMs +
           flexAlpa * (targetPositionMs - state.smoothedPositionMs);

@@ -5,8 +5,15 @@ import 'package:jam_sync/shared/models/canvas_model.dart';
 
 class AddBarDialog extends ConsumerStatefulWidget {
   final String timeSignature;
+  final bool isEdit;
+  final int? initialBeatCount;
 
-  const AddBarDialog({super.key, required this.timeSignature});
+  const AddBarDialog({
+    super.key,
+    required this.timeSignature,
+    this.isEdit = false,
+    this.initialBeatCount,
+  });
 
   @override
   ConsumerState<AddBarDialog> createState() => _AddBarDialogState();
@@ -20,13 +27,16 @@ class _AddBarDialogState extends ConsumerState<AddBarDialog> {
   void initState() {
     super.initState();
     maxBeats = beatsPerBar(widget.timeSignature);
-    selectedBeatCount = maxBeats;
+    selectedBeatCount = (widget.initialBeatCount ?? maxBeats).clamp(1, maxBeats);
   }
 
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text('Add Bar', style: AppStyles.h3(context)),
+      title: Text(
+        widget.isEdit ? 'Edit Beat Count' : 'Add Bar',
+        style: AppStyles.h3(context),
+      ),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -62,7 +72,7 @@ class _AddBarDialogState extends ConsumerState<AddBarDialog> {
             backgroundColor: AppStyles.darkNavy,
             foregroundColor: AppStyles.white,
           ),
-          child: const Text('Add Bar'),
+          child: Text(widget.isEdit ? 'Update' : 'Add Bar'),
         ),
       ],
     );

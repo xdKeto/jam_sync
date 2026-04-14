@@ -51,3 +51,4 @@ app.*.map.json
 *.csv
 riverpod_setup.md
 PRD - Aplikasi Skripsi.md
+*.md

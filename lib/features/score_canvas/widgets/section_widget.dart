@@ -2,13 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:jam_sync/features/score_canvas/providers/canvas_provider.dart';
-import 'package:jam_sync/features/score_canvas/providers/editing_presence_provider.dart';
 import 'package:jam_sync/features/score_canvas/providers/participants_provider.dart';
 import 'package:jam_sync/features/score_canvas/widgets/bar_widget.dart';
 import 'package:jam_sync/shared/models/section_model.dart';
 import 'package:jam_sync/shared/repositories/project_repository.dart';
 import 'package:jam_sync/shared/utils/app_styles.dart';
-import 'package:jam_sync/shared/utils/collab_colors.dart';
 import 'package:jam_sync/shared/utils/gap_helper.dart';
 
 class SectionWidget extends ConsumerWidget {
@@ -35,7 +33,6 @@ class SectionWidget extends ConsumerWidget {
       barsStreamProvider((projectID: projectID, canvasID: canvasID, sectionID: section.id)),
     );
 
-    final editingPresenceAsync = ref.watch(editingPresenceProvider(projectID));
     final participantsAsync = ref.watch(participantsStreamProvider(projectID));
 
     return Padding(
@@ -75,30 +72,16 @@ class SectionWidget extends ConsumerWidget {
                 );
               }
 
-              final editingPresence = editingPresenceAsync.value ?? {};
               final participants = participantsAsync.value ?? [];
-
               final sortedOnline = participants.where((p) => p.isOnline).toList()
                 ..sort((a, b) => a.uid.compareTo(b.uid));
 
-              final currentUserId = FirebaseAuth.instance.currentUser?.uid;
-
               final barWidgets = List.generate(bars.length, (i) {
                 final bar = bars[i];
-                final barPath = '$canvasID/${section.id}/${bar.id}';
                 final isLeft = i % 4 == 0;
                 final isRight = i % 4 == 3 || i == bars.length - 1;
 
-                Color? highlightColor;
-                for (final entry in editingPresence.entries) {
-                  if (entry.key != currentUserId && entry.value == barPath) {
-                    final index = sortedOnline.indexWhere((p) => p.uid == entry.key);
-                    if (index != -1) {
-                      highlightColor = CollabColors.getColor(index);
-                      break;
-                    }
-                  }
-                }
+                // Highlight calculation moved to BarWidget for performance
 
                 return SizedBox(
                   width: barWidth,
@@ -112,7 +95,7 @@ class SectionWidget extends ConsumerWidget {
                     passingChords: bar.passingChord,
                     isCornerLeft: isLeft,
                     isCornerRight: isRight,
-                    highlightColor: highlightColor,
+                    sortedParticipants: sortedOnline,
                     onChordChanged: (beatIndex, chord) {
                       ref
                           .read(projectRepositoryProvider)

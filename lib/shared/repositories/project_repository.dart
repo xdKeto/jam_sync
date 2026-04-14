@@ -493,13 +493,13 @@ class ProjectRepository {
     final empty = List.filled(beatCount, '');
     final barRef = sectionRef.collection('bars').doc();
 
-    await barRef.set({
-      ...barToFirestore(BarModel(id: barRef.id, index: index, chords: empty)),
+    final batch = _firestore.batch();
+    batch.set(barRef, {
+      ...barToFirestore(BarModel(id: barRef.id, index: index, chords: empty, beatCount: beatCount)),
       'updatedAt': FieldValue.serverTimestamp(),
     });
-
-    await sectionRef.update({'barCount': FieldValue.increment(1)});
-    await recalculateSectionMetadata(projectID: projectID, canvasID: canvasID);
+    batch.update(sectionRef, {'barCount': FieldValue.increment(1)});
+    await batch.commit();
   }
 
   Future<void> deleteBar({
@@ -515,9 +515,10 @@ class ProjectRepository {
         .collection('sections')
         .doc(sectionID);
 
-    await sectionRef.collection('bars').doc(barID).delete();
-    await sectionRef.update({'barCount': FieldValue.increment(-1)});
-    await recalculateSectionMetadata(projectID: projectID, canvasID: canvasID);
+    final batch = _firestore.batch();
+    batch.delete(sectionRef.collection('bars').doc(barID));
+    batch.update(sectionRef, {'barCount': FieldValue.increment(-1)});
+    await batch.commit();
   }
 
   Future<void> reorderBars({
@@ -549,6 +550,8 @@ class ProjectRepository {
     required String sectionID,
     required String barID,
     required int newBeatCount,
+    required List<String> currentChords,
+    required List<String> currentPassing,
     required String userID,
   }) async {
     final barRef = _projectsRef
@@ -559,10 +562,6 @@ class ProjectRepository {
         .doc(sectionID)
         .collection('bars')
         .doc(barID);
-
-    final doc = await barRef.get();
-    final currentChords = List<String>.from(doc.data()?['chords'] ?? []);
-    final currentPassing = List<String>.from(doc.data()?['passingChord'] ?? []);
 
     List<String> newChords;
     List<String> newPassing;

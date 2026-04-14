@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jam_sync/features/score_canvas/providers/canvas_provider.dart';
 import 'package:jam_sync/shared/utils/app_styles.dart';
 import 'package:jam_sync/shared/repositories/project_repository.dart';
+import 'package:jam_sync/shared/models/section_model.dart';
 import 'package:jam_sync/features/score_canvas/widgets/add_section_dialog.dart';
 
 class SongStructureSheet extends ConsumerStatefulWidget {
@@ -22,6 +23,7 @@ class SongStructureSheet extends ConsumerStatefulWidget {
 }
 
 class _SongStructureSheetState extends ConsumerState<SongStructureSheet> {
+  List<SectionModel>? _localSections;
   
   Future<void> showRenameDialog(String sectionId, String currentName) async {
     final controller = TextEditingController(text: currentName);
@@ -92,6 +94,7 @@ class _SongStructureSheetState extends ConsumerState<SongStructureSheet> {
       builder: (context, scrollController) {
         return SafeArea(
           child: Scaffold(
+            resizeToAvoidBottomInset: false,
             appBar: AppBar(
               title: const Text("Song Structure"),
               leading: IconButton(
@@ -101,12 +104,14 @@ class _SongStructureSheetState extends ConsumerState<SongStructureSheet> {
             ),
             body: sectionAsync.when(
               data: (sections) {
-                if (sections.isEmpty) {
+                final displaySections = _localSections ?? sections;
+
+                if (displaySections.isEmpty) {
                   return const Center(child: Text("No sections available."));
                 }
                 return ReorderableListView.builder(
                   itemBuilder: (context, index) {
-                    final section = sections[index];
+                    final section = displaySections[index];
                     return ListTile(
                       key: ValueKey(section.id),
                       leading: const Icon(Icons.drag_handle),
@@ -127,16 +132,20 @@ class _SongStructureSheetState extends ConsumerState<SongStructureSheet> {
                       ),
                     );
                   },
-                  itemCount: sections.length,
-                  onReorder: (oldIndex, newIndex) async {
-                    if (oldIndex < newIndex) newIndex -= 1;
-                    final item = sections.removeAt(oldIndex);
-                    sections.insert(newIndex, item);
+                  itemCount: displaySections.length,
+                  onReorder: (oldIndex, newIndex) {
+                    setState(() {
+                      if (oldIndex < newIndex) newIndex -= 1;
+                      _localSections = List.from(displaySections);
+                      final item = _localSections!.removeAt(oldIndex);
+                      _localSections!.insert(newIndex, item);
+                    });
                     
-                    await ref.read(projectRepositoryProvider).reorderSections(
+                    // ignore: unawaited_futures
+                    ref.read(projectRepositoryProvider).reorderSections(
                       projectID: widget.projectID, 
                       canvasID: widget.canvasID, 
-                      reordered: sections,
+                      reordered: _localSections!,
                     );
                   },
                 );

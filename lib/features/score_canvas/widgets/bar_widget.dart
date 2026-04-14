@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:jam_sync/features/score_canvas/providers/editing_presence_provider.dart';
+import 'package:jam_sync/shared/models/participant_info_model.dart';
+import 'package:jam_sync/shared/utils/collab_colors.dart';
 import 'package:jam_sync/shared/utils/app_styles.dart';
 import 'package:jam_sync/features/score_canvas/widgets/chord_widget.dart';
 import 'package:jam_sync/features/score_canvas/widgets/circle_of_fifths_dialog.dart';
 import 'package:jam_sync/features/score_canvas/widgets/chord_modifier_dialog.dart';
 import 'package:jam_sync/features/score_canvas/widgets/chord_action_sheet.dart';
 
-class BarWidget extends StatelessWidget {
+class BarWidget extends ConsumerWidget {
   const BarWidget({
     super.key,
     this.projectID,
@@ -19,7 +23,7 @@ class BarWidget extends StatelessWidget {
     this.passingChords,
     this.isCornerRight = false,
     this.isCornerLeft = false,
-    this.highlightColor,
+    this.sortedParticipants,
     this.onChordChanged,
     this.onChordDeleted,
     this.onPassingChordChanged,
@@ -35,7 +39,7 @@ class BarWidget extends StatelessWidget {
   final List<String>? passingChords;
   final bool isCornerRight;
   final bool isCornerLeft;
-  final Color? highlightColor;
+  final List<ParticipantInfo>? sortedParticipants;
   final void Function(int beatIndex, String chord)? onChordChanged;
   final void Function(int beatIndex)? onChordDeleted;
   final void Function(int beatIndex, String chord)? onPassingChordChanged;
@@ -49,7 +53,8 @@ class BarWidget extends StatelessWidget {
     final String? userId = FirebaseAuth.instance.currentUser?.uid;
 
     if (pId != null && cId != null && sId != null && bId != null && userId != null) {
-      await FirebaseDatabase.instance.ref('playback_sessions/$pId/editing/$userId').set({
+      // ignore: unawaited_futures
+      FirebaseDatabase.instance.ref('playback_sessions/$pId/editing/$userId').set({
         'barPath': '$cId/$sId/$bId',
         'timestamp': ServerValue.timestamp,
       });
@@ -113,12 +118,35 @@ class BarWidget extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
-    int beats = 4;
-    final parts = timeSig.split('/');
-    if (parts.isNotEmpty) {
-      beats = int.tryParse(parts[0]) ?? 4;
+  Widget build(BuildContext context, WidgetRef ref) {
+    Color? highlightColor;
+    final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+
+    if (projectID != null && canvasID != null && sectionID != null && barID != null) {
+      final barPath = '$canvasID/$sectionID/$barID';
+      final editorUid = ref.watch(
+        editingPresenceProvider(projectID!).select((presence) {
+          final data = presence.value ?? {};
+          for (final entry in data.entries) {
+            if (entry.key != currentUserId && entry.value == barPath) {
+              return entry.key;
+            }
+          }
+          return null;
+        }),
+      );
+
+      if (editorUid != null && sortedParticipants != null) {
+        final index = sortedParticipants!.indexWhere((p) => p.uid == editorUid);
+        if (index != -1) {
+          highlightColor = CollabColors.getColor(index);
+        }
+      }
     }
+
+    final parts = timeSig.split('/');
+    final defaultBeats = parts.isNotEmpty ? (int.tryParse(parts[0]) ?? 4) : 4;
+    final int beats = (chords != null && chords!.isNotEmpty) ? chords!.length : defaultBeats;
 
     return Material(
       color: highlightColor?.withValues(alpha: 0.15) ?? AppStyles.white,
