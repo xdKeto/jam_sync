@@ -49,6 +49,4 @@ app.*.map.json
 # Misc Documents
 *.pdf
 *.csv
-riverpod_setup.md
-PRD - Aplikasi Skripsi.md
 *.md
