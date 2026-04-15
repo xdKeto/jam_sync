@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jam_sync/features/score_canvas/providers/canvas_provider.dart';
 import 'package:jam_sync/features/score_canvas/widgets/playback/playback_cursor.dart';
+import 'package:jam_sync/features/score_canvas/widgets/playback/zoom_controller.dart';
 import 'package:jam_sync/shared/utils/playback_layout.dart';
 import 'package:jam_sync/features/score_canvas/widgets/playback/playback_section_widget.dart';
 import 'package:jam_sync/shared/models/section_model.dart';
@@ -12,7 +13,7 @@ class PlaybackCanvas extends ConsumerStatefulWidget {
   final String canvasID;
   final double scrollOffset;
   final int currentIndex;
-  final String zoomMode;
+  final PlaybackZoomMode zoomMode;
   final bool isPlaying;
 
   const PlaybackCanvas({
@@ -31,6 +32,41 @@ class PlaybackCanvas extends ConsumerStatefulWidget {
 
 class _PlaybackCanvasState extends ConsumerState<PlaybackCanvas> {
   Map<String, int> sectionRowCount = {};
+  ScrollController? vScrollController;
+  ScrollController? hScrollController;
+  ZoomController? zoomController;
+
+  @override
+  void initState() {
+    super.initState();
+    vScrollController = ScrollController();
+    hScrollController = ScrollController();
+    zoomController = ZoomController();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      initZoomController();
+    });
+  }
+
+  @override
+  void dispose() {
+    vScrollController?.dispose();
+    hScrollController?.dispose();
+    zoomController?.dispose();
+    super.dispose();
+  }
+
+  void initZoomController() {
+    final size = MediaQuery.of(context).size;
+    zoomController?.updateScreenSize(size.width, size.height);
+
+    if (vScrollController != null) {
+      zoomController?.initVScrollController(vScrollController!);
+    }
+    if (hScrollController != null) {
+      zoomController?.initHScrollController(hScrollController!);
+    }
+  }
 
   void computeSectionRowCount(List<SectionModel> sections) {
     sectionRowCount = {
@@ -70,14 +106,17 @@ class _PlaybackCanvasState extends ConsumerState<PlaybackCanvas> {
     if (sections.isEmpty) return 0;
 
     final location = locateBar(barIndex, sections);
+    // final rowsBefore = rowsBeforeSection(location.section, sections);
+    // final sectionRows = sectionRowCount[location.section.id] ?? 0;
 
     double y = 0;
     for (final section in sections) {
       if (section.id == location.section.id) break;
-      final sectionRows = sectionRowCount[section.id] ?? 0;
-      y += PlaybackLayout.sectionHeaderHeight +
+      final rows = sectionRowCount[section.id] ?? 0;
+      y +=
+          PlaybackLayout.sectionHeaderHeight +
           12 +
-          sectionRows * PlaybackLayout.rowHeight +
+          rows * PlaybackLayout.rowHeight +
           PlaybackLayout.sectionSpacing;
     }
 
@@ -124,41 +163,71 @@ class _PlaybackCanvasState extends ConsumerState<PlaybackCanvas> {
         final cursorY = computeCursorY(barIndex, sections);
         final cursorX = computeCursorX(location.barWithinRow);
 
-        return SingleChildScrollView(
-          padding: const EdgeInsets.all(PlaybackLayout.canvasPadding),
-          child: SizedBox(
-            width: PlaybackLayout.canvasWidth,
-            child: Stack(
-              children: [
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: sections.map((section) {
-                    return PlaybackSectionWidget(
-                      projectID: widget.projectID,
-                      canvasID: widget.canvasID,
-                      timeSignature: timeSignature,
-                      section: section,
-                      isFirst: section == sections.first,
-                      barWidth: PlaybackLayout.barWidth,
-                    );
-                  }).toList(),
-                ),
-                Positioned(
-                  left: cursorX - (PlaybackLayout.cursorWidth / 2),
-                  top: cursorY - (PlaybackLayout.barHeight / 2),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    curve: Curves.easeOut,
-                    child: PlaybackCursor(
-                      barHeight: PlaybackLayout.barHeight,
-                      isPlaying: widget.isPlaying,
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              zoomController?.updateScreenSize(constraints.maxWidth, constraints.maxHeight);
+            });
+
+            final canvasWidth = zoomController?.canvasWidth ?? PlaybackLayout.canvasWidth;
+            final isHorizontal = zoomController?.isHorizontalScroll ?? false;
+
+            if (widget.isPlaying) {
+              zoomController?.scrollToBar(cursor: cursorY, isVertical: true);
+              if (zoomController?.mode == PlaybackZoomMode.cursorToFollow) {
+                zoomController?.scrollToBar(cursor: cursorX, isVertical: false);
+              }
+            }
+
+            Widget canvas = SingleChildScrollView(
+              controller: vScrollController,
+              padding: const EdgeInsets.all(PlaybackLayout.canvasPadding),
+              child: SizedBox(
+                width: canvasWidth,
+                child: Stack(
+                  children: [
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: sections.map((section) {
+                        return PlaybackSectionWidget(
+                          projectID: widget.projectID,
+                          canvasID: widget.canvasID,
+                          timeSignature: timeSignature,
+                          section: section,
+                          isFirst: section == sections.first,
+                          barWidth: PlaybackLayout.barWidth,
+                        );
+                      }).toList(),
                     ),
-                  ),
+                    Positioned(
+                      left: cursorX - (PlaybackLayout.cursorWidth / 2),
+                      top: cursorY - (PlaybackLayout.barHeight / 2),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        curve: Curves.easeOut,
+                        child: PlaybackCursor(
+                          barHeight: PlaybackLayout.barHeight,
+                          isPlaying: widget.isPlaying,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ),
+              ),
+            );
+
+            if (isHorizontal) {
+              canvas = SingleChildScrollView(
+                controller: hScrollController,
+                scrollDirection: Axis.horizontal,
+                physics: ClampingScrollPhysics(),
+                child: canvas,
+              );
+            }
+
+            return canvas;
+          },
         );
       },
     );
