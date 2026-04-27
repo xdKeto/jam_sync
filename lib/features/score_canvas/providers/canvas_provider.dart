@@ -2,13 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jam_sync/shared/models/canvas_model.dart';
 import 'package:jam_sync/shared/models/section_model.dart';
 import 'package:jam_sync/shared/models/bar_model.dart';
-import 'package:jam_sync/shared/models/project_model.dart';
 import 'package:jam_sync/shared/repositories/project_repository.dart';
-
-final projectStreamProvider = StreamProvider.family<ProjectModel, String>((ref, projectID) {
-  final repository = ref.watch(projectRepositoryProvider);
-  return repository.streamProject(projectID);
-});
 
 final canvasesStreamProvider = StreamProvider.family<List<CanvasModel>, String>((ref, projectID) {
   final repository = ref.watch(projectRepositoryProvider);

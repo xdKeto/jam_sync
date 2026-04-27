@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jam_sync/features/auth/providers/auth_provider.dart';
 import 'package:jam_sync/shared/utils/app_styles.dart';
 import 'package:jam_sync/shared/utils/gap_helper.dart';
-import 'package:jam_sync/shared/widgets/participant_avatar.dart';
+import 'package:jam_sync/shared/widgets/avatar_stack.dart';
 
 class ProjectCard extends ConsumerWidget {
   final String title;
@@ -64,34 +64,10 @@ class ProjectCard extends ConsumerWidget {
               4.width,
               Text(timeAgo, style: AppStyles.bodySmall(context)),
               const Spacer(),
-              _buildAvatarStack(),
+              AvatarStack(participants: participants),
             ],
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildAvatarStack() {
-    const double avatarSize = 28;
-    const double overlap = 10;
-    final int count = participants.length;
-
-    if (count == 0) return const SizedBox.shrink();
-
-    final double totalWidth = avatarSize + (count - 1) * (avatarSize - overlap);
-
-    return SizedBox(
-      width: totalWidth,
-      height: avatarSize,
-      child: Stack(
-        children: List.generate(count, (index) {
-          final uid = participants[index];
-          return Positioned(
-            left: index * (avatarSize - overlap),
-            child: ParticipantAvatar(uid: uid, size: avatarSize),
-          );
-        }),
       ),
     );
   }

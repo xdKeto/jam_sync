@@ -7,7 +7,8 @@ import 'package:jam_sync/features/score_canvas/providers/room_provider.dart';
 import 'package:jam_sync/shared/repositories/project_repository.dart';
 import 'package:jam_sync/shared/utils/app_styles.dart';
 import 'package:jam_sync/shared/utils/gap_helper.dart';
-import 'package:jam_sync/shared/widgets/participant_avatar.dart';
+import 'package:jam_sync/shared/widgets/avatar_stack.dart';
+import 'package:jam_sync/shared/widgets/dialog_helpers.dart';
 
 class ProjectListCard extends ConsumerWidget {
   final String projectId;
@@ -61,27 +62,13 @@ class ProjectListCard extends ConsumerWidget {
                   icon: const Icon(Icons.more_vert, color: AppStyles.grey500),
                   onSelected: (value) async {
                     if (value == 'delete') {
-                      final confirm = await showDialog<bool>(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                          title: const Text('Delete Project'),
-                          content: const Text(
-                            'Are you sure you want to delete this project? This action cannot be undone.',
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(context, false),
-                              child: const Text('Cancel'),
-                            ),
-                            TextButton(
-                              onPressed: () => Navigator.pop(context, true),
-                              child: const Text('Delete', style: TextStyle(color: Colors.red)),
-                            ),
-                          ],
-                        ),
+                      final confirm = await showDeleteDialog(
+                        context,
+                        title: 'Delete Project',
+                        content: 'Are you sure you want to delete this project? This action cannot be undone.',
                       );
 
-                      if (confirm == true) {
+                      if (confirm) {
                         final roomState = ref.read(roomProvider);
                         if (roomState.roomID == projectId) {
                           ref.read(roomProvider.notifier).leaveRoom();
@@ -125,34 +112,10 @@ class ProjectListCard extends ConsumerWidget {
               4.width,
               Text(timeAgo, style: AppStyles.bodySmall(context)),
               const Spacer(),
-              Padding(padding: const EdgeInsets.only(right: 8.0), child: _buildAvatarStack()),
+              Padding(padding: const EdgeInsets.only(right: 8.0), child: AvatarStack(participants: participants)),
             ],
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildAvatarStack() {
-    const double avatarSize = 28;
-    const double overlap = 10;
-    final int count = participants.length;
-
-    if (count == 0) return const SizedBox.shrink();
-
-    final double totalWidth = avatarSize + (count - 1) * (avatarSize - overlap);
-
-    return SizedBox(
-      width: totalWidth,
-      height: avatarSize,
-      child: Stack(
-        children: List.generate(count, (index) {
-          final uid = participants[index];
-          return Positioned(
-            left: index * (avatarSize - overlap),
-            child: ParticipantAvatar(uid: uid, size: avatarSize),
-          );
-        }),
       ),
     );
   }

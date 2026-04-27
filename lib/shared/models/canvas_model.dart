@@ -52,16 +52,18 @@ Map<String, dynamic> canvasToFirestore(CanvasModel canvas) {
 }
 
 int beatsPerBar(String timeSignature) {
-  switch (timeSignature) {
-    case '2/4':
-      return 2;
-    case '3/4':
-      return 3;
-    case '4/4':
-      return 4;
-    case '6/8':
-      return 6;
-    default:
-      return 4;
+  final parts = timeSignature.split('/');
+  if (parts.length != 2) return 4;
+
+  final numerator = int.tryParse(parts[0]) ?? 4;
+  final denominator = int.tryParse(parts[1]) ?? 4;
+
+  // Compound meter: denominator is 8 AND numerator is divisible by 3.
+  // In compound meter, the beat is a dotted note = 3 subdivisions.
+  // e.g. 6/8 = 2 dotted-quarter beats, 9/8 = 3, 12/8 = 4.
+  if (denominator == 8 && numerator % 3 == 0) {
+    return numerator ~/ 3;
   }
+
+  return numerator;
 }
