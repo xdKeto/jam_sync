@@ -69,7 +69,7 @@ class _ProfileFormScreenState extends ConsumerState<ProfileFormScreen> {
   Widget build(BuildContext context) {
     return BackgroundGradient(
       child: Scaffold(
-        backgroundColor: AppStyles.lightTeal,
+        backgroundColor: Colors.transparent,
         body: SafeArea(
           child: Padding(
             padding: EdgeInsets.all(24),

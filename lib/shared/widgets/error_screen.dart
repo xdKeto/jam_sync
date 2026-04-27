@@ -16,7 +16,7 @@ class ErrorScreenState extends State<ErrorScreen> {
   Widget build(BuildContext context) {
     return BackgroundGradient(
       child: Scaffold(
-        backgroundColor: AppStyles.lightTeal,
+        backgroundColor: Colors.transparent,
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24.0),

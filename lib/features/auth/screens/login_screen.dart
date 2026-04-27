@@ -41,7 +41,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       children: [
         BackgroundGradient(
           child: Scaffold(
-            backgroundColor: AppStyles.lightTeal,
+            backgroundColor: Colors.transparent,
             body: Padding(
               padding: const EdgeInsets.all(24.0),
               child: Center(
