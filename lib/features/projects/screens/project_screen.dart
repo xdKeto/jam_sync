@@ -61,9 +61,9 @@ class ProjectScreen extends ConsumerWidget {
                                           bottom: 10,
                                         ),
                                           child: ProjectListCard(
-                                            projectId: p.id,
+                                            projectID: p.id,
                                             title: p.title,
-                                            creatorId: p.createdBy,
+                                            creatorID: p.createdBy,
                                             roomCode: p.roomCode,
                                             timeAgo: timeAgoFromDate(
                                               p.createdAt ?? DateTime.now(),

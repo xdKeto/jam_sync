@@ -11,18 +11,18 @@ import 'package:jam_sync/shared/widgets/avatar_stack.dart';
 import 'package:jam_sync/shared/widgets/dialog_helpers.dart';
 
 class ProjectListCard extends ConsumerWidget {
-  final String projectId;
+  final String projectID;
   final String title;
-  final String creatorId;
+  final String creatorID;
   final String roomCode;
   final String timeAgo;
   final List<String> participants;
 
   const ProjectListCard({
     super.key,
-    required this.projectId,
+    required this.projectID,
     required this.title,
-    required this.creatorId,
+    required this.creatorID,
     required this.roomCode,
     required this.timeAgo,
     required this.participants,
@@ -30,13 +30,14 @@ class ProjectListCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final creatorData = ref.watch(userProvider(creatorId));
+    final creatorData = ref.watch(userProvider(creatorID));
     final creatorName = creatorData.when(
       data: (data) => data?['displayName'] as String? ?? 'Unknown User',
       loading: () => '...',
       error: (_, _) => 'Error',
     );
-
+    final currentUser = ref.watch(authStateProvider).value?.uid;
+    
     return Container(
       padding: const EdgeInsets.only(top: 16, bottom: 16, left: 16, right: 8),
       decoration: AppStyles.whiteBox(),
@@ -65,34 +66,39 @@ class ProjectListCard extends ConsumerWidget {
                       final confirm = await showDeleteDialog(
                         context,
                         title: 'Delete Project',
-                        content: 'Are you sure you want to delete this project? This action cannot be undone.',
+                        content:
+                            'Are you sure you want to delete this project? This action cannot be undone.',
                       );
 
                       if (confirm) {
                         final roomState = ref.read(roomProvider);
-                        if (roomState.roomID == projectId) {
+                        if (roomState.roomID == projectID) {
                           ref.read(roomProvider.notifier).leaveRoom();
                         }
-                        ref.invalidate(canvasesStreamProvider(projectId));
-                        await ref.read(projectRepositoryProvider).deleteProject(projectId);
+                        ref.invalidate(canvasesStreamProvider(projectID));
+                        await ref.read(projectRepositoryProvider).deleteProject(projectID);
 
                         if (!context.mounted) return;
                         ref.invalidate(projectsProvider);
                       }
                     }
                   },
-                  itemBuilder: (BuildContext context) => [
-                    const PopupMenuItem(
-                      value: 'delete',
-                      child: Row(
-                        children: [
-                          Icon(Icons.delete, color: Colors.red, size: 20),
-                          SizedBox(width: 8),
-                          Text('Delete', style: TextStyle(color: Colors.red)),
-                        ],
+                  itemBuilder: (BuildContext context) {
+                    if (currentUser != creatorID) return [];
+
+                    return [
+                      const PopupMenuItem(
+                        value: 'delete',
+                        child: Row(
+                          children: [
+                            Icon(Icons.delete, color: Colors.red, size: 20),
+                            SizedBox(width: 8),
+                            Text('Delete', style: TextStyle(color: Colors.red)),
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+                    ];
+                  },
                 ),
               ),
             ],
@@ -112,7 +118,10 @@ class ProjectListCard extends ConsumerWidget {
               4.width,
               Text(timeAgo, style: AppStyles.bodySmall(context)),
               const Spacer(),
-              Padding(padding: const EdgeInsets.only(right: 8.0), child: AvatarStack(participants: participants)),
+              Padding(
+                padding: const EdgeInsets.only(right: 8.0),
+                child: AvatarStack(participants: participants),
+              ),
             ],
           ),
         ],

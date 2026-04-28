@@ -55,6 +55,7 @@ dependencies:
   iconsax_flutter: ^1.0.1
   syncfusion_flutter_sliders: ^32.2.9
   quickalert: ^1.1.0
+  flutter_launcher_icons: ^0.14.4
 
 dev_dependencies:
   flutter_test:
@@ -83,6 +84,11 @@ flutter_native_splash:
     image: assets/images/splash_image2.png
   ios: true
   web: false
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/icon/app_icon.png"
 
 # The following section is specific to Flutter packages.
 flutter:
