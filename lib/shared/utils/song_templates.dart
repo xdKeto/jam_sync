@@ -1,4 +1,8 @@
-const songTemplates = [
+import 'dart:convert';
+import 'package:flutter/foundation.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+List<Map<String, dynamic>> songTemplates = [
   {
     "id": "kj415",
     "name": "KJ 415 - Gembala Baik",
@@ -175,162 +179,19 @@ const songTemplates = [
       },
     ],
   },
-  {
-    "id": "nkb210",
-    "name": "NKB 210 - Kuutus Kau",
-    "description": "NKB 210",
-    "canvas": {"title": "NKB 210", "tempo": 80, "timeSignature": "4/4", "type": "manual"},
-    "sections": [
-      {
-        "name": "Intro",
-        "order": 0,
-        "bars": [
-          {
-            "chords": ["", "", "", ""],
-          },
-          {
-            "chords": ["F", "", "", ""],
-          },
-          {
-            "chords": ["Dm", "", "", ""],
-          },
-          {
-            "chords": ["Gm", "", "", ""],
-          },
-          {
-            "chords": ["C", "", "", ""],
-          },
-        ],
-      },
-      {
-        "name": "Verse 1",
-        "order": 1,
-        "bars": [
-          {
-            "chords": ["F", "", "", ""],
-          },
-          {
-            "chords": ["C", "", "", ""],
-          },
-          {
-            "chords": ["Gm", "", "C", ""],
-          },
-          {
-            "chords": ["F", "", "", ""],
-          },
-          {
-            "chords": ["Cm", "", "F", ""],
-          },
-          {
-            "chords": ["Bb", "", "", ""],
-          },
-          {
-            "chords": ["C", "", "", ""],
-          },
-          {
-            "chords": ["F", "", "C", ""],
-          },
-        ],
-      },
-      {
-        "name": "Verse 2",
-        "order": 2,
-        "bars": [
-          {
-            "chords": ["F", "", "", ""],
-          },
-          {
-            "chords": ["C", "", "", ""],
-          },
-          {
-            "chords": ["Gm", "", "C", ""],
-          },
-          {
-            "chords": ["F", "", "", ""],
-          },
-          {
-            "chords": ["Cm", "", "F", ""],
-          },
-          {
-            "chords": ["Bb", "", "", ""],
-          },
-          {
-            "chords": ["C", "", "", ""],
-          },
-          {
-            "chords": ["F", "", "C", ""],
-          },
-        ],
-      },
-      {
-        "name": "Interlude",
-        "order": 3,
-        "bars": [
-          {
-            "chords": ["F", "", "", ""],
-          },
-          {
-            "chords": ["Dm", "", "", ""],
-          },
-          {
-            "chords": ["Gm", "", "", ""],
-          },
-          {
-            "chords": ["C", "", "D", ""],
-          },
-        ],
-      },
-      {
-        "name": "Verse 3",
-        "order": 4,
-        "bars": [
-          {
-            "chords": ["G", "", "", ""],
-          },
-          {
-            "chords": ["D", "", "", ""],
-          },
-          {
-            "chords": ["Am", "", "D", ""],
-          },
-          {
-            "chords": ["G", "", "", ""],
-          },
-          {
-            "chords": ["Dm", "", "G", ""],
-          },
-          {
-            "chords": ["C", "", "", ""],
-          },
-          {
-            "chords": ["D", "", "", ""],
-          },
-          {
-            "chords": ["G", "", "", ""],
-          },
-        ],
-      },
-      {
-        "name": "Ending",
-        "order": 5,
-        "bars": [
-          {
-            "chords": ["G", "", "", ""],
-          },
-          {
-            "chords": ["Em", "", "", ""],
-          },
-          {
-            "chords": ["Am", "", "", ""],
-          },
-          {
-            "chords": ["D", "", "", ""],
-          },
-          {
-            "chords": ["G", "", "", ""],
-          },
-        ],
-      },
-    ],
-  },
 ];
+
+Future<void> loadSongTemplatesFromSupabase() async {
+  try {
+    final response = await Supabase.instance.client.storage
+        .from('song-template')
+        .download('song_templates.json');
+
+    final jsonString = utf8.decode(response);
+    final List<dynamic> decoded = json.decode(jsonString);
+
+    songTemplates = decoded.cast<Map<String, dynamic>>();
+  } catch (e) {
+    debugPrint(e.toString());
+  }
+}
