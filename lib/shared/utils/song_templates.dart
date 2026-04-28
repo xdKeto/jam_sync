@@ -1,0 +1,336 @@
+const songTemplates = [
+  {
+    "id": "kj415",
+    "name": "KJ 415 - Gembala Baik",
+    "description": "Kidung Jemaat 415",
+    "canvas": {"title": "KJ 415", "tempo": 75, "timeSignature": "4/4", "type": "manual"},
+    "sections": [
+      {
+        "name": "Intro",
+        "order": 0,
+        "bars": [
+          {
+            "chords": ["", "", "", ""],
+          },
+          {
+            "chords": ["C#m", "", "G#m", ""],
+          },
+          {
+            "chords": ["F#m", "", "", ""],
+          },
+          {
+            "chords": ["C#m", "", "G#m", ""],
+          },
+          {
+            "chords": ["D", "", "", ""],
+          },
+          {
+            "chords": ["B", "", "", ""],
+          },
+        ],
+      },
+      {
+        "name": "Verse 1",
+        "order": 1,
+        "bars": [
+          {
+            "chords": ["E", "", "", ""],
+          },
+          {
+            "chords": ["A", "", "", ""],
+          },
+          {
+            "chords": ["G#m", "", "C#m", ""],
+          },
+          {
+            "chords": ["D", "", "B", ""],
+          },
+          {
+            "chords": ["E", "", "", ""],
+          },
+          {
+            "chords": ["A", "", "", ""],
+          },
+          {
+            "chords": ["F#m", "", "B", ""],
+          },
+          {
+            "chords": ["E", "", "E7", ""],
+          },
+        ],
+      },
+      {
+        "name": "Chorus 1",
+        "order": 2,
+        "bars": [
+          {
+            "chords": ["A", "", "", ""],
+          },
+          {
+            "chords": ["G#m", "", "C#m", ""],
+          },
+          {
+            "chords": ["F#m", "", "B", ""],
+          },
+          {
+            "chords": ["E", "", "E7", ""],
+          },
+          {
+            "chords": ["A", "", "", ""],
+          },
+          {
+            "chords": ["G#m", "", "C#m", ""],
+          },
+          {
+            "chords": ["F#m", "", "B", ""],
+          },
+          {
+            "chords": ["E", "", "E7", ""],
+          },
+        ],
+      },
+      {
+        "name": "Intro",
+        "order": 3,
+        "bars": [
+          {
+            "chords": ["C#m", "", "G#m", ""],
+          },
+          {
+            "chords": ["F#m", "", "", ""],
+          },
+          {
+            "chords": ["C#m", "", "G#m", ""],
+          },
+          {
+            "chords": ["D", "", "", ""],
+          },
+          {
+            "chords": ["B", "", "", ""],
+          },
+        ],
+      },
+      {
+        "name": "Verse 2",
+        "order": 4,
+        "bars": [
+          {
+            "chords": ["E", "", "", ""],
+          },
+          {
+            "chords": ["A", "", "", ""],
+          },
+          {
+            "chords": ["G#m", "", "C#m", ""],
+          },
+          {
+            "chords": ["D", "", "B", ""],
+          },
+          {
+            "chords": ["E", "", "", ""],
+          },
+          {
+            "chords": ["A", "", "", ""],
+          },
+          {
+            "chords": ["F#m", "", "B", ""],
+          },
+          {
+            "chords": ["E", "", "E7", ""],
+          },
+        ],
+      },
+      {
+        "name": "Chorus 2",
+        "order": 5,
+        "bars": [
+          {
+            "chords": ["A", "", "", ""],
+          },
+          {
+            "chords": ["G#m", "", "C#m", ""],
+          },
+          {
+            "chords": ["F#m", "", "B", ""],
+          },
+          {
+            "chords": ["E", "", "E7", ""],
+          },
+          {
+            "chords": ["A", "", "", ""],
+          },
+          {
+            "chords": ["G#m", "", "C#m", ""],
+          },
+          {
+            "chords": ["F#m", "", "B", ""],
+          },
+          {
+            "chords": ["E", "", "", ""],
+          },
+          {
+            "chords": ["E", "", "", ""],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    "id": "nkb210",
+    "name": "NKB 210 - Kuutus Kau",
+    "description": "NKB 210",
+    "canvas": {"title": "NKB 210", "tempo": 80, "timeSignature": "4/4", "type": "manual"},
+    "sections": [
+      {
+        "name": "Intro",
+        "order": 0,
+        "bars": [
+          {
+            "chords": ["", "", "", ""],
+          },
+          {
+            "chords": ["F", "", "", ""],
+          },
+          {
+            "chords": ["Dm", "", "", ""],
+          },
+          {
+            "chords": ["Gm", "", "", ""],
+          },
+          {
+            "chords": ["C", "", "", ""],
+          },
+        ],
+      },
+      {
+        "name": "Verse 1",
+        "order": 1,
+        "bars": [
+          {
+            "chords": ["F", "", "", ""],
+          },
+          {
+            "chords": ["C", "", "", ""],
+          },
+          {
+            "chords": ["Gm", "", "C", ""],
+          },
+          {
+            "chords": ["F", "", "", ""],
+          },
+          {
+            "chords": ["Cm", "", "F", ""],
+          },
+          {
+            "chords": ["Bb", "", "", ""],
+          },
+          {
+            "chords": ["C", "", "", ""],
+          },
+          {
+            "chords": ["F", "", "C", ""],
+          },
+        ],
+      },
+      {
+        "name": "Verse 2",
+        "order": 2,
+        "bars": [
+          {
+            "chords": ["F", "", "", ""],
+          },
+          {
+            "chords": ["C", "", "", ""],
+          },
+          {
+            "chords": ["Gm", "", "C", ""],
+          },
+          {
+            "chords": ["F", "", "", ""],
+          },
+          {
+            "chords": ["Cm", "", "F", ""],
+          },
+          {
+            "chords": ["Bb", "", "", ""],
+          },
+          {
+            "chords": ["C", "", "", ""],
+          },
+          {
+            "chords": ["F", "", "C", ""],
+          },
+        ],
+      },
+      {
+        "name": "Interlude",
+        "order": 3,
+        "bars": [
+          {
+            "chords": ["F", "", "", ""],
+          },
+          {
+            "chords": ["Dm", "", "", ""],
+          },
+          {
+            "chords": ["Gm", "", "", ""],
+          },
+          {
+            "chords": ["C", "", "D", ""],
+          },
+        ],
+      },
+      {
+        "name": "Verse 3",
+        "order": 4,
+        "bars": [
+          {
+            "chords": ["G", "", "", ""],
+          },
+          {
+            "chords": ["D", "", "", ""],
+          },
+          {
+            "chords": ["Am", "", "D", ""],
+          },
+          {
+            "chords": ["G", "", "", ""],
+          },
+          {
+            "chords": ["Dm", "", "G", ""],
+          },
+          {
+            "chords": ["C", "", "", ""],
+          },
+          {
+            "chords": ["D", "", "", ""],
+          },
+          {
+            "chords": ["G", "", "", ""],
+          },
+        ],
+      },
+      {
+        "name": "Ending",
+        "order": 5,
+        "bars": [
+          {
+            "chords": ["G", "", "", ""],
+          },
+          {
+            "chords": ["Em", "", "", ""],
+          },
+          {
+            "chords": ["Am", "", "", ""],
+          },
+          {
+            "chords": ["D", "", "", ""],
+          },
+          {
+            "chords": ["G", "", "", ""],
+          },
+        ],
+      },
+    ],
+  },
+];
