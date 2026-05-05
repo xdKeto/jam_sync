@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jam_sync/features/auth/providers/auth_provider.dart';
 import 'package:jam_sync/features/home/providers/projects_provider.dart';
-import 'package:jam_sync/features/home/widgets/home_top_bar.dart';
 import 'package:jam_sync/features/home/widgets/project_card.dart';
 import 'package:jam_sync/features/home/widgets/user_card.dart';
 import 'package:jam_sync/features/score_canvas/providers/room_provider.dart';
@@ -27,7 +26,6 @@ class HomeScreen extends ConsumerWidget {
     return BackgroundGradient(
       child: Scaffold(
         backgroundColor: Colors.transparent,
-        appBar: HomeTopBar(),
         body: SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(8.0),

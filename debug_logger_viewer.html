@@ -108,7 +108,8 @@
         <button onclick="showSection('session')" style="margin-bottom: 15px;">← Back to Devices</button>
         <div class="info-grid" id="log-info"></div>
         <div class="copy-section">
-            <button onclick="copyLogsAsCSV()">Copy</button>
+            <button onclick="copyLogsPosition()">Copy Position</button>
+            <button onclick="copyLogsSequence()">Copy Sequence Index</button>
         </div>
         <div id="logs-table-container"></div>
     </div>
@@ -406,7 +407,7 @@
             showSection('logs');
         }
 
-        function copyLogsAsCSV() {
+        function copyLogsPosition() {
             if (!selectedDevice) {
                 alert('Please select a device first');
                 return;
@@ -417,6 +418,21 @@
             let csv = '';
             deviceLogs.forEach(log => {
                 csv += (log.currentPosition ?? '') + '\n';
+            });
+            navigator.clipboard.writeText(csv).then(() => alert('Copied ' + deviceLogs.length + ' entries!')).catch(() => alert('Failed to copy'));
+        }
+
+        function copyLogsSequence() {
+            if (!selectedDevice) {
+                alert('Please select a device first');
+                return;
+            }
+            const deviceLogs = allLogs
+                .filter(l => l.client === selectedDevice)
+                .sort((a, b) => (a.logSequence || 0) - (b.logSequence || 0));
+            let csv = '';
+            deviceLogs.forEach(log => {
+                csv += (log.logSequence ?? '') + '\n';
             });
             navigator.clipboard.writeText(csv).then(() => alert('Copied ' + deviceLogs.length + ' entries!')).catch(() => alert('Failed to copy'));
         }
