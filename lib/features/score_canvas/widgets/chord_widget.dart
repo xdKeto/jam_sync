@@ -23,7 +23,7 @@ class ChordWidget extends StatelessWidget {
     for (int i = 0; i < chord.length; i++) {
       String char = chord[i];
 
-      // A-G atau / (bass note separator) -> teks besar
+      // main alfabet -> besar
       if (RegExp(r'[A-G/]').hasMatch(char)) {
         spans.add(
           TextSpan(
@@ -36,7 +36,7 @@ class ChordWidget extends StatelessWidget {
           ),
         );
       }
-      // # (sharp) atau b (flat) -> agak ke atas dan lebih rapat (nyelip)
+      // # atau b
       else if (char == '#' || char == 'b') {
         final displayChar = char == '#' ? '♯' : '♭';
         spans.add(
@@ -57,7 +57,7 @@ class ChordWidget extends StatelessWidget {
           ),
         );
       }
-      // Modifiers lainnya (m, dim, maj, 7, dll) -> normal, teks kecil
+      // modifiers
       else {
         spans.add(
           TextSpan(
