@@ -1,0 +1,284 @@
+========================================================================================================================
+ANALISIS KOMPREHENSIF - 10 FILE CSV PENGUJIAN TEKNIS (MAD)
+========================================================================================================================
+
+RINGKASAN PER FILE:
+------------------------------------------------------------------------------------------------------------------------
+Label                                 Mean MAD   Median     Best    Worst   StdDev  <=30ms  <=20ms  <=10ms  Spikes
+------------------------------------------------------------------------------------------------------------------------
+RAW - Mobile Data                        18.11    15.21     8.35    37.09     9.00  13/15   11/15    1/15       97
+RAW - WiFi                               13.35    11.41     3.90    30.20     8.10  14/15   12/15    5/15       33
+NTP+BG - Data, No Resync                 13.75    10.87     4.78    29.50     7.60  15/15   11/15    7/15       14
+NTP only - Data, No Resync               16.47    12.51     5.29    34.73     8.97  13/15   11/15    4/15       85
+NTP only - WiFi, No Resync               16.20    14.24     7.14    36.38     7.39  14/15   12/15    2/15       47
+NTP+BG - WiFi, No Resync                 13.36    14.94     4.62    24.92     6.01  15/15   13/15    5/15        4
+NTP+BG+Resync - Data                     18.45    15.69     6.49    34.88     9.77  12/15    9/15    5/15      114
+NTP+Resync - Data, No BG                 17.67    19.24     5.12    37.68     9.57  13/15    9/15    5/15       75
+NTP+Resync - WiFi, No BG                 11.38     9.52     3.98    27.61     6.49  15/15   13/15    9/15       18
+NTP+BG+Resync - WiFi                     12.36    10.03     3.69    30.25     6.72  14/15   13/15    7/15       19
+
+========================================================================================================================
+PERBANDINGAN GRUP:
+========================================================================================================================
+
+--- RAW Mobile Data (1 file, 15 tables total) ---
+  Grand Mean MAD:    18.11 ms
+  Grand Median MAD:  15.21 ms
+  Range:             8.35 - 37.09 ms
+  Tables <= 30ms:    13/15 (86.7%)
+  Tables <= 20ms:    11/15 (73.3%)
+  Tables <= 10ms:    1/15 (6.7%)
+
+--- RAW WiFi (1 file, 15 tables total) ---
+  Grand Mean MAD:    13.35 ms
+  Grand Median MAD:  11.41 ms
+  Range:             3.90 - 30.20 ms
+  Tables <= 30ms:    14/15 (93.3%)
+  Tables <= 20ms:    12/15 (80.0%)
+  Tables <= 10ms:    5/15 (33.3%)
+
+--- NTP-based Mobile Data (4 file, 60 tables total) ---
+  Grand Mean MAD:    16.58 ms
+  Grand Median MAD:  15.40 ms
+  Range:             4.78 - 37.68 ms
+  Tables <= 30ms:    53/60 (88.3%)
+  Tables <= 20ms:    40/60 (66.7%)
+  Tables <= 10ms:    21/60 (35.0%)
+
+--- NTP-based WiFi (4 file, 60 tables total) ---
+  Grand Mean MAD:    13.32 ms
+  Grand Median MAD:  12.85 ms
+  Range:             3.69 - 36.38 ms
+  Tables <= 30ms:    58/60 (96.7%)
+  Tables <= 20ms:    51/60 (85.0%)
+  Tables <= 10ms:    23/60 (38.3%)
+
+========================================================================================================================
+DETAIL PER TABLE - SEMUA FILE:
+========================================================================================================================
+
+--- RAW - Mobile Data (Pengujian Teknis (MAD) - RawData.csv) ---
+  Table           MAD   Spikes      Drift Status         
+  ------------------------------------------------------------
+  table1        16.49        0       0.02 OK             
+  table11       10.72        0       0.01 OK             
+  table2        11.73        0       0.03 OK             
+  table12       17.09        0       0.08 OK             
+  table3        19.38        0       0.11 OK             
+  table13       37.08       40       0.02 OVER 30ms (SPIKE:40)
+  table4        12.21        0       0.04 OK             
+  table14       20.51        0      -0.02 OK             
+  table5        15.21        0       0.05 OK             
+  table15       13.27        0       0.08 OK             
+  table6         8.35        0       0.05 OK             
+  table7        11.71        0      -0.03 OK             
+  table8        11.12        0      -0.07 OK             
+  table9        37.09       39       0.01 OVER 30ms (SPIKE:39)
+  table10       29.76       18      -0.06 OK (SPIKE:18)  
+
+--- RAW - WiFi (Pengujian Teknis (MAD) - RawWIFI.csv) ---
+  Table           MAD   Spikes      Drift Status         
+  ------------------------------------------------------------
+  table1         8.92        0       0.15 OK             
+  table11       18.28        0      -0.08 OK             
+  table2         4.59        0       0.01 OK             
+  table12        4.18        0      -0.02 OK             
+  table3        10.81        0      -0.01 OK             
+  table13       11.66        0      -0.10 OK             
+  table4        18.38        0       0.00 OK             
+  table14       10.29        0       0.04 OK             
+  table5         3.90        0       0.07 OK             
+  table15       30.20       20      -0.20 OVER 30ms (SPIKE:20)
+  table6        24.21        4      -0.08 OK (SPIKE:4)   
+  table7        26.46        9      -0.11 OK (SPIKE:9)   
+  table8        11.41        0       0.11 OK             
+  table9         5.16        0       0.00 OK             
+  table10       11.82        0      -0.09 OK             
+
+--- NTP+BG - Data, No Resync (NEW - Pengujian Teknis (MAD) - NoResyncDataBackground.csv) ---
+  Table           MAD   Spikes      Drift Status         
+  ------------------------------------------------------------
+  table1         4.78        0      -0.03 OK             
+  table11        5.76        0      -0.02 OK             
+  table2         9.91        0      -0.07 OK             
+  table12       22.15        0      -0.06 OK             
+  table3        16.70        0       0.03 OK             
+  table13       18.91        0       0.00 OK             
+  table4         5.69        0      -0.11 OK             
+  table14       10.87        0       0.00 OK             
+  table5         8.11        0       0.00 OK             
+  table15       22.38        0       0.08 OK             
+  table6        23.05        0      -0.04 OK             
+  table7         6.11        0      -0.03 OK             
+  table8         8.27        0       0.00 OK             
+  table9        14.00        0       0.01 OK             
+  table10       29.50       14       0.07 OK (SPIKE:14)  
+
+--- NTP only - Data, No Resync (NEW - Pengujian Teknis (MAD) - NoResyncDataNoBackground.csv) ---
+  Table           MAD   Spikes      Drift Status         
+  ------------------------------------------------------------
+  table1        12.51        0      -0.01 OK             
+  table11       10.17        0      -0.08 OK             
+  table2        34.73       37       0.08 OVER 30ms (SPIKE:37)
+  table12        9.07        0       0.03 OK             
+  table3         7.93        0       0.09 OK             
+  table13       31.32       31       0.03 OVER 30ms (SPIKE:31)
+  table4        29.95       17       0.09 OK (SPIKE:17)  
+  table14       11.25        0       0.01 OK             
+  table5        15.40        0       0.04 OK             
+  table15        5.29        0      -0.04 OK             
+  table6        16.77        0      -0.03 OK             
+  table7        23.60        0      -0.03 OK             
+  table8        11.58        0       0.05 OK             
+  table9        18.43        0       0.01 OK             
+  table10        8.98        0      -0.13 OK             
+
+--- NTP only - WiFi, No Resync (NEW - Pengujian Teknis (MAD) - NoResyncWifiNoBackground.csv) ---
+  Table           MAD   Spikes      Drift Status         
+  ------------------------------------------------------------
+  table1        12.29        0       0.00 OK             
+  table11       10.37        0      -0.11 OK             
+  table2        11.52        0      -0.01 OK             
+  table12       14.24        0      -0.14 OK             
+  table3         7.61        0      -0.05 OK             
+  table13       36.38       41       0.09 OVER 30ms (SPIKE:41)
+  table4        13.31        0       0.10 OK             
+  table14       14.70        0       0.00 OK             
+  table5        12.02        0      -0.07 OK             
+  table15        7.14        0      -0.03 OK             
+  table6        25.54        6      -0.03 OK (SPIKE:6)   
+  table7        17.14        0       0.00 OK             
+  table8        23.34        0       0.01 OK             
+  table9        19.28        0      -0.03 OK             
+  table10       18.18        0       0.05 OK             
+
+--- NTP+BG - WiFi, No Resync (NEW - Pengujian Teknis (MAD) - NoResyncWifiWithBackground.csv) ---
+  Table           MAD   Spikes      Drift Status         
+  ------------------------------------------------------------
+  table1        12.94        0      -0.02 OK             
+  table11       16.38        0       0.09 OK             
+  table2        24.92        1       0.04 OK (SPIKE:1)   
+  table12       15.73        0      -0.13 OK             
+  table3         7.14        0      -0.01 OK             
+  table13       14.94        0       0.10 OK             
+  table4        15.34        0       0.18 OK             
+  table14        4.78        0       0.03 OK             
+  table5         4.62        0       0.09 OK             
+  table15        9.79        0       0.04 OK             
+  table6        15.12        0       0.00 OK             
+  table7        15.99        0      -0.01 OK             
+  table8        23.85        3      -0.01 OK (SPIKE:3)   
+  table9        13.50        0      -0.03 OK             
+  table10        5.32        0      -0.05 OK             
+
+--- NTP+BG+Resync - Data (NEW - Pengujian Teknis (MAD) - ResyncWithDataBackground.csv) ---
+  Table           MAD   Spikes      Drift Status         
+  ------------------------------------------------------------
+  table1        34.88       39      -0.05 OVER 30ms (SPIKE:39)
+  table11        6.49        0      -0.02 OK             
+  table2        33.37       33      -0.03 OVER 30ms (SPIKE:33)
+  table12        8.58        0       0.00 OK             
+  table3         8.47        0       0.01 OK             
+  table13       23.09        1      -0.01 OK (SPIKE:1)   
+  table4         7.10        0      -0.03 OK             
+  table14       13.58        0      -0.09 OK             
+  table5        14.72        0       0.03 OK             
+  table15       15.69        0       0.00 OK             
+  table6        24.18        1      -0.12 OK (SPIKE:1)   
+  table7         8.43        0      -0.01 OK             
+  table8        29.37       19      -0.04 OK (SPIKE:19)  
+  table9        18.07        0       0.04 OK             
+  table10       30.69       21       0.01 OVER 30ms (SPIKE:21)
+
+--- NTP+Resync - Data, No BG (NEW - Pengujian Teknis (MAD) - ResyncWithDataNoBackground.csv) ---
+  Table           MAD   Spikes      Drift Status         
+  ------------------------------------------------------------
+  table1        19.34        0      -0.10 OK             
+  table11       15.73        0       0.05 OK             
+  table2         6.74        0       0.05 OK             
+  table12       26.40        3      -0.05 OK (SPIKE:3)   
+  table3        31.13       24      -0.15 OVER 30ms (SPIKE:24)
+  table13       26.57        7       0.02 OK (SPIKE:7)   
+  table4        20.22        0       0.09 OK             
+  table14       21.15        0       0.09 OK             
+  table5        37.68       41      -0.08 OVER 30ms (SPIKE:41)
+  table15        8.46        0      -0.01 OK             
+  table6         9.26        0       0.05 OK             
+  table7         5.33        0       0.13 OK             
+  table8         5.12        0      -0.03 OK             
+  table9        12.65        0       0.08 OK             
+  table10       19.24        0       0.06 OK             
+
+--- NTP+Resync - WiFi, No BG (NEW - Pengujian Teknis (MAD) - ResyncWithWifiNoBackground.csv) ---
+  Table           MAD   Spikes      Drift Status         
+  ------------------------------------------------------------
+  table1         9.52        0      -0.02 OK             
+  table11        7.21        0      -0.02 OK             
+  table2         4.12        0      -0.01 OK             
+  table12        6.85        0       0.01 OK             
+  table3        27.61       12       0.03 OK (SPIKE:12)  
+  table13        6.24        6      -0.03 OK (SPIKE:6)   
+  table4         9.70        0       0.07 OK             
+  table14        3.98        0      -0.04 OK             
+  table5        18.50        0      -0.04 OK             
+  table15       12.85        0      -0.02 OK             
+  table6        20.20        0      -0.04 OK             
+  table7         5.58        0       0.01 OK             
+  table8        14.29        0      -0.01 OK             
+  table9         9.15        0       0.03 OK             
+  table10       14.87        0       0.10 OK             
+
+--- NTP+BG+Resync - WiFi (NEW - Pengujian Teknis (MAD) - ResyncWithWifiWithBackground.csv) ---
+  Table           MAD   Spikes      Drift Status         
+  ------------------------------------------------------------
+  table1         8.22        0      -0.12 OK             
+  table11       12.44        0      -0.09 OK             
+  table2        19.38        0       0.01 OK             
+  table12       12.27        0       0.08 OK             
+  table3         7.93        0       0.01 OK             
+  table13        5.81        0       0.03 OK             
+  table4         7.83        0      -0.01 OK             
+  table14       10.03        0      -0.06 OK             
+  table5        21.74        0      -0.02 OK             
+  table15        8.59        0       0.10 OK             
+  table6        13.59        0      -0.03 OK             
+  table7        30.25       19      -0.07 OVER 30ms (SPIKE:19)
+  table8         8.50        0       0.17 OK             
+  table9         3.69        0      -0.01 OK             
+  table10       15.13        0       0.08 OK             
+
+========================================================================================================================
+ANALISIS HEAD-TO-HEAD: RAW vs NTP (Mobile Data)
+========================================================================================================================
+
+  RAW Mobile Data:    Mean=18.11ms, Median=15.21ms, n=15
+  NTP Mobile Data:    Mean=16.58ms, Median=15.40ms, n=60
+  Perbaikan Mean:     1.53ms
+  RAW <=30ms:         13/15 (86.7%)
+  NTP <=30ms:         53/60 (88.3%)
+
+========================================================================================================================
+ANALISIS HEAD-TO-HEAD: RAW vs NTP (WiFi)
+========================================================================================================================
+
+  RAW WiFi:           Mean=13.35ms, Median=11.41ms, n=15
+  NTP WiFi:           Mean=13.32ms, Median=12.85ms, n=60
+  Perbaikan Mean:     0.03ms
+  RAW <=30ms:         14/15 (93.3%)
+  NTP <=30ms:         58/60 (96.7%)
+
+========================================================================================================================
+ANALISIS DAMPAK BACKGROUND CALIBRATION (Mobile Data, No Resync)
+========================================================================================================================
+
+  Dengan BG Cal:      Mean=13.75ms, Median=10.87ms
+  Tanpa BG Cal:       Mean=16.47ms, Median=12.51ms
+  Selisih Mean:       2.72ms
+
+========================================================================================================================
+ANALISIS DAMPAK RESYNC (Mobile Data)
+========================================================================================================================
+
+  Dengan Resync:      Mean=16.58ms, n=60
+  Tanpa Resync:       Mean=15.11ms, n=30
+  Selisih:            -1.48ms

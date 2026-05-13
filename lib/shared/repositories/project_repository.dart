@@ -8,13 +8,16 @@ import 'package:jam_sync/shared/models/canvas_model.dart';
 import 'package:jam_sync/shared/models/section_model.dart';
 import 'package:jam_sync/shared/models/bar_model.dart';
 
+final _forceServerFetch = GetOptions(source: Source.server);
+
+// sistem batching, add banyak, commit firebase
 class ProjectRepository {
   final FirebaseFirestore _firestore;
 
   ProjectRepository({FirebaseFirestore? firestore})
     : _firestore = firestore ?? FirebaseFirestore.instance;
 
-  CollectionReference get _projectsRef => _firestore.collection('projects');
+  CollectionReference get projectsRef => _firestore.collection('projects'); //project
 
   String generateRoomCode() {
     final uuid = const Uuid().v4();
@@ -22,17 +25,19 @@ class ProjectRepository {
     return (hash % 900000 + 100000).toString();
   }
 
+  // PROJECTS BATCHING
   Future<String> createProject({
     required String title,
     required String songTitle,
     required double tempo,
     required String timeSignature,
     required bool useTemplate,
+    Map<String, dynamic>? songTemplate,
   }) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) throw Exception('User not logged in');
 
-    final projectRef = _projectsRef.doc();
+    final projectRef = projectsRef.doc();
     final projectId = projectRef.id;
 
     final project = ProjectModel(
@@ -68,7 +73,11 @@ class ProjectRepository {
     });
 
     if (useTemplate) {
-      addTemplateSections(batch, canvasRef, timeSignature);
+      if (songTemplate != null) {
+        addSongTemplateSections(batch, canvasRef, songTemplate, timeSignature);
+      } else {
+        addTemplateSections(batch, canvasRef, timeSignature);
+      }
     }
 
     await batch.commit();
@@ -108,11 +117,52 @@ class ProjectRepository {
     }
   }
 
+  void addSongTemplateSections(
+    WriteBatch batch,
+    DocumentReference canvasRef,
+    Map<String, dynamic> songTemplate,
+    String timeSignature,
+  ) {
+    final sections = songTemplate['sections'] as List<dynamic>;
+
+    for (final sectionData in sections) {
+      final sectionMap = sectionData as Map<String, dynamic>;
+      final bars = sectionMap['bars'] as List<dynamic>;
+
+      final sectionRef = canvasRef.collection('sections').doc();
+      final section = SectionModel(
+        id: sectionRef.id,
+        name: sectionMap['name'] as String,
+        order: sectionMap['order'] as int,
+        barCount: bars.length,
+        startBar: 0,
+      );
+
+      batch.set(sectionRef, sectionToFirestore(section));
+
+      for (int i = 0; i < bars.length; i++) {
+        final barData = bars[i] as Map<String, dynamic>;
+        final barChords = barData['chords'] as List<dynamic>;
+
+        final barRef = sectionRef.collection('bars').doc();
+        final bar = BarModel(
+          id: barRef.id,
+          index: i,
+          chords: barChords.map((e) => e.toString()).toList(),
+        );
+
+        batch.set(barRef, {...barToFirestore(bar), 'updatedAt': FieldValue.serverTimestamp()});
+      }
+    }
+  }
+
+  // STREAM GET METHODS
+  // stream, realtime referenced ke provider
   Future<List<ProjectModel>> getUserProjects() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) throw Exception('User not logged in');
 
-    final snapshot = await _projectsRef
+    final snapshot = await projectsRef
         .where('participants', arrayContains: user.uid)
         .orderBy('updatedAt', descending: true)
         .get();
@@ -121,20 +171,20 @@ class ProjectRepository {
   }
 
   Future<ProjectModel> getProject(String projectId) async {
-    final doc = await _projectsRef.doc(projectId).get();
+    final doc = await projectsRef.doc(projectId).get();
     if (!doc.exists) throw Exception('Project not found');
     return ProjectModel.fromFirestore(doc);
   }
 
-  Stream<ProjectModel> streamProject(String projectId) {
-    return _projectsRef.doc(projectId).snapshots().map((doc) {
-      if (!doc.exists) throw Exception('Project not found');
-      return ProjectModel.fromFirestore(doc);
-    });
-  }
+  // Stream<ProjectModel> streamProject(String projectId) {
+  //   return projectsRef.doc(projectId).snapshots().map((doc) {
+  //     if (!doc.exists) throw Exception('Project not found');
+  //     return ProjectModel.fromFirestore(doc);
+  //   });
+  // }
 
   Stream<List<CanvasModel>> streamCanvases(String projectId) {
-    return _projectsRef
+    return projectsRef
         .doc(projectId)
         .collection('canvases')
         .orderBy('order')
@@ -144,7 +194,7 @@ class ProjectRepository {
   }
 
   Stream<List<SectionModel>> streamSections(String projectId, String canvasId) {
-    return _projectsRef
+    return projectsRef
         .doc(projectId)
         .collection('canvases')
         .doc(canvasId)
@@ -154,8 +204,19 @@ class ProjectRepository {
         .map((snapshot) => snapshot.docs.map((doc) => SectionModel.fromFirestore(doc)).toList());
   }
 
+  Future<List<SectionModel>> getSections(String projectId, String canvasId) async {
+    final snapshot = await projectsRef
+        .doc(projectId)
+        .collection('canvases')
+        .doc(canvasId)
+        .collection('sections')
+        .orderBy('order')
+        .get(_forceServerFetch);
+    return snapshot.docs.map((doc) => SectionModel.fromFirestore(doc)).toList();
+  }
+
   Stream<List<BarModel>> streamBars(String projectId, String canvasId, String sectionId) {
-    return _projectsRef
+    return projectsRef
         .doc(projectId)
         .collection('canvases')
         .doc(canvasId)
@@ -167,20 +228,34 @@ class ProjectRepository {
         .map((snapshot) => snapshot.docs.map((doc) => BarModel.fromFirestore(doc)).toList());
   }
 
+  Future<List<BarModel>> getBars(String projectId, String canvasId, String sectionId) async {
+    final snapshot = await projectsRef
+        .doc(projectId)
+        .collection('canvases')
+        .doc(canvasId)
+        .collection('sections')
+        .doc(sectionId)
+        .collection('bars')
+        .orderBy('index')
+        .get();
+    return snapshot.docs.map((doc) => BarModel.fromFirestore(doc)).toList();
+  }
+
   Future<List<CanvasModel>> getCanvases(String projectId) async {
-    final snapshot = await _projectsRef
+    final snapshot = await projectsRef
         .doc(projectId)
         .collection('canvases')
         .orderBy('order')
-        .get();
+        .get(_forceServerFetch);
     return snapshot.docs.map((doc) => CanvasModel.fromFirestore(doc)).toList();
   }
 
+  // join
   Future<ProjectModel> joinRoom(String roomCode) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) throw Exception('User not logged in');
 
-    final snapshot = await _projectsRef
+    final snapshot = await projectsRef
         .where('roomCode', isEqualTo: roomCode.trim())
         .limit(1)
         .get();
@@ -202,8 +277,9 @@ class ProjectRepository {
     return project;
   }
 
+  // delete
   Future<void> deleteProject(String projectId) async {
-    final doc = await _projectsRef.doc(projectId).get();
+    final doc = await projectsRef.doc(projectId).get();
     if (doc.exists) {
       final project = ProjectModel.fromFirestore(doc);
       final roomCode = project.roomCode;
@@ -212,11 +288,12 @@ class ProjectRepository {
       await rtdb.child('rooms/$roomCode').remove();
       await rtdb.child('playback_sessions/$projectId').remove();
     }
-    await _projectsRef.doc(projectId).delete();
+    await projectsRef.doc(projectId).delete();
   }
 
-  // chord stuff
+  // CHORD STUFF
   Future<void> updateBarChord({
+    
     required String projectID,
     required String canvasID,
     required String sectionID,
@@ -225,7 +302,7 @@ class ProjectRepository {
     required String chord,
     required String userID,
   }) async {
-    final barRef = _projectsRef
+    final barRef = projectsRef
         .doc(projectID)
         .collection('canvases')
         .doc(canvasID)
@@ -236,7 +313,7 @@ class ProjectRepository {
 
     final doc = await barRef.get();
     final chords = List<String>.from(doc.data()?['chords'] ?? []);
-    if (beatIndex < chords.length) chords[beatIndex] = chord;
+    if (beatIndex < chords.length) chords[beatIndex] = chord; //cek index
 
     await barRef.update({
       'chords': chords,
@@ -253,7 +330,7 @@ class ProjectRepository {
     required int beatIndex,
     required String userID,
   }) async {
-    final barRef = _projectsRef
+    final barRef = projectsRef
         .doc(projectID)
         .collection('canvases')
         .doc(canvasID)
@@ -282,7 +359,7 @@ class ProjectRepository {
     required String chord,
     required String userID,
   }) async {
-    final barRef = _projectsRef
+    final barRef = projectsRef
         .doc(projectID)
         .collection('canvases')
         .doc(canvasID)
@@ -294,8 +371,9 @@ class ProjectRepository {
     final doc = await barRef.get();
     final chords = List<String>.from(doc.data()?['passingChord'] ?? []);
     final mainChords = List<dynamic>.from(doc.data()?['chords'] ?? []);
+    
+    // nosql, 
     final targetLength = mainChords.length > beatIndex ? mainChords.length : beatIndex + 1;
-
     while (chords.length < targetLength) {
       chords.add('');
     }
@@ -317,7 +395,7 @@ class ProjectRepository {
     required int beatIndex,
     required String userID,
   }) async {
-    final barRef = _projectsRef
+    final barRef = projectsRef
         .doc(projectID)
         .collection('canvases')
         .doc(canvasID)
@@ -329,8 +407,8 @@ class ProjectRepository {
     final doc = await barRef.get();
     final chords = List<String>.from(doc.data()?['passingChord'] ?? []);
     final mainChords = List<dynamic>.from(doc.data()?['chords'] ?? []);
-    final targetLength = mainChords.length > beatIndex ? mainChords.length : beatIndex + 1;
 
+    final targetLength = mainChords.length > beatIndex ? mainChords.length : beatIndex + 1;
     while (chords.length < targetLength) {
       chords.add('');
     }
@@ -344,7 +422,7 @@ class ProjectRepository {
     });
   }
 
-  // section steuff
+  // SECTION STUFF
   Future<void> addSection({
     required String projectID,
     required String canvasID,
@@ -355,7 +433,7 @@ class ProjectRepository {
     required String timeSignature,
   }) async {
     final batch = _firestore.batch();
-    final sectionRef = _projectsRef
+    final sectionRef = projectsRef
         .doc(projectID)
         .collection('canvases')
         .doc(canvasID)
@@ -395,7 +473,7 @@ class ProjectRepository {
     required String sectionID,
     required Map<String, dynamic> data,
   }) async {
-    await _projectsRef
+    await projectsRef
         .doc(projectID)
         .collection('canvases')
         .doc(canvasID)
@@ -409,7 +487,7 @@ class ProjectRepository {
     required String canvasID,
     required String sectionID,
   }) async {
-    final sectionRef = _projectsRef
+    final sectionRef = projectsRef
         .doc(projectID)
         .collection('canvases')
         .doc(canvasID)
@@ -435,46 +513,46 @@ class ProjectRepository {
     final batch = _firestore.batch();
     int runningStartBar = 0;
     for (int i = 0; i < reordered.length; i++) {
-      final section = reordered[i];
-      final ref = _projectsRef
+      final section = reordered[i]; //set index
+      final ref = projectsRef
           .doc(projectID)
           .collection('canvases')
           .doc(canvasID)
           .collection('sections')
           .doc(section.id);
 
-      batch.update(ref, {'order': i, 'startBar': runningStartBar});
+      batch.update(ref, {'order': i, 'startBar': runningStartBar}); //update index
 
       runningStartBar += section.barCount;
     }
     await batch.commit();
   }
 
-  Future<void> recalculateSectionMetadata({
-    required String projectID,
-    required String canvasID,
-  }) async {
-    final sectionsSnap = await _projectsRef
-        .doc(projectID)
-        .collection('canvases')
-        .doc(canvasID)
-        .collection('sections')
-        .orderBy('order')
-        .get();
+  // Future<void> recalculateSectionMetadata({
+  //   required String projectID,
+  //   required String canvasID,
+  // }) async {
+  //   final sectionsSnap = await projectsRef
+  //       .doc(projectID)
+  //       .collection('canvases')
+  //       .doc(canvasID)
+  //       .collection('sections')
+  //       .orderBy('order')
+  //       .get();
 
-    final batch = _firestore.batch();
-    int runningStart = 0;
+  //   final batch = _firestore.batch();
+  //   int runningStart = 0;
 
-    for (final doc in sectionsSnap.docs) {
-      final barsCount = await doc.reference.collection('bars').count().get();
-      final count = barsCount.count ?? 0;
-      batch.update(doc.reference, {'startBar': runningStart, 'barCount': count});
-      runningStart += count;
-    }
-    await batch.commit();
-  }
+  //   for (final doc in sectionsSnap.docs) {
+  //     final barsCount = await doc.reference.collection('bars').count().get();
+  //     final count = barsCount.count ?? 0;
+  //     batch.update(doc.reference, {'startBar': runningStart, 'barCount': count});
+  //     runningStart += count;
+  //   }
+  //   await batch.commit();
+  // }
 
-  //  bar stuefff
+  // BAR STUFF
   Future<void> addBar({
     required String projectID,
     required String canvasID,
@@ -483,13 +561,14 @@ class ProjectRepository {
     required int beatCount,
     required String timeSignature,
   }) async {
-    final sectionRef = _projectsRef
+    final sectionRef = projectsRef
         .doc(projectID)
         .collection('canvases')
         .doc(canvasID)
         .collection('sections')
         .doc(sectionID);
 
+    // bar kosong
     final empty = List.filled(beatCount, '');
     final barRef = sectionRef.collection('bars').doc();
 
@@ -508,7 +587,7 @@ class ProjectRepository {
     required String sectionID,
     required String barID,
   }) async {
-    final sectionRef = _projectsRef
+    final sectionRef = projectsRef
         .doc(projectID)
         .collection('canvases')
         .doc(canvasID)
@@ -530,7 +609,7 @@ class ProjectRepository {
     final batch = _firestore.batch();
     for (int i = 0; i < reordered.length; i++) {
       final bar = reordered[i];
-      final ref = _projectsRef
+      final ref = projectsRef
           .doc(projectID)
           .collection('canvases')
           .doc(canvasID)
@@ -554,7 +633,7 @@ class ProjectRepository {
     required List<String> currentPassing,
     required String userID,
   }) async {
-    final barRef = _projectsRef
+    final barRef = projectsRef
         .doc(projectID)
         .collection('canvases')
         .doc(canvasID)
@@ -581,6 +660,102 @@ class ProjectRepository {
       'updatedBy': userID,
       'updatedAt': FieldValue.serverTimestamp(),
     });
+  }
+
+  // CANVAS PARTITUR
+  Future<CanvasModel> createCanvas({
+    required String projectID,
+    required String title,
+    required double tempo,
+    required String timeSignature,
+    String type = 'manual',
+    bool createEmptySections = true,
+    Map<String, dynamic>? songTemplate,
+  }) async {
+    final projectRef = projectsRef.doc(projectID);
+    final canvasRef = projectRef.collection('canvases').doc();
+
+    final existingCanvases = await getCanvases(projectID);
+    final order = existingCanvases.length;
+
+    final canvas = CanvasModel(
+      id: canvasRef.id,
+      title: title,
+      order: order,
+      tempo: tempo,
+      timeSignature: timeSignature,
+      type: type,
+    );
+
+    final batch = _firestore.batch();
+
+    batch.set(canvasRef, {
+      ...canvasToFirestore(canvas),
+      'createdAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+
+    if (songTemplate != null) {
+      addSongTemplateSections(batch, canvasRef, songTemplate, timeSignature);
+    } else if (createEmptySections) {
+      addTemplateSections(batch, canvasRef, timeSignature);
+    }
+
+    await batch.commit();
+    return canvas;
+  }
+
+  Future<void> deleteCanvas({
+    required String projectID,
+    required String canvasID,
+  }) async {
+    final canvasRef = projectsRef.doc(projectID).collection('canvases').doc(canvasID);
+
+    final sectionsSnap = await canvasRef.collection('sections').get();
+    final batch = _firestore.batch();
+
+    for (final sectionDoc in sectionsSnap.docs) {
+      final barsSnap = await sectionDoc.reference.collection('bars').get();
+      for (final barDoc in barsSnap.docs) {
+        batch.delete(barDoc.reference);
+      }
+      batch.delete(sectionDoc.reference);
+    }
+
+    batch.delete(canvasRef);
+    await batch.commit();
+
+    await reorderCanvases(projectID);
+  }
+
+  // reorder list
+  Future<void> reorderCanvases(String projectID) async {
+    final canvases = await getCanvases(projectID);
+    if (canvases.isEmpty) return;
+
+    final batch = _firestore.batch();
+    for (int i = 0; i < canvases.length; i++) {
+      batch.update(
+        projectsRef.doc(projectID).collection('canvases').doc(canvases[i].id),
+        {'order': i},
+      );
+    }
+    await batch.commit();
+  }
+
+  Future<void> updateCanvasTempo({
+    required String projectID,
+    required String canvasID,
+    required int tempo,
+  }) async {
+    await projectsRef
+        .doc(projectID)
+        .collection('canvases')
+        .doc(canvasID)
+        .update({
+          'tempo': tempo,
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
   }
 }
 
