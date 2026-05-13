@@ -176,13 +176,6 @@ class ProjectRepository {
     return ProjectModel.fromFirestore(doc);
   }
 
-  // Stream<ProjectModel> streamProject(String projectId) {
-  //   return projectsRef.doc(projectId).snapshots().map((doc) {
-  //     if (!doc.exists) throw Exception('Project not found');
-  //     return ProjectModel.fromFirestore(doc);
-  //   });
-  // }
-
   Stream<List<CanvasModel>> streamCanvases(String projectId) {
     return projectsRef
         .doc(projectId)
@@ -527,30 +520,6 @@ class ProjectRepository {
     }
     await batch.commit();
   }
-
-  // Future<void> recalculateSectionMetadata({
-  //   required String projectID,
-  //   required String canvasID,
-  // }) async {
-  //   final sectionsSnap = await projectsRef
-  //       .doc(projectID)
-  //       .collection('canvases')
-  //       .doc(canvasID)
-  //       .collection('sections')
-  //       .orderBy('order')
-  //       .get();
-
-  //   final batch = _firestore.batch();
-  //   int runningStart = 0;
-
-  //   for (final doc in sectionsSnap.docs) {
-  //     final barsCount = await doc.reference.collection('bars').count().get();
-  //     final count = barsCount.count ?? 0;
-  //     batch.update(doc.reference, {'startBar': runningStart, 'barCount': count});
-  //     runningStart += count;
-  //   }
-  //   await batch.commit();
-  // }
 
   // BAR STUFF
   Future<void> addBar({
