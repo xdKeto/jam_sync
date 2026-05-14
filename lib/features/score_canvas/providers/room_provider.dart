@@ -63,8 +63,7 @@ class RoomNotifier extends StateNotifier<RoomState> {
   final DatabaseReference rtdb = FirebaseDatabase.instance.ref();
   StreamSubscription? roomSubscription;
   Timer? latencyTimer;
-  
-  // user ping checker
+
   static const bool latencyProbe = true;
   String? probeProjectID;
   String? probeUserID;
@@ -75,7 +74,7 @@ class RoomNotifier extends StateNotifier<RoomState> {
   void listenToRoom(String roomID) {
     roomSubscription?.cancel();
 
-    roomSubscription = rtdb.child('playback_sessions/$roomID').onValue.listen((event) { //subscribe, listen onvalue
+    roomSubscription = rtdb.child('playback_sessions/$roomID').onValue.listen((event) {
       if (!event.snapshot.exists) {
         stopListen();
         return;
@@ -91,10 +90,7 @@ class RoomNotifier extends StateNotifier<RoomState> {
 
       // case kalo tengah playback crash, tpi node nya masih nyala di rtdb
       if (isPlaying == false && (serverStartTime as int? ?? 0) > 0) {
-        rtdb.child('playback_sessions/$roomID').update({
-          'serverStartTime': 0,
-          'isPlaying': false,
-        });
+        rtdb.child('playback_sessions/$roomID').update({'serverStartTime': 0, 'isPlaying': false});
         state = state.copyWith(serverStartTime: 0);
         return;
       }
@@ -122,9 +118,7 @@ class RoomNotifier extends StateNotifier<RoomState> {
         'isOnline': false,
         'latencyMs': 0,
       });
-
       rtdb.child('playback_sessions/$probeProjectID/editing/$probeUserID').remove();
-
       rtdb
           .child('playback_sessions/$probeProjectID/participants/$probeUserID/latencyProbe')
           .remove();
@@ -170,10 +164,10 @@ class RoomNotifier extends StateNotifier<RoomState> {
 
       await participantRef.onDisconnect().cancel();
       await participantRef.onDisconnect().update({'isOnline': false, 'isReady': false});
-      
+
       // re-cleanup, misal ada sisa idk
       final editingRef = rtdb.child('playback_sessions/$projectID/editing/$userID');
-      await editingRef.onDisconnect().cancel(); 
+      await editingRef.onDisconnect().cancel();
       await editingRef.onDisconnect().remove();
 
       state = state.copyWith(
@@ -311,8 +305,9 @@ class RoomNotifier extends StateNotifier<RoomState> {
     updates['playback_sessions/$roomID/viewers'] = null;
 
     // smua isReady = false
-    final participantsRef = FirebaseDatabase.instance.ref()
-        .child('playback_sessions/$roomID/participants');
+    final participantsRef = FirebaseDatabase.instance.ref().child(
+      'playback_sessions/$roomID/participants',
+    );
     final snapshot = await participantsRef.get();
     if (snapshot.exists) {
       final data = snapshot.value as Map<dynamic, dynamic>;
@@ -334,7 +329,7 @@ class RoomNotifier extends StateNotifier<RoomState> {
     await rtdb.child('playback_sessions/$roomID').update({
       'sectionsNeedRebuild': ServerValue.timestamp,
     });
- 
+
     await forceResetPlaybackState();
 
     // trigger stream partitur
@@ -344,6 +339,4 @@ class RoomNotifier extends StateNotifier<RoomState> {
       debugPrint('RoomNotifier invalidate eror: $e');
     }
   }
-
-  
 }

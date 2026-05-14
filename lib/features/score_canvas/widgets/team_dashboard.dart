@@ -285,7 +285,7 @@ class _TeamDashboardState extends ConsumerState<TeamDashboard> {
                     ),
               const SizedBox(height: 12),
             ],
-            intentState.state == IntentState.idle //default
+            intentState.state == IntentState.idle
                 ? GestureDetector(
                     onTap: () => intentController.sendIntent(),
                     child: TheButton(
@@ -294,7 +294,7 @@ class _TeamDashboardState extends ConsumerState<TeamDashboard> {
                       textColor: AppStyles.white,
                     ),
                   )
-                : intentState.state == IntentState.waiting //waitng
+                : intentState.state == IntentState.waiting
                 ? Row(
                     children: [
                       Expanded(
@@ -320,7 +320,7 @@ class _TeamDashboardState extends ConsumerState<TeamDashboard> {
                       ),
                     ],
                   )
-                : Row( //all ready
+                : Row( 
                     children: [
                       Expanded(
                         child: GestureDetector(
@@ -429,7 +429,6 @@ class _TeamDashboardState extends ConsumerState<TeamDashboard> {
     );
   }
 
-  // start
   Future<void> onStartPlayback(
     BuildContext context,
     PlaybackIntentController intentController,
@@ -438,7 +437,7 @@ class _TeamDashboardState extends ConsumerState<TeamDashboard> {
     final selectedCanvasId = intentController.selectedCanvasId;
     final selectedCanvasTitle = intentController.selectedCanvasTitle;
 
-    // fetch info, tmepo, section data
+    // fetch fetch
     final repository = ref.read(projectRepositoryProvider);
     final canvases = await repository.getCanvases(widget.projectID);
     final currentCanvas = canvases.where((c) => c.id == selectedCanvasId).firstOrNull;
@@ -455,9 +454,10 @@ class _TeamDashboardState extends ConsumerState<TeamDashboard> {
 
     intentController.resetIntent();
 
+    //leader only, member auto
     Navigator.push(
       context,
-      MaterialPageRoute( //leader only, member auto
+      MaterialPageRoute( 
         builder: (ctx) => PlaybackScreen(
           projectID: widget.projectID,
           canvasID: selectedCanvasId,
