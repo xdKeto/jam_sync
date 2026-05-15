@@ -183,7 +183,7 @@ class CircleOfFifthsPainter extends CustomPainter {
     final segmentAngle = 2 * pi / 12;
     final startOffset = -pi / 2 - segmentAngle / 2;
 
-    // Draw outer ring segments
+    // outer
     for (int i = 0; i < 12; i++) {
       final startAngle = startOffset + i * segmentAngle;
       final isHovered = hoveredOuterIndex == i;
@@ -217,14 +217,13 @@ class CircleOfFifthsPainter extends CustomPainter {
 
       canvas.drawPath(path, paint);
 
-      // Segment border
       final borderPaint = Paint()
         ..color = AppStyles.grey400
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1.0;
       canvas.drawPath(path, borderPaint);
 
-      // Text label
+      // label
       final midAngle = startAngle + segmentAngle / 2;
       final textRadius = (outerRadius + innerRadius) / 2;
       final textPos = Offset(
@@ -247,7 +246,7 @@ class CircleOfFifthsPainter extends CustomPainter {
       textPainter.paint(canvas, textPos - Offset(textPainter.width / 2, textPainter.height / 2));
     }
 
-    // Draw inner ring segments
+    // inner
     for (int i = 0; i < 12; i++) {
       final startAngle = startOffset + i * segmentAngle;
       final isHovered = hoveredInnerIndex == i;
@@ -284,7 +283,7 @@ class CircleOfFifthsPainter extends CustomPainter {
         ..strokeWidth = 1.0;
       canvas.drawPath(path, borderPaint);
 
-      // Text label
+      // label
       final midAngle = startAngle + segmentAngle / 2;
       final textRadius = (innerRadius + coreRadius) / 2;
       final textPos = Offset(
@@ -307,13 +306,13 @@ class CircleOfFifthsPainter extends CustomPainter {
       textPainter.paint(canvas, textPos - Offset(textPainter.width / 2, textPainter.height / 2));
     }
 
-    // Draw center hole
+    // center
     final corePaint = Paint()
       ..color = AppStyles.darkNavy
       ..style = PaintingStyle.fill;
     canvas.drawCircle(center, coreRadius, corePaint);
 
-    // Center label
+    // label
     final centerText = TextPainter(
       text: const TextSpan(
         text: 'Select\nRoot',

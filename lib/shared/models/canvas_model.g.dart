@@ -13,8 +13,6 @@ _CanvasModel _$CanvasModelFromJson(Map<String, dynamic> json) => _CanvasModel(
   tempo: (json['tempo'] as num).toDouble(),
   timeSignature: json['timeSignature'] as String,
   type: json['type'] as String? ?? 'manual',
-  audioUrl: json['audioUrl'] as String?,
-  extractionStatus: json['extractionStatus'] as String?,
   createdAt: json['createdAt'] == null
       ? null
       : DateTime.parse(json['createdAt'] as String),
@@ -31,8 +29,6 @@ Map<String, dynamic> _$CanvasModelToJson(_CanvasModel instance) =>
       'tempo': instance.tempo,
       'timeSignature': instance.timeSignature,
       'type': instance.type,
-      'audioUrl': instance.audioUrl,
-      'extractionStatus': instance.extractionStatus,
       'createdAt': instance.createdAt?.toIso8601String(),
       'updatedAt': instance.updatedAt?.toIso8601String(),
     };
