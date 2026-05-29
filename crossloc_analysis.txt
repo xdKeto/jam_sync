@@ -1,0 +1,78 @@
+========================================================================================================================
+ANALISIS CROSS-LOCATION vs SAME-LOCATION
+========================================================================================================================
+
+RINGKASAN PER FILE:
+------------------------------------------------------------------------------------------------------------------------
+Label                                      Mean MAD   Median     Best    Worst   StdDev  <=30ms  <=20ms  <=10ms  Spikes
+------------------------------------------------------------------------------------------------------------------------
+CrossLoc - Mobile Data (NTP+BG)               18.60    17.44     3.82    33.08     9.05  12/15    9/15    2/15       95
+CrossLoc - WiFi (NTP+BG)                      15.43    14.82     4.43    30.30     9.09  14/15   10/15    6/15       46
+SameLoc - Mobile Data (NTP+BG)                13.75    10.87     4.78    29.50     7.60  15/15   11/15    7/15       14
+SameLoc - WiFi (NTP+BG)                       13.36    14.94     4.62    24.92     6.01  15/15   13/15    5/15        4
+SameLoc - Mobile Data (RAW)                   18.11    15.21     8.35    37.09     9.00  13/15   11/15    1/15       97
+SameLoc - WiFi (RAW)                          13.35    11.41     3.90    30.20     8.10  14/15   12/15    5/15       33
+
+========================================================================================================================
+PERBANDINGAN LANGSUNG: CrossLoc vs SameLoc (konfigurasi sama: NTP+BG)
+========================================================================================================================
+
+--- Mobile Data ---
+  CrossLoc (NTP+BG):  Mean=18.60ms, Median=17.44ms, StdDev=9.05
+  SameLoc  (NTP+BG):  Mean=13.75ms, Median=10.87ms, StdDev=7.60
+  Selisih Mean:       +4.85ms
+  CrossLoc <=30ms:    12/15 (80.0%)
+  SameLoc  <=30ms:    15/15 (100.0%)
+  CrossLoc Spikes:    95
+  SameLoc  Spikes:    14
+
+--- WiFi ---
+  CrossLoc (NTP+BG):  Mean=15.43ms, Median=14.82ms, StdDev=9.09
+  SameLoc  (NTP+BG):  Mean=13.36ms, Median=14.94ms, StdDev=6.01
+  Selisih Mean:       +2.07ms
+  CrossLoc <=30ms:    14/15 (93.3%)
+  SameLoc  <=30ms:    15/15 (100.0%)
+  CrossLoc Spikes:    46
+  SameLoc  Spikes:    4
+
+========================================================================================================================
+DETAIL PER TABLE - CROSS-LOCATION FILES
+========================================================================================================================
+
+--- CrossLoc - Mobile Data (NTP+BG) (NEW - Pengujian Teknis (MAD) - CrossLocData.csv) ---
+  Table           MAD   Spikes      Drift Status              
+  ------------------------------------------------------------
+  table1        12.88        0      -0.08 OK                  
+  table11        3.82        0      -0.01 OK                  
+  table2        11.22        0       0.24 OK                  
+  table12       13.54        0       0.03 OK                  
+  table3         9.09        0      -0.06 OK                  
+  table13       22.80        0      -0.15 OK                  
+  table4        32.90       33       0.04 OVER 30ms (SPIKE:33)
+  table14       28.25        8      -0.11 OK (SPIKE:8)        
+  table5        17.44        0       0.02 OK                  
+  table15       10.55        0      -0.01 OK                  
+  table6        33.08       29       0.20 OVER 30ms (SPIKE:29)
+  table7        20.76        0       0.02 OK                  
+  table8        31.60       25       0.05 OVER 30ms (SPIKE:25)
+  table9        12.07        0      -0.09 OK                  
+  table10       18.94        0       0.14 OK                  
+
+--- CrossLoc - WiFi (NTP+BG) (NEW - Pengujian Teknis (MAD) - CrossLocWifi.csv) ---
+  Table           MAD   Spikes      Drift Status              
+  ------------------------------------------------------------
+  table1        20.54        0       0.07 OK                  
+  table11       26.21        2       0.01 OK (SPIKE:2)        
+  table2        30.30       20      -0.09 OVER 30ms (SPIKE:20)
+  table12       16.88        0       0.03 OK                  
+  table3        27.22        9       0.08 OK (SPIKE:9)        
+  table13       10.05        0      -0.10 OK                  
+  table4         5.74        0       0.07 OK                  
+  table14        9.73        0       0.12 OK                  
+  table5         4.66        0      -0.04 OK                  
+  table15       29.98       15       0.00 OK (SPIKE:15)       
+  table6        15.88        0      -0.03 OK                  
+  table7         6.25        0       0.16 OK                  
+  table8         4.43        0       0.02 OK                  
+  table9        14.82        0       0.09 OK                  
+  table10        8.74        0       0.00 OK                  

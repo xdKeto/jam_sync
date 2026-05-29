@@ -88,7 +88,7 @@ class RoomNotifier extends StateNotifier<RoomState> {
       final countdownBeats = data['countdownBeats'];
       final sessionId = data['sessionId'] as String?;
 
-      // case kalo tengah playback crash, tpi node nya masih nyala di rtdb
+      // case playback crash, tpi node nya masih nyala di rtdb
       if (isPlaying == false && (serverStartTime as int? ?? 0) > 0) {
         rtdb.child('playback_sessions/$roomID').update({'serverStartTime': 0, 'isPlaying': false});
         state = state.copyWith(serverStartTime: 0);
@@ -165,7 +165,7 @@ class RoomNotifier extends StateNotifier<RoomState> {
       await participantRef.onDisconnect().cancel();
       await participantRef.onDisconnect().update({'isOnline': false, 'isReady': false});
 
-      // re-cleanup, misal ada sisa idk
+      // re-cleanup, sisa idk
       final editingRef = rtdb.child('playback_sessions/$projectID/editing/$userID');
       await editingRef.onDisconnect().cancel();
       await editingRef.onDisconnect().remove();

@@ -8,7 +8,7 @@ import 'package:jam_sync/shared/models/canvas_model.dart';
 import 'package:jam_sync/shared/models/section_model.dart';
 import 'package:jam_sync/shared/models/bar_model.dart';
 
-final _forceServerFetch = GetOptions(source: Source.server);
+final forceServerFetch = GetOptions(source: Source.server);
 
 // sistem batching, add banyak, commit firebase
 class ProjectRepository {
@@ -176,6 +176,7 @@ class ProjectRepository {
     return ProjectModel.fromFirestore(doc);
   }
 
+  // ambil snapshot, not all data
   Stream<List<CanvasModel>> streamCanvases(String projectId) {
     return projectsRef
         .doc(projectId)
@@ -204,7 +205,7 @@ class ProjectRepository {
         .doc(canvasId)
         .collection('sections')
         .orderBy('order')
-        .get(_forceServerFetch);
+        .get(forceServerFetch);
     return snapshot.docs.map((doc) => SectionModel.fromFirestore(doc)).toList();
   }
 
@@ -239,7 +240,7 @@ class ProjectRepository {
         .doc(projectId)
         .collection('canvases')
         .orderBy('order')
-        .get(_forceServerFetch);
+        .get(forceServerFetch);
     return snapshot.docs.map((doc) => CanvasModel.fromFirestore(doc)).toList();
   }
 
@@ -365,7 +366,7 @@ class ProjectRepository {
     final chords = List<String>.from(doc.data()?['passingChord'] ?? []);
     final mainChords = List<dynamic>.from(doc.data()?['chords'] ?? []);
     
-    // nosql, 
+    // nosql, buat kosong dulu
     final targetLength = mainChords.length > beatIndex ? mainChords.length : beatIndex + 1;
     while (chords.length < targetLength) {
       chords.add('');

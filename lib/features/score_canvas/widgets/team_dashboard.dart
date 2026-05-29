@@ -61,7 +61,7 @@ class _TeamDashboardState extends ConsumerState<TeamDashboard> {
 
     final isLeader = roomState.leaderID == _userID;
 
-    final intentParams = PlaybackIntentParams(
+    final intentParams = PlaybackIntentParams( // intent
       roomID: widget.projectID,
       projectID: widget.projectID,
       defaultCanvasID: widget.canvasID,

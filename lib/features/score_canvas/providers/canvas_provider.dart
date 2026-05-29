@@ -4,6 +4,8 @@ import 'package:jam_sync/shared/models/section_model.dart';
 import 'package:jam_sync/shared/models/bar_model.dart';
 import 'package:jam_sync/shared/repositories/project_repository.dart';
 
+// PARTRUR STREAM PROVIDERS 
+
 final canvasesStreamProvider = StreamProvider.family<List<CanvasModel>, String>((ref, projectID) {
   final repository = ref.watch(projectRepositoryProvider);
   return repository.streamCanvases(projectID);

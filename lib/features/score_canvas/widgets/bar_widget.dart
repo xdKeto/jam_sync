@@ -150,7 +150,7 @@ class BarWidget extends ConsumerWidget {
           final data = presence.value ?? {};
           for (final i in data.entries) {
             if (i.key != currentUserId && i.value.barPath == barPath) {
-              return (uid: i.key, beatIndex: i.value.beatIndex);
+              return (uid: i.key, beatIndex: i.value.beatIndex); //id user, index yg lagi diedit
             }
           }
           return null;
