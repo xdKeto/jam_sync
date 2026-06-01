@@ -7,6 +7,7 @@ import 'package:jam_sync/shared/models/canvas_model.dart';
 import 'package:jam_sync/shared/utils/app_styles.dart';
 import 'package:jam_sync/shared/repositories/project_repository.dart';
 import 'package:jam_sync/features/score_canvas/widgets/add_bar_dialog.dart';
+import 'package:jam_sync/shared/widgets/dialog_helpers.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class EditSectionSheet extends ConsumerStatefulWidget {
@@ -32,25 +33,13 @@ class _EditSectionSheetState extends ConsumerState<EditSectionSheet> {
   Future<void> confirmDeleteBar(String barId, int index) async {
     if (selectedSection == null) return;
 
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Delete Bar', style: AppStyles.h3(context)),
-        content: Text(
-          'Delete Bar ${index + 1}? This cannot be undone.',
-          style: AppStyles.bodyMedium(context),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
+    final confirm = await showDeleteDialog(
+      context,
+      title: 'Delete Bar',
+      content: 'Delete Bar ${index + 1}? This cannot be undone.',
     );
 
-    if (confirm == true && mounted) {
+    if (confirm && mounted) {
       await ref
           .read(projectRepositoryProvider)
           .deleteBar(

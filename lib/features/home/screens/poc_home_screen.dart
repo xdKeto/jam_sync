@@ -12,7 +12,7 @@ import 'package:jam_sync/shared/widgets/the_button.dart';
 Future<void> _exportMadLogs() async {
   const sessionId = 'ZCQnJVQZqvnCvyhwsEIc';
 
-  debugPrint('\n========== SESSION: $sessionId ==========');
+  // debugPrint('\n========== SESSION: $sessionId ==========');
 
   final logsSnap = await FirebaseFirestore.instance
       .collection('poc_sessions')
@@ -30,23 +30,23 @@ Future<void> _exportMadLogs() async {
     clientLogs[client]!.add(d);
   }
 
-  debugPrint('Total logs: ${logsSnap.docs.length}');
-  debugPrint('Clients found: ${clientLogs.keys.toList()}');
+  // debugPrint('Total logs: ${logsSnap.docs.length}');
+  // debugPrint('Clients found: ${clientLogs.keys.toList()}');
 
-  int clientNum = 1;
-  for (final entry in clientLogs.entries) {
-    debugPrint('\n---------- CLIENT $clientNum (${entry.key}) ----------');
-    debugPrint('|logSequence|currentPosition|serverTimeOffset|rawOffset|');
-    for (final d in entry.value) {
-      debugPrint(
-        // '|${d['logSequence']}|${d['currentPosition']}|${d['serverTimeOffset']}|${d['rawOffset']}|',
-        '${d['currentPosition']}',
-      );
-    }
-    clientNum++;
-  }
+  // int clientNum = 1;
+  // for (final entry in clientLogs.entries) {
+  //   debugPrint('\n---------- CLIENT $clientNum (${entry.key}) ----------');
+  //   debugPrint('|logSequence|currentPosition|serverTimeOffset|rawOffset|');
+  //   for (final d in entry.value) {
+  //     debugPrint(
+  //       '|${d['logSequence']}|${d['currentPosition']}|${d['serverTimeOffset']}|${d['rawOffset']}|',
+  //       '${d['currentPosition']}',
+  //     );
+  //   }
+  //   clientNum++;
+  // }
 
-  debugPrint('\n========== EXPORT DONE ==========');
+  // debugPrint('\n========== EXPORT DONE ==========');
 }
 
 class PocHomeScreen extends ConsumerWidget {

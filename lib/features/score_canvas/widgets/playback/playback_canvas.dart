@@ -1,20 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jam_sync/features/score_canvas/providers/canvas_provider.dart';
-import 'package:jam_sync/features/score_canvas/widgets/playback/playback_cursor.dart';
-import 'package:jam_sync/features/score_canvas/widgets/playback/zoom_controller.dart';
-import 'package:jam_sync/shared/utils/playback_layout.dart';
+import 'package:jam_sync/features/score_canvas/providers/playback_provider.dart';
 import 'package:jam_sync/features/score_canvas/widgets/playback/playback_section_widget.dart';
-import 'package:jam_sync/shared/models/section_model.dart';
 import 'package:jam_sync/shared/utils/app_styles.dart';
+import 'package:jam_sync/shared/utils/gap_helper.dart';
 
 class PlaybackCanvas extends ConsumerStatefulWidget {
   final String projectID;
   final String canvasID;
   final double scrollOffset;
   final int currentIndex;
-  final PlaybackZoomMode zoomMode;
+  final double smoothedPositionMs;
   final bool isPlaying;
+  final bool isEditable;
+  final Map<int, int> barIndexMap;
+  final Map<String, int> sectionStartBarIndex;
+  final PlaybackProviderParams playbackParams;
+  final String? title;
 
   const PlaybackCanvas({
     super.key,
@@ -22,8 +25,13 @@ class PlaybackCanvas extends ConsumerStatefulWidget {
     required this.canvasID,
     required this.scrollOffset,
     required this.currentIndex,
-    required this.zoomMode,
+    required this.smoothedPositionMs,
     required this.isPlaying,
+    this.isEditable = true,
+    this.barIndexMap = const {},
+    this.sectionStartBarIndex = const {},
+    required this.playbackParams,
+    this.title,
   });
 
   @override
@@ -31,114 +39,105 @@ class PlaybackCanvas extends ConsumerStatefulWidget {
 }
 
 class _PlaybackCanvasState extends ConsumerState<PlaybackCanvas> {
-  Map<String, int> sectionRowCount = {};
-  ScrollController? vScrollController;
-  ScrollController? hScrollController;
-  ZoomController? zoomController;
+  final TransformationController transformController = TransformationController();
+  final GlobalKey canvasKey = GlobalKey();
+  bool isClamping = false;
+  Size viewportSize = Size.zero;
+  double cachedContentHeight = 300;
+  bool _initialZoomApplied = false;
+
+  static const double canvasWidth = 1000;
+  static const double barWidth = canvasWidth / 4; // 250
+  static const double canvasPadding = 16.0;
+  static const double totalCanvasWidth = canvasWidth + canvasPadding * 2;
 
   @override
   void initState() {
     super.initState();
-    vScrollController = ScrollController();
-    hScrollController = ScrollController();
-    zoomController = ZoomController();
+    transformController.addListener(onTransformChanged);
+  }
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      initZoomController();
-    });
+  void ensureInitialZoomApplied() {
+    if (_initialZoomApplied) return;
+    if (viewportSize == Size.zero) return;
+
+    final minScale = (viewportSize.width / totalCanvasWidth).clamp(0.1, 1.0);
+    if (transformController.value.getMaxScaleOnAxis() == minScale) {
+      _initialZoomApplied = true;
+      return;
+    }
+
+    isClamping = true;
+    transformController.value = Matrix4.identity()..scale(minScale, minScale);
+    isClamping = false;
+    _initialZoomApplied = true;
   }
 
   @override
   void dispose() {
-    vScrollController?.dispose();
-    hScrollController?.dispose();
-    zoomController?.dispose();
+    transformController.removeListener(onTransformChanged);
+    transformController.dispose();
     super.dispose();
   }
 
-  void initZoomController() {
-    final size = MediaQuery.of(context).size;
-    zoomController?.updateScreenSize(size.width, size.height);
+  void onTransformChanged() {
+    if (isClamping || viewportSize == Size.zero) return;
 
-    if (vScrollController != null) {
-      zoomController?.initVScrollController(vScrollController!);
+    final matrix = transformController.value;
+    final scale = matrix.getMaxScaleOnAxis();
+    double tx = matrix[12];
+    double ty = matrix[13];
+
+    final scaledW = totalCanvasWidth * scale;
+    final scaledH = cachedContentHeight * scale;
+
+    double clampedTx = tx;
+    double clampedTy = ty;
+
+    if (scaledW <= viewportSize.width) {
+      clampedTx = 0;
+    } else {
+      clampedTx = tx.clamp(-(scaledW - viewportSize.width), 0.0);
     }
-    if (hScrollController != null) {
-      zoomController?.initHScrollController(hScrollController!);
+
+    if (scaledH <= viewportSize.height) {
+      clampedTy = 0;
+    } else {
+      clampedTy = ty.clamp(-(scaledH - viewportSize.height), 0.0);
+    }
+
+    if (clampedTx != tx || clampedTy != ty) {
+      isClamping = true;
+      final newMatrix = matrix.clone();
+      newMatrix[12] = clampedTx;
+      newMatrix[13] = clampedTy;
+      transformController.value = newMatrix;
+      isClamping = false;
     }
   }
 
-  void computeSectionRowCount(List<SectionModel> sections) {
-    sectionRowCount = {
-      for (final section in sections)
-        section.id: (section.barCount / PlaybackLayout.barsPerRow).ceil(),
-    };
-  }
-
-  int rowsBeforeSection(SectionModel targetSection, List<SectionModel> sections) {
-    int rows = 0;
-    for (final section in sections) {
-      if (section.id == targetSection.id) break;
-      rows += sectionRowCount[section.id] ?? 0;
-    }
-    return rows;
-  }
-
-  ({SectionModel section, int rowIndex, int barWithinRow}) locateBar(
-    int barIndex,
-    List<SectionModel> sections,
-  ) {
-    int barCursor = 0;
-    for (final section in sections) {
-      final barCount = section.barCount;
-      if (barIndex < barCursor + barCount) {
-        final barWithinSection = barIndex - barCursor;
-        final rowIndex = barWithinSection ~/ PlaybackLayout.barsPerRow;
-        final barWithinRow = barWithinSection % PlaybackLayout.barsPerRow;
-        return (section: section, rowIndex: rowIndex, barWithinRow: barWithinRow);
+  void updateCachedHeight() {
+    final renderBox = canvasKey.currentContext?.findRenderObject() as RenderBox?;
+    if (renderBox != null && renderBox.hasSize) {
+      if (cachedContentHeight != renderBox.size.height) {
+        setState(() {
+          cachedContentHeight = renderBox.size.height;
+        });
       }
-      barCursor += barCount;
     }
-    return (section: sections.last, rowIndex: 0, barWithinRow: 0);
-  }
-
-  double computeCursorY(int barIndex, List<SectionModel> sections) {
-    if (sections.isEmpty) return 0;
-
-    final location = locateBar(barIndex, sections);
-    // final rowsBefore = rowsBeforeSection(location.section, sections);
-    // final sectionRows = sectionRowCount[location.section.id] ?? 0;
-
-    double y = 0;
-    for (final section in sections) {
-      if (section.id == location.section.id) break;
-      final rows = sectionRowCount[section.id] ?? 0;
-      y +=
-          PlaybackLayout.sectionHeaderHeight +
-          12 +
-          rows * PlaybackLayout.rowHeight +
-          PlaybackLayout.sectionSpacing;
-    }
-
-    y += PlaybackLayout.sectionHeaderHeight + 12 + location.rowIndex * PlaybackLayout.rowHeight;
-
-    return y + (PlaybackLayout.barHeight / 2);
-  }
-
-  double computeCursorX(int colIndex) {
-    return colIndex * PlaybackLayout.barWidth + (PlaybackLayout.barWidth / 2);
   }
 
   @override
   Widget build(BuildContext context) {
+    final playbackState = ref.watch(playbackProvider(widget.playbackParams));
+    final tempo = playbackState.tempo;
+    final beatDurationMs = 60000 / tempo;
+
     final sectionAsync = ref.watch(
       sectionsStreamProvider((projectID: widget.projectID, canvasID: widget.canvasID)),
     );
 
-    final canvasAsync = ref.watch(canvasesStreamProvider(widget.projectID));
-    final canvases = canvasAsync.value ?? [];
-    final currentCanvas = canvases.where((c) => c.id == widget.canvasID).firstOrNull;
-    final timeSignature = currentCanvas?.timeSignature ?? "4/4";
+    final timeSignature = playbackState.timeSignature;
 
     return sectionAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -156,77 +155,67 @@ class _PlaybackCanvasState extends ConsumerState<PlaybackCanvas> {
           );
         }
 
-        computeSectionRowCount(sections);
-
-        final barIndex = widget.currentIndex;
-        final location = locateBar(barIndex, sections);
-        final cursorY = computeCursorY(barIndex, sections);
-        final cursorX = computeCursorX(location.barWithinRow);
+        // hasil hitungan autonomous
+        final beatPosition = widget.smoothedPositionMs / beatDurationMs;
+        final currentBeatIndex = beatPosition.floor();
 
         return LayoutBuilder(
           builder: (context, constraints) {
+            viewportSize = Size(constraints.maxWidth, constraints.maxHeight);
             WidgetsBinding.instance.addPostFrameCallback((_) {
-              zoomController?.updateScreenSize(constraints.maxWidth, constraints.maxHeight);
+              updateCachedHeight();
+              ensureInitialZoomApplied();
             });
 
-            final canvasWidth = zoomController?.canvasWidth ?? PlaybackLayout.canvasWidth;
-            final isHorizontal = zoomController?.isHorizontalScroll ?? false;
+            final minScale = (viewportSize.width / totalCanvasWidth).clamp(0.1, 1.0);
 
-            if (widget.isPlaying) {
-              zoomController?.scrollToBar(cursor: cursorY, isVertical: true);
-              if (zoomController?.mode == PlaybackZoomMode.cursorToFollow) {
-                zoomController?.scrollToBar(cursor: cursorX, isVertical: false);
-              }
-            }
-
-            Widget canvas = SingleChildScrollView(
-              controller: vScrollController,
-              padding: const EdgeInsets.all(PlaybackLayout.canvasPadding),
-              child: SizedBox(
-                width: canvasWidth,
-                child: Stack(
-                  children: [
-                    Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: sections.map((section) {
-                        return PlaybackSectionWidget(
-                          projectID: widget.projectID,
-                          canvasID: widget.canvasID,
-                          timeSignature: timeSignature,
-                          section: section,
-                          isFirst: section == sections.first,
-                          barWidth: PlaybackLayout.barWidth,
-                        );
-                      }).toList(),
-                    ),
-                    Positioned(
-                      left: cursorX - (PlaybackLayout.cursorWidth / 2),
-                      top: cursorY - (PlaybackLayout.barHeight / 2),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        curve: Curves.easeOut,
-                        child: PlaybackCursor(
-                          barHeight: PlaybackLayout.barHeight,
-                          isPlaying: widget.isPlaying,
+            return InteractiveViewer(
+              transformationController: transformController,
+              minScale: minScale,
+              maxScale: 2.0,
+              boundaryMargin: const EdgeInsets.all(double.infinity),
+              constrained: false,
+              child: Padding(
+                key: canvasKey,
+                padding: const EdgeInsets.all(canvasPadding),
+                child: SizedBox(
+                  width: canvasWidth,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (widget.title != null)
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Text(widget.title!, style: AppStyles.h2(context)),
+                          ],
                         ),
-                      ),
-                    ),
-                  ],
+                      12.height,
+                      ...sections.asMap().entries.map((entry) {
+                          final idx = entry.key;
+                          final section = entry.value;
+                          return PlaybackSectionWidget(
+                            projectID: widget.projectID,
+                            canvasID: widget.canvasID,
+                            timeSignature: timeSignature,
+                            section: section,
+                            isFirst: idx == 0,
+                            barWidth: barWidth,
+                            canvasWidth: canvasWidth,
+                            isEditable: widget.isEditable,
+                            currentBeatIndex: widget.isPlaying ? currentBeatIndex : -1,
+                            barIndexMap: widget.barIndexMap,
+                            sectionStartBarIndex: widget.sectionStartBarIndex[section.id] ?? 0,
+                            beatPosition: widget.isPlaying ? beatPosition : -1,
+                          );
+                        }),
+                    ],
+                  ),
                 ),
               ),
             );
-
-            if (isHorizontal) {
-              canvas = SingleChildScrollView(
-                controller: hScrollController,
-                scrollDirection: Axis.horizontal,
-                physics: ClampingScrollPhysics(),
-                child: canvas,
-              );
-            }
-
-            return canvas;
           },
         );
       },

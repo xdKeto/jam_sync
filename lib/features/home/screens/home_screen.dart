@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jam_sync/features/auth/providers/auth_provider.dart';
 import 'package:jam_sync/features/home/providers/projects_provider.dart';
-import 'package:jam_sync/features/home/widgets/home_top_bar.dart';
 import 'package:jam_sync/features/home/widgets/project_card.dart';
 import 'package:jam_sync/features/home/widgets/user_card.dart';
 import 'package:jam_sync/features/score_canvas/providers/room_provider.dart';
 import 'package:jam_sync/features/score_canvas/screens/score_canvas_screen.dart';
+import 'package:jam_sync/features/score_canvas/services/sync_service.dart';
 import 'package:jam_sync/shared/utils/app_styles.dart';
 import 'package:jam_sync/shared/utils/gap_helper.dart';
 import 'package:jam_sync/shared/utils/time_ago_helper.dart';
@@ -17,12 +17,15 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Force syncServiceProvider initialization on home screen open
+    // This triggers burstCalibrate() for NTP time sync before playback
+    ref.read(syncServiceProvider);
+
     final authState = ref.watch(authStateProvider);
 
     return BackgroundGradient(
       child: Scaffold(
         backgroundColor: Colors.transparent,
-        appBar: HomeTopBar(),
         body: SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(8.0),
@@ -86,7 +89,7 @@ class HomeScreen extends ConsumerWidget {
                                                   padding: const EdgeInsets.only(bottom: 10),
                                                   child: GestureDetector(
                                                     onTap: () async {
-                                                      debugPrint("Project tapped: ${p.title}");
+                                                      // debugPrint("Project tapped: ${p.title}");
 
                                                       final userId = ref.read(authNotifierProvider.notifier).getCurrentUser()!.uid;
 

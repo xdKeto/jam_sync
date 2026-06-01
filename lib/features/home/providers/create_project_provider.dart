@@ -37,6 +37,7 @@ class CreateProjectNotifier extends StateNotifier<CreateProjectState> {
     required double tempo,
     required String timeSignature,
     required bool useTemplate,
+    Map<String, dynamic>? songTemplate,
   }) async {
     state = state.copyWith(isLoading: true, error: null);
 
@@ -47,6 +48,7 @@ class CreateProjectNotifier extends StateNotifier<CreateProjectState> {
         tempo: tempo,
         timeSignature: timeSignature,
         useTemplate: useTemplate,
+        songTemplate: songTemplate,
       );
 
       state = state.copyWith(

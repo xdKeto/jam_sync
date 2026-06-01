@@ -13,8 +13,6 @@ abstract class CanvasModel with _$CanvasModel {
     required double tempo,
     required String timeSignature,
     @Default('manual') String type,
-    String? audioUrl,
-    String? extractionStatus,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) = _CanvasModel;
@@ -31,8 +29,6 @@ abstract class CanvasModel with _$CanvasModel {
       tempo: (data['tempo'] as num).toDouble(),
       timeSignature: data['timeSignature'] as String,
       type: data['type'] as String? ?? 'manual',
-      audioUrl: data['audioUrl'] as String?,
-      extractionStatus: data['extractionStatus'] as String?,
       createdAt: (data['createdAt'] as Timestamp?)?.toDate(),
       updatedAt: (data['updatedAt'] as Timestamp?)?.toDate(),
     );
@@ -46,22 +42,21 @@ Map<String, dynamic> canvasToFirestore(CanvasModel canvas) {
     'tempo': canvas.tempo,
     'timeSignature': canvas.timeSignature,
     'type': canvas.type,
-    'audioUrl': canvas.audioUrl,
-    'extractionStatus': canvas.extractionStatus,
   };
 }
 
+// helper time signature
 int beatsPerBar(String timeSignature) {
-  switch (timeSignature) {
-    case '2/4':
-      return 2;
-    case '3/4':
-      return 3;
-    case '4/4':
-      return 4;
-    case '6/8':
-      return 6;
-    default:
-      return 4;
+  final parts = timeSignature.split('/');
+  if (parts.length != 2) return 4;
+
+  final numerator = int.tryParse(parts[0]) ?? 4;
+  final denominator = int.tryParse(parts[1]) ?? 4;
+
+  // case 6/8, 9/8, 12/8 -> modulus 3
+  if (denominator == 8 && numerator % 3 == 0) {
+    return numerator ~/ 3;
   }
+
+  return numerator;
 }

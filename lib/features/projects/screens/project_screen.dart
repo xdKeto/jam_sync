@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:jam_sync/features/auth/providers/auth_provider.dart';
 import 'package:jam_sync/features/home/providers/projects_provider.dart';
 import 'package:jam_sync/features/projects/widgets/project_list_card.dart';
+import 'package:jam_sync/features/score_canvas/providers/room_provider.dart';
+import 'package:jam_sync/features/score_canvas/screens/score_canvas_screen.dart';
 import 'package:jam_sync/shared/utils/app_styles.dart';
 import 'package:jam_sync/shared/utils/gap_helper.dart';
 import 'package:jam_sync/shared/utils/time_ago_helper.dart';
@@ -34,13 +37,10 @@ class ProjectScreen extends ConsumerWidget {
                             },
                             child: projects.isEmpty
                                 ? ListView(
-                                    physics:
-                                        const AlwaysScrollableScrollPhysics(),
+                                    physics: const AlwaysScrollableScrollPhysics(),
                                     children: [
                                       SizedBox(
-                                        height:
-                                            MediaQuery.of(context).size.height *
-                                            0.4,
+                                        height: MediaQuery.of(context).size.height * 0.4,
                                         child: Center(
                                           child: Text(
                                             "No projects yet.",
@@ -51,32 +51,55 @@ class ProjectScreen extends ConsumerWidget {
                                     ],
                                   )
                                 : ListView.builder(
-                                    physics:
-                                        const AlwaysScrollableScrollPhysics(),
+                                    physics: const AlwaysScrollableScrollPhysics(),
                                     itemCount: projects.length,
                                     itemBuilder: (context, index) {
                                       final p = projects[index];
                                       return Padding(
-                                        padding: const EdgeInsets.only(
-                                          bottom: 10,
-                                        ),
+                                        padding: const EdgeInsets.only(bottom: 10),
+                                        child: GestureDetector(
+                                          onTap: () async {
+                                            // debugPrint("Project tapped: ${p.title}");
+
+                                            final userId = ref
+                                                .read(authNotifierProvider.notifier)
+                                                .getCurrentUser()!
+                                                .uid;
+
+                                            await ref
+                                                .read(roomProvider.notifier)
+                                                .joinExistingRoom(
+                                                  roomCode: p.roomCode,
+                                                  userID: userId,
+                                                );
+
+                                            if (!context.mounted) return;
+
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) => ScoreCanvasScreen(
+                                                  projectID: p.id,
+                                                  roomCode: p.roomCode,
+                                                ),
+                                              ),
+                                            );
+                                          },
                                           child: ProjectListCard(
-                                            projectId: p.id,
+                                            projectID: p.id,
                                             title: p.title,
-                                            creatorId: p.createdBy,
+                                            creatorID: p.createdBy,
                                             roomCode: p.roomCode,
-                                            timeAgo: timeAgoFromDate(
-                                              p.createdAt ?? DateTime.now(),
-                                            ),
+                                            timeAgo: timeAgoFromDate(p.createdAt ?? DateTime.now()),
                                             participants: p.participants,
                                           ),
+                                        ),
                                       );
                                     },
                                   ),
                           );
                         },
-                        loading: () =>
-                            const Center(child: CircularProgressIndicator()),
+                        loading: () => const Center(child: CircularProgressIndicator()),
                         error: (e, s) => Center(child: Text('Error: $e')),
                       ),
                 ),

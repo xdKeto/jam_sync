@@ -157,7 +157,6 @@ class _ChordModifierDialogState extends State<ChordModifierDialog> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Back button
                   SizedBox(
                     height: 28,
                     width: 28,
@@ -332,7 +331,7 @@ class ModifierRingPainter extends CustomPainter {
       textPainter.paint(canvas, textPos - Offset(textPainter.width / 2, textPainter.height / 2));
     }
 
-    // Center hole
+    // center
     final corePaint = Paint()
       ..color = AppStyles.darkNavy
       ..style = PaintingStyle.fill;

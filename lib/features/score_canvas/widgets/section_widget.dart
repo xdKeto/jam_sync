@@ -78,10 +78,8 @@ class SectionWidget extends ConsumerWidget {
 
               final barWidgets = List.generate(bars.length, (i) {
                 final bar = bars[i];
-                final isLeft = i % 4 == 0;
+                final isLeft = i % 4 == 0; // buat rounding left right UI
                 final isRight = i % 4 == 3 || i == bars.length - 1;
-
-                // Highlight calculation moved to BarWidget for performance
 
                 return SizedBox(
                   width: barWidth,

@@ -1,18 +1,58 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:jam_sync/features/score_canvas/providers/playback_provider.dart';
 import 'package:jam_sync/shared/utils/app_styles.dart';
 import 'package:jam_sync/shared/utils/gap_helper.dart';
 
 class PlaybackControls extends ConsumerStatefulWidget {
   final bool isVisible;
   final String roomCode;
-  const PlaybackControls({super.key, required this.isVisible, required this.roomCode});
+  final PlaybackPhase phase;
+  final bool isLeader;
+  final VoidCallback? onClose;
+  final VoidCallback? onStop;
+
+  const PlaybackControls({
+    super.key,
+    required this.isVisible,
+    required this.roomCode,
+    required this.phase,
+    required this.isLeader,
+    this.onClose,
+    this.onStop,
+  });
 
   @override
   ConsumerState<PlaybackControls> createState() => _PlaybackControlsState();
 }
 
 class _PlaybackControlsState extends ConsumerState<PlaybackControls> {
+  void confirmStop() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Stop Playback?', style: AppStyles.h3(ctx)),
+        content: Text(
+          'This will stop playback for all participants.',
+          style: AppStyles.bodyMedium(ctx),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              widget.onStop?.call();
+            },
+            child: Text('Stop', style: TextStyle(color: AppStyles.error)),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Positioned(
@@ -27,31 +67,125 @@ class _PlaybackControlsState extends ConsumerState<PlaybackControls> {
           opacity: widget.isVisible ? 1 : 0,
           duration: Duration(milliseconds: 300),
           child: Container(
-            height: 80,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [Colors.transparent, AppStyles.black.withValues(alpha: 0.7)],
-              ),
-            ),
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(color: AppStyles.darkNavy),
             child: SafeArea(
               top: false,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  IconButton(
-                    onPressed: () {},
-                    icon: Icon(Icons.close, color: AppStyles.white),
+                  PhaseIndicator(phase: widget.phase),
+                  12.height,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      if (widget.phase == PlaybackPhase.playing &&
+                          widget.isLeader)
+                        _ControlButton(
+                          icon: Icons.stop,
+                          label: 'Stop',
+                          color: AppStyles.error,
+                          onTap: confirmStop,
+                        ),
+                    ],
                   ),
-                  Spacer(),
-                  Text("Room: ${widget.roomCode}", style: TextStyle(color: AppStyles.white)),
-                  Spacer(),
-                  48.width,
                 ],
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class PhaseIndicator extends StatelessWidget {
+  final PlaybackPhase phase;
+
+  const PhaseIndicator({super.key, required this.phase});
+
+  String get label {
+    switch (phase) {
+      case PlaybackPhase.idle:
+        return 'Ready';
+      case PlaybackPhase.syncing:
+        return 'Syncing...';
+      case PlaybackPhase.countdown:
+        return 'Get Ready!';
+      case PlaybackPhase.playing:
+        return 'Playing';
+      case PlaybackPhase.ended:
+        return 'Finished';
+    }
+  }
+
+  Color get color {
+    switch (phase) {
+      case PlaybackPhase.idle:
+        return AppStyles.grey400;
+      case PlaybackPhase.syncing:
+        return AppStyles.warning;
+      case PlaybackPhase.countdown:
+        return AppStyles.lightTeal;
+      case PlaybackPhase.playing:
+        return AppStyles.success;
+      case PlaybackPhase.ended:
+        return AppStyles.grey400;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Text(
+        label,
+        style: AppStyles.bodySmall(
+          context,
+        ).copyWith(color: color, fontWeight: FontWeight.w600),
+      ),
+    );
+  }
+}
+
+class _ControlButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _ControlButton({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: AppStyles.grey900,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: color, size: 20),
+            8.width,
+            Text(
+              label,
+              style: AppStyles.bodyMedium(context).copyWith(color: color),
+            ),
+          ],
         ),
       ),
     );

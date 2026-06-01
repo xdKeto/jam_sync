@@ -52,7 +52,14 @@ service cloud.firestore {
     }
     match /poc_sessions/{sessionId} {
       allow read, write: if isAuthenticated();
-      
+
+      match /logs/{logId} {
+        allow read, write: if isAuthenticated();
+      }
+    }
+    match /main_sessions/{sessionId} {
+      allow read, write: if isAuthenticated();
+
       match /logs/{logId} {
         allow read, write: if isAuthenticated();
       }

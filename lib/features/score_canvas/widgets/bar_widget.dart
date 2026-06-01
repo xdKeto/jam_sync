@@ -28,6 +28,11 @@ class BarWidget extends ConsumerWidget {
     this.onChordDeleted,
     this.onPassingChordChanged,
     this.onPassingChordDeleted,
+    this.isEditable = true,
+    this.isHighlighted = false,
+    this.highlightedBeatIndex = -1,
+    this.isCursorBar = false,
+    this.cursorProgress = 0.0,
   });
 
   final String? projectID;
@@ -44,8 +49,18 @@ class BarWidget extends ConsumerWidget {
   final void Function(int beatIndex)? onChordDeleted;
   final void Function(int beatIndex, String chord)? onPassingChordChanged;
   final void Function(int beatIndex)? onPassingChordDeleted;
+  final bool isEditable;
+  final bool isHighlighted;
+  final int highlightedBeatIndex;
+  final bool isCursorBar;
+  final double cursorProgress;
 
-  Future<void> showChordPickerFlow(BuildContext context, int beatIndex, String mainChord, String passingChord) async {
+  Future<void> showChordPickerFlow(
+    BuildContext context,
+    int beatIndex,
+    String mainChord,
+    String passingChord,
+  ) async {
     final String? pId = projectID;
     final String? cId = canvasID;
     final String? sId = sectionID;
@@ -56,6 +71,7 @@ class BarWidget extends ConsumerWidget {
       // ignore: unawaited_futures
       FirebaseDatabase.instance.ref('playback_sessions/$pId/editing/$userId').set({
         'barPath': '$cId/$sId/$bId',
+        'beatIndex': beatIndex,
         'timestamp': ServerValue.timestamp,
       });
     }
@@ -65,7 +81,7 @@ class BarWidget extends ConsumerWidget {
       currentChord: mainChord,
       currentPassingChord: passingChord,
     );
-    
+
     Future<void> clearEditingPresence() async {
       if (pId != null && userId != null) {
         await FirebaseDatabase.instance.ref('playback_sessions/$pId/editing/$userId').remove();
@@ -81,6 +97,7 @@ class BarWidget extends ConsumerWidget {
       case ChordAction.addChord:
       case ChordAction.changeChord:
         while (true) {
+          if (!context.mounted) break;
           final result = await CircleOfFifthsDialog.show(context);
           if (result == null || !context.mounted) break;
           final (rootNote, isMinor) = result;
@@ -98,6 +115,7 @@ class BarWidget extends ConsumerWidget {
       case ChordAction.addPassing:
       case ChordAction.changePassing:
         while (true) {
+          if (!context.mounted) break;
           final result = await CircleOfFifthsDialog.show(context);
           if (result == null || !context.mounted) break;
           final (rootNote, isMinor) = result;
@@ -113,49 +131,56 @@ class BarWidget extends ConsumerWidget {
         if (onPassingChordDeleted != null) onPassingChordDeleted!(beatIndex);
         break;
     }
-    
+
     await clearEditingPresence();
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    Color? highlightColor;
+    Color? beatHighlightColor;
+    int? editorBeatIndex;
     final currentUserId = FirebaseAuth.instance.currentUser?.uid;
     final double barHeight = 60;
 
     if (projectID != null && canvasID != null && sectionID != null && barID != null) {
       final barPath = '$canvasID/$sectionID/$barID';
-      final editorUid = ref.watch(
+      // listen ke provider editnig presence
+      final editorData = ref.watch(
         editingPresenceProvider(projectID!).select((presence) {
           final data = presence.value ?? {};
-          for (final entry in data.entries) {
-            if (entry.key != currentUserId && entry.value == barPath) {
-              return entry.key;
+          for (final i in data.entries) {
+            if (i.key != currentUserId && i.value.barPath == barPath) {
+              return (uid: i.key, beatIndex: i.value.beatIndex); //id user, index yg lagi diedit
             }
           }
           return null;
         }),
       );
 
-      if (editorUid != null && sortedParticipants != null) {
-        final index = sortedParticipants!.indexWhere((p) => p.uid == editorUid);
+      // warna editing sesuai index
+      if (editorData != null && sortedParticipants != null) {
+        final index = sortedParticipants!.indexWhere((p) => p.uid == editorData.uid);
         if (index != -1) {
-          highlightColor = CollabColors.getColor(index);
+          beatHighlightColor = CollabColors.getColor(index);
+          editorBeatIndex = editorData.beatIndex;
         }
       }
     }
 
+    // time sig
     final parts = timeSig.split('/');
     final defaultBeats = parts.isNotEmpty ? (int.tryParse(parts[0]) ?? 4) : 4;
     final int beats = (chords != null && chords!.isNotEmpty) ? chords!.length : defaultBeats;
 
+    final Color barColor = AppStyles.white;
+    final Color borderColor = AppStyles.black;
+    final double borderWidth = 1.0;
+    final double barWidth = 250.0;
+
     return Material(
-      color: highlightColor?.withValues(alpha: 0.15) ?? AppStyles.white,
+      color: barColor,
       shape: RoundedRectangleBorder(
-        side: BorderSide(
-          color: highlightColor ?? AppStyles.black, 
-          width: highlightColor != null ? 2.5 : 1,
-        ),
+        side: BorderSide(color: borderColor, width: borderWidth),
         borderRadius: (isCornerRight && isCornerLeft)
             ? const BorderRadius.all(Radius.circular(12))
             : isCornerRight
@@ -169,55 +194,119 @@ class BarWidget extends ConsumerWidget {
       ),
       child: SizedBox(
         height: barHeight,
-        child: Row(
-          children: List.generate(beats, (index) {
-            String rawMainChord = '';
-            if (chords != null && index < chords!.length) {
-              rawMainChord = chords![index];
-            }
+        child: Stack(
+          children: [
+            Row(
+              children: List.generate(beats, (index) {
+                String rawMainChord = '';
+                if (chords != null && index < chords!.length) {
+                  rawMainChord = chords![index];
+                }
 
-            String passingChord = '';
-            if (passingChords != null && index < passingChords!.length) {
-              passingChord = passingChords![index];
-            }
+                String passingChord = '';
+                if (passingChords != null && index < passingChords!.length) {
+                  passingChord = passingChords![index];
+                }
 
-            return Expanded(
-              child: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  // Main Chord
-                  Positioned.fill(
-                    child: Builder(
-                      builder: (innerContext) => InkWell(
-                        onTap: () => showChordPickerFlow(innerContext, index, rawMainChord, passingChord),
-                        child: ChordWidget(chord: rawMainChord),
-                      ),
+                // highlighting ketukan, collaborative, hijau playback
+                final isPlaybackHighlighted = isHighlighted && index == highlightedBeatIndex;
+                final isEditingHighlighted = index == editorBeatIndex && beatHighlightColor != null;
+                final Color beatBackground = isEditingHighlighted
+                    ? beatHighlightColor.withValues(alpha: 0.3)
+                    : isPlaybackHighlighted
+                    ? AppStyles.success.withValues(alpha: 0.3)
+                    : Colors.transparent;
+
+                return Expanded(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: (isCornerRight && isCornerLeft)
+                          ? const BorderRadius.all(Radius.circular(12))
+                          : (isCornerRight && index == beats - 1)
+                          ? const BorderRadius.only(
+                              topRight: Radius.circular(12),
+                              bottomRight: Radius.circular(12),
+                            )
+                          : (isCornerLeft && index == 0)
+                          ? const BorderRadius.only(
+                              topLeft: Radius.circular(12),
+                              bottomLeft: Radius.circular(12),
+                            )
+                          : BorderRadius.zero,
+                      color: beatBackground,
+                    ),
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        // main chord
+                        Positioned.fill(
+                          child: isEditable
+                              ? Builder(
+                                  builder: (innerContext) => InkWell(
+                                    onTap: () => showChordPickerFlow(
+                                      innerContext,
+                                      index,
+                                      rawMainChord,
+                                      passingChord,
+                                    ),
+                                    child: ChordWidget(chord: rawMainChord),
+                                  ),
+                                )
+                              : ChordWidget(chord: rawMainChord),
+                        ),
+                        // passing chord
+                        if (passingChord.isNotEmpty)
+                          Positioned(
+                            top: 4,
+                            right: 4,
+                            child: isEditable
+                                ? Builder(
+                                    builder: (innerContext) => InkWell(
+                                      onTap: () => showChordPickerFlow(
+                                        innerContext,
+                                        index,
+                                        rawMainChord,
+                                        passingChord,
+                                      ),
+                                      child: ChordWidget(chord: passingChord, isPassing: true),
+                                    ),
+                                  )
+                                : ChordWidget(chord: passingChord, isPassing: true),
+                          ),
+                        Positioned(
+                          left: 4,
+                          top: 4,
+                          child: Text(
+                            '${index + 1}',
+                            style: TextStyle(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w500,
+                              color: AppStyles.grey600,
+                            ),
+                          ),
+                        ),
+                        if (index < beats - 1)
+                          Positioned(
+                            right: 0,
+                            top: 0,
+                            bottom: 0,
+                            child: Container(width: 1, color: AppStyles.grey400),
+                          ),
+                      ],
                     ),
                   ),
-                  // Passing Chord
-                  if (passingChord.isNotEmpty)
-                    Positioned(
-                      top: 4,
-                      right: 4,
-                      child: Builder(
-                        builder: (innerContext) => InkWell(
-                          onTap: () => showChordPickerFlow(innerContext, index, rawMainChord, passingChord),
-                          child: ChordWidget(chord: passingChord, isPassing: true),
-                        ),
-                      ),
-                    ),
-                  // Garis pembatas tipis antar beat
-                  if (index < beats - 1)
-                    Positioned(
-                      right: 0,
-                      top: 0,
-                      bottom: 0,
-                      child: Container(width: 1, color: AppStyles.grey400),
-                    ),
-                ],
+                );
+              }),
+            ),
+            // cursor widget
+            if (isCursorBar)
+              Positioned(
+                left: cursorProgress * barWidth - 1,
+                top: 0,
+                bottom: 0,
+                child: Container(width: 2, color: AppStyles.black),
               ),
-            );
-          }),
+          ],
         ),
       ),
     );
