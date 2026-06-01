@@ -7,10 +7,12 @@ import 'package:jam_sync/features/score_canvas/screens/score_canvas_screen.dart'
 import 'package:jam_sync/shared/repositories/project_repository.dart';
 import 'package:jam_sync/shared/utils/app_styles.dart';
 import 'package:jam_sync/shared/utils/gap_helper.dart';
+import 'package:jam_sync/shared/utils/song_templates.dart';
 import 'package:jam_sync/shared/widgets/background_gradient.dart';
+import 'package:jam_sync/shared/widgets/template_chip.dart';
+import 'package:jam_sync/shared/widgets/tempo_picker.dart';
 import 'package:jam_sync/shared/widgets/the_button.dart';
 import 'package:quickalert/quickalert.dart';
-import 'package:syncfusion_flutter_sliders/sliders.dart';
 
 class NewProjectScreen extends ConsumerStatefulWidget {
   const NewProjectScreen({super.key});
@@ -27,6 +29,17 @@ class NewProjectScreenState extends ConsumerState<NewProjectScreen> {
   final projectTimeSigController = TextEditingController(text: '4/4');
   bool? useSongTemplate = true;
   bool isLoading = false;
+  Map<String, dynamic>? selectedTemplate;
+
+  void applyTemplate(Map<String, dynamic> template) {
+    setState(() {
+      selectedTemplate = template;
+      defaultSongTitleController.text = template['name'] as String? ?? '';
+      final canvas = template['canvas'] as Map<String, dynamic>;
+      tempoValue = (canvas['tempo'] as num?)?.toDouble() ?? 120.0;
+      useSongTemplate = true;
+    });
+  }
 
   @override
   void dispose() {
@@ -49,6 +62,7 @@ class NewProjectScreenState extends ConsumerState<NewProjectScreen> {
           tempo: tempoValue,
           timeSignature: projectTimeSigController.text,
           useTemplate: useSongTemplate ?? true,
+          songTemplate: selectedTemplate,
         );
 
     if (!mounted) return;
@@ -170,7 +184,7 @@ class NewProjectScreenState extends ConsumerState<NewProjectScreen> {
                           ),
                         ),
                         12.height,
-                        Text("Default Canvas Setting", style: AppStyles.h4(context)),
+                        Text("Default Setting", style: AppStyles.h4(context)),
                         Divider(color: AppStyles.darkNavy, thickness: 1),
                         4.height,
                         RepaintBoundary(
@@ -183,6 +197,7 @@ class NewProjectScreenState extends ConsumerState<NewProjectScreen> {
                                 Text("Song Title", style: AppStyles.h5(context)),
                                 4.height,
                                 TextFormField(
+                                  controller: defaultSongTitleController,
                                   cursorColor: AppStyles.black,
                                   decoration: AppStyles.formBox.copyWith(
                                     hintText: 'Song Title',
@@ -195,11 +210,10 @@ class NewProjectScreenState extends ConsumerState<NewProjectScreen> {
                                   ),
                                   validator: (value) {
                                     if (value == null || value.isEmpty) {
-                                      return 'Please enter a project title';
+                                      return 'Please enter a song title';
                                     }
                                     return null;
                                   },
-                                  onChanged: (value) => defaultSongTitleController.text = value,
                                 ),
                               ],
                             ),
@@ -207,90 +221,13 @@ class NewProjectScreenState extends ConsumerState<NewProjectScreen> {
                         ),
                         12.height,
                         RepaintBoundary(
-                          child: Container(
-                            decoration: AppStyles.whiteBox(),
-                            padding: EdgeInsets.all(12),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Text("Tempo (BPM)", style: AppStyles.h5(context)),
-                                    Text(
-                                      " - nilai ini bisa diubah nanti",
-                                      style: AppStyles.labelSmall(context),
-                                    ),
-                                  ],
-                                ),
-                                12.height,
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: SfSlider(
-                                        min: 40.0,
-                                        max: 200.0,
-                                        value: tempoValue,
-                                        interval: 40,
-                                        stepSize: 1.0,
-                                        showTicks: true,
-                                        showLabels: true,
-                                        enableTooltip: true,
-                                        minorTicksPerInterval: 3,
-                                        activeColor: AppStyles.darkNavy,
-                                        tooltipTextFormatterCallback:
-                                            (dynamic actualValue, String formattedText) {
-                                              return (actualValue as double).round().toString();
-                                            },
-                                        labelFormatterCallback:
-                                            (dynamic actualValue, String formattedText) {
-                                              return (actualValue as double).round().toString();
-                                            },
-                                        onChanged: (dynamic value) {
-                                          setState(() {
-                                            tempoValue = (value as double).roundToDouble();
-                                          });
-                                        },
-                                      ),
-                                    ),
-                                    8.width,
-                                    Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        IconButton(
-                                          padding: EdgeInsets.zero,
-                                          constraints: const BoxConstraints(),
-                                          icon: const Icon(Icons.arrow_drop_up, size: 32),
-                                          onPressed: () {
-                                            if (tempoValue < 200.0) {
-                                              setState(() {
-                                                tempoValue += 1.0;
-                                              });
-                                            }
-                                          },
-                                        ),
-                                        Text(
-                                          tempoValue.round().toString(),
-                                          style: AppStyles.h3(context),
-                                        ),
-                                        IconButton(
-                                          padding: EdgeInsets.zero,
-                                          constraints: const BoxConstraints(),
-                                          icon: const Icon(Icons.arrow_drop_down, size: 32),
-                                          onPressed: () {
-                                            if (tempoValue > 40.0) {
-                                              setState(() {
-                                                tempoValue -= 1.0;
-                                              });
-                                            }
-                                          },
-                                        ),
-                                      ],
-                                    ),
-                                    16.width,
-                                  ],
-                                ),
-                              ],
-                            ),
+                          child: TempoPicker(
+                            value: tempoValue,
+                            onChanged: (value) {
+                              setState(() {
+                                tempoValue = value;
+                              });
+                            },
                           ),
                         ),
                         12.height,
@@ -355,6 +292,70 @@ class NewProjectScreenState extends ConsumerState<NewProjectScreen> {
                             ),
                           ),
                         ),
+                        12.height,
+                        if (useSongTemplate == true)
+                          RepaintBoundary(
+                            child: Container(
+                              decoration: AppStyles.whiteBox(),
+                              padding: EdgeInsets.all(12),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Text("Song Template", style: AppStyles.h5(context)),
+                                      if (selectedTemplate != null) ...[
+                                        const SizedBox(width: 8),
+                                        GestureDetector(
+                                          onTap: () {
+                                            setState(() {
+                                              selectedTemplate = null;
+                                              defaultSongTitleController.text = '';
+                                              tempoValue = 120.0;
+                                            });
+                                          },
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 8,
+                                              vertical: 2,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: AppStyles.darkNavy,
+                                              borderRadius: BorderRadius.circular(12),
+                                            ),
+                                            child: Text(
+                                              "Clear",
+                                              style: AppStyles.labelSmall(
+                                                context,
+                                              ).copyWith(color: AppStyles.white),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                  8.height,
+                                  Text(
+                                    "Pilih lagu di bawah untuk auto-fill tempo & nama",
+                                    style: AppStyles.labelSmall(context),
+                                  ),
+                                  8.height,
+                                  Wrap(
+                                    spacing: 8,
+                                    runSpacing: 8,
+                                    children: [
+                                      for (final template in songTemplates)
+                                        TemplateChip(
+                                          template: template,
+                                          isSelected: selectedTemplate?['id'] == template['id'],
+                                          onTap: () => applyTemplate(template),
+                                        ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
                       ],
                     ),
                   ),
@@ -367,3 +368,4 @@ class NewProjectScreenState extends ConsumerState<NewProjectScreen> {
     );
   }
 }
+

@@ -174,6 +174,8 @@ class SyncService {
       // sort, take 2/3
       samples.sort((a, b) => a.rtt.compareTo(b.rtt));
       final best = samples.take(2).toList();
+
+      // mean sample
       final offset = best.map((e) => e.offset).reduce((a, b) => a + b) ~/ best.length;
       final rtt = best.map((e) => e.rtt).reduce((a, b) => a + b) / best.length;
 

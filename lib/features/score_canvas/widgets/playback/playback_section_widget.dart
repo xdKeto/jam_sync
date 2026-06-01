@@ -13,6 +13,13 @@ class PlaybackSectionWidget extends ConsumerWidget {
   final SectionModel section;
   final bool isFirst;
   final double barWidth;
+  final double canvasWidth;
+  final bool isEditable;
+  final int currentBeatIndex;
+  final Map<int, int> barIndexMap;
+
+  final int sectionStartBarIndex;
+  final double beatPosition;
 
   const PlaybackSectionWidget({
     super.key,
@@ -22,6 +29,12 @@ class PlaybackSectionWidget extends ConsumerWidget {
     required this.section,
     this.isFirst = false,
     required this.barWidth,
+    required this.canvasWidth,
+    this.isEditable = true,
+    this.currentBeatIndex = -1,
+    this.barIndexMap = const {},
+    this.sectionStartBarIndex = 0,
+    this.beatPosition = -1,
   });
 
   static const double sectionHeaderHeight = 44;
@@ -33,6 +46,16 @@ class PlaybackSectionWidget extends ConsumerWidget {
     return (barCount / barsPerRow).ceil();
   }
 
+  double cursorProgress(int barStartBeat, int barEndBeat) {
+    if (beatPosition < 0) return 0.0;
+    if (beatPosition < barStartBeat || beatPosition >= barEndBeat) return 0.0;
+
+    final beatsInBar = barEndBeat - barStartBeat;
+    if (beatsInBar <= 0) return 0.0;
+
+    return ((beatPosition - barStartBeat) / beatsInBar).clamp(0.0, 1.0);
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final barsAsync = ref.watch(
@@ -42,7 +65,7 @@ class PlaybackSectionWidget extends ConsumerWidget {
     return Padding(
       padding: EdgeInsets.only(top: isFirst ? 0 : 16),
       child: SizedBox(
-        width: 1000, 
+        width: canvasWidth,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -84,22 +107,32 @@ class PlaybackSectionWidget extends ConsumerWidget {
                 for (int rowStart = 0; rowStart < totalBars; rowStart += barsPerRow) {
                   final rowBars = bars.sublist(
                     rowStart,
-                    rowStart + barsPerRow > totalBars
-                        ? totalBars
-                        : rowStart + barsPerRow,
+                    rowStart + barsPerRow > totalBars ? totalBars : rowStart + barsPerRow,
                   );
 
                   rows.add(
                     Padding(
-                      padding: EdgeInsets.only(bottom: rowStart + barsPerRow < totalBars ? runSpacing : 0),
+                      padding: EdgeInsets.only(
+                        bottom: rowStart + barsPerRow < totalBars ? runSpacing : 0,
+                      ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: List.generate(barsPerRow, (i) {
+                          final isLeft = i % 4 == 0;
+                          final isRight = i % 4 == 3 || i == bars.length - 1;
+                          
                           if (i < rowBars.length) {
                             final bar = rowBars[i];
-                            final barIndex = rowStart + i;
-                            final isFirstBar = barIndex == 0;
-                            final isLastBarInRow = (i == barsPerRow - 1) || (barIndex == totalBars - 1);
+                            final globalBarIndex = sectionStartBarIndex + rowStart + i;
+
+                            final barStartBeat =
+                                barIndexMap[globalBarIndex] ?? (globalBarIndex * 4);
+                            final barEndBeat = barIndexMap[globalBarIndex + 1] ?? barStartBeat + 4;
+                            final isHighlighted =
+                                currentBeatIndex >= barStartBeat && currentBeatIndex < barEndBeat;
+                            final beatIndexWithinBar = isHighlighted
+                                ? (currentBeatIndex - barStartBeat)
+                                : -1;
 
                             return SizedBox(
                               width: barWidth,
@@ -111,8 +144,13 @@ class PlaybackSectionWidget extends ConsumerWidget {
                                 timeSig: timeSignature,
                                 chords: bar.chords,
                                 passingChords: bar.passingChord,
-                                isCornerLeft: isFirstBar && i == 0,
-                                isCornerRight: isLastBarInRow && i == rowBars.length - 1,
+                                isCornerLeft: isLeft,
+                                isCornerRight: isRight,
+                                isEditable: isEditable,
+                                isHighlighted: isHighlighted,
+                                highlightedBeatIndex: beatIndexWithinBar,
+                                isCursorBar: isHighlighted,
+                                cursorProgress: cursorProgress(barStartBeat, barEndBeat),
                               ),
                             );
                           } else {

@@ -23,8 +23,7 @@ class SongStructureSheet extends ConsumerStatefulWidget {
 }
 
 class _SongStructureSheetState extends ConsumerState<SongStructureSheet> {
-  List<SectionModel>? _localSections;
-  
+
   Future<void> showRenameDialog(String sectionId, String currentName) async {
     final controller = TextEditingController(text: currentName);
     final result = await showDialog<String>(
@@ -104,14 +103,12 @@ class _SongStructureSheetState extends ConsumerState<SongStructureSheet> {
             ),
             body: sectionAsync.when(
               data: (sections) {
-                final displaySections = _localSections ?? sections;
-
-                if (displaySections.isEmpty) {
+                if (sections.isEmpty) {
                   return const Center(child: Text("No sections available."));
                 }
                 return ReorderableListView.builder(
                   itemBuilder: (context, index) {
-                    final section = displaySections[index];
+                    final section = sections[index];
                     return ListTile(
                       key: ValueKey(section.id),
                       leading: const Icon(Icons.drag_handle),
@@ -132,20 +129,18 @@ class _SongStructureSheetState extends ConsumerState<SongStructureSheet> {
                       ),
                     );
                   },
-                  itemCount: displaySections.length,
-                  onReorder: (oldIndex, newIndex) {
-                    setState(() {
-                      if (oldIndex < newIndex) newIndex -= 1;
-                      _localSections = List.from(displaySections);
-                      final item = _localSections!.removeAt(oldIndex);
-                      _localSections!.insert(newIndex, item);
-                    });
-                    
-                    // ignore: unawaited_futures
-                    ref.read(projectRepositoryProvider).reorderSections(
-                      projectID: widget.projectID, 
-                      canvasID: widget.canvasID, 
-                      reordered: _localSections!,
+                  itemCount: sections.length,
+                  onReorder: (oldIndex, newIndex) async {
+                    if (oldIndex < newIndex) newIndex -= 1;
+
+                    final reordered = List<SectionModel>.from(sections);
+                    final item = reordered.removeAt(oldIndex);
+                    reordered.insert(newIndex, item);
+
+                    await ref.read(projectRepositoryProvider).reorderSections(
+                      projectID: widget.projectID,
+                      canvasID: widget.canvasID,
+                      reordered: reordered,
                     );
                   },
                 );
