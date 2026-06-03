@@ -28,12 +28,13 @@ class CanvasOptionSheet extends ConsumerStatefulWidget {
 }
 
 class _CanvasOptionSheetState extends ConsumerState<CanvasOptionSheet> {
-  void _showAddCanvasSheet() {
+  void showAddCanvasSheet() {
     Navigator.pop(context);
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
+      constraints: const BoxConstraints(maxWidth: double.infinity),
       builder: (ctx) => AddCanvasSheet(
         projectID: widget.projectID,
         existingCanvases: widget.canvases,
@@ -49,7 +50,9 @@ class _CanvasOptionSheetState extends ConsumerState<CanvasOptionSheet> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete Sheet?'),
-        content: Text('"${canvas.title}" Sheet dan semua bagiannya akan dihapus.'),
+        content: Text(
+          '"${canvas.title}" Sheet dan semua bagiannya akan dihapus.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -65,10 +68,9 @@ class _CanvasOptionSheetState extends ConsumerState<CanvasOptionSheet> {
 
     if (confirmed == true) {
       try {
-        await ref.read(projectRepositoryProvider).deleteCanvas(
-              projectID: widget.projectID,
-              canvasID: canvas.id,
-            );
+        await ref
+            .read(projectRepositoryProvider)
+            .deleteCanvas(projectID: widget.projectID, canvasID: canvas.id);
 
         if (!mounted) return;
 
@@ -86,6 +88,7 @@ class _CanvasOptionSheetState extends ConsumerState<CanvasOptionSheet> {
       }
     }
   }
+
   @override
   Widget build(BuildContext context) {
     final canDelete = widget.canvases.length > 1;
@@ -96,7 +99,10 @@ class _CanvasOptionSheetState extends ConsumerState<CanvasOptionSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("Pick Sheet", style: AppStyles.h3(context).copyWith(color: AppStyles.darkNavy)),
+          Text(
+            "Pick Sheet",
+            style: AppStyles.h3(context).copyWith(color: AppStyles.darkNavy),
+          ),
           4.height,
           ...widget.canvases.map((canvas) {
             final isSelected =
@@ -107,10 +113,12 @@ class _CanvasOptionSheetState extends ConsumerState<CanvasOptionSheet> {
 
             return Dismissible(
               key: Key(canvas.id),
-              direction: canDelete ? DismissDirection.endToStart : DismissDirection.none,
+              direction: canDelete
+                  ? DismissDirection.endToStart
+                  : DismissDirection.none,
               confirmDismiss: (direction) async {
                 await handleDeleteCanvas(canvas);
-                return false; 
+                return false;
               },
               background: Container(
                 alignment: Alignment.centerRight,
@@ -119,25 +127,36 @@ class _CanvasOptionSheetState extends ConsumerState<CanvasOptionSheet> {
                 child: const Icon(Icons.delete, color: Colors.white),
               ),
               child: ListTile(
-                leading: const Icon(Icons.document_scanner_outlined, color: AppStyles.darkNavy),
+                leading: const Icon(
+                  Icons.document_scanner_outlined,
+                  color: AppStyles.darkNavy,
+                ),
                 title: Text(
                   canvas.title,
                   style: AppStyles.bodyMedium(context).copyWith(
                     color: AppStyles.darkNavy,
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    fontWeight: isSelected
+                        ? FontWeight.bold
+                        : FontWeight.normal,
                   ),
                 ),
                 subtitle: Text(
                   '♩ ${canvas.tempo.round()} BPM • ${canvas.timeSignature}',
-                  style: AppStyles.labelSmall(context).copyWith(color: AppStyles.grey500),
+                  style: AppStyles.labelSmall(
+                    context,
+                  ).copyWith(color: AppStyles.grey500),
                 ),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    if (isSelected) const Icon(Icons.check, color: AppStyles.darkNavy),
+                    if (isSelected)
+                      const Icon(Icons.check, color: AppStyles.darkNavy),
                     if (canDelete)
                       IconButton(
-                        icon: const Icon(Icons.delete_outline, color: AppStyles.grey400),
+                        icon: const Icon(
+                          Icons.delete_outline,
+                          color: AppStyles.grey400,
+                        ),
                         onPressed: () => handleDeleteCanvas(canvas),
                       ),
                   ],
@@ -154,11 +173,12 @@ class _CanvasOptionSheetState extends ConsumerState<CanvasOptionSheet> {
             leading: const Icon(Icons.add, color: AppStyles.darkNavy),
             title: Text(
               "Add New",
-              style: AppStyles.bodyMedium(
-                context,
-              ).copyWith(color: AppStyles.darkNavy, fontWeight: FontWeight.bold),
+              style: AppStyles.bodyMedium(context).copyWith(
+                color: AppStyles.darkNavy,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-            onTap: _showAddCanvasSheet,
+            onTap: showAddCanvasSheet,
           ),
         ],
       ),

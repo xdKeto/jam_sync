@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jam_sync/shared/utils/app_styles.dart';
 import 'package:jam_sync/shared/models/canvas_model.dart';
+import 'package:jam_sync/shared/utils/gap_helper.dart';
 
 class AddBarDialog extends ConsumerStatefulWidget {
   final String timeSignature;
@@ -42,7 +43,7 @@ class _AddBarDialogState extends ConsumerState<AddBarDialog> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('Select Beat Count:', style: AppStyles.bodyMedium(context)),
-          const SizedBox(height: 8),
+          8.height,
           DropdownButtonFormField<int>(
             initialValue: selectedBeatCount,
             decoration: AppStyles.formBox,

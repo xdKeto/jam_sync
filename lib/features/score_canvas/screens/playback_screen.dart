@@ -13,6 +13,7 @@ import 'package:jam_sync/features/score_canvas/widgets/playback/playback_control
 import 'package:jam_sync/shared/models/canvas_model.dart';
 import 'package:jam_sync/shared/models/section_model.dart';
 import 'package:jam_sync/shared/repositories/project_repository.dart';
+import 'package:jam_sync/shared/utils/gap_helper.dart';
 
 class PlaybackScreen extends ConsumerStatefulWidget {
   final String projectID;
@@ -280,14 +281,14 @@ class _PlaybackScreenState extends ConsumerState<PlaybackScreen> {
                   size: 64,
                   color: Colors.orange[700],
                 ),
-                const SizedBox(height: 16),
+                16.height,
                 Text(
                   'Session Expired',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 8),
+                8.height,
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 32),
                   child: Text(
@@ -298,7 +299,7 @@ class _PlaybackScreenState extends ConsumerState<PlaybackScreen> {
                     ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
                   ),
                 ),
-                const SizedBox(height: 24),
+                24.height,
                 ElevatedButton(
                   onPressed: () => Navigator.pop(context),
                   child: const Text('Back to Canvas'),

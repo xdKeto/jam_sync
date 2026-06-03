@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jam_sync/shared/utils/app_styles.dart';
+import 'package:jam_sync/shared/utils/gap_helper.dart';
 
 class AddSectionDialog extends ConsumerStatefulWidget {
   const AddSectionDialog({super.key});
@@ -34,7 +35,7 @@ class _AddSectionDialogState extends ConsumerState<AddSectionDialog> {
               hintText: 'e.g., Verse 2, Chorus',
             ),
           ),
-          const SizedBox(height: 16),
+          16.height,
           TextField(
             controller: barCountController,
             keyboardType: TextInputType.number,

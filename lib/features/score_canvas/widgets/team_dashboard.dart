@@ -50,18 +50,23 @@ class _TeamDashboardState extends ConsumerState<TeamDashboard> {
   @override
   Widget build(BuildContext context) {
     final roomState = ref.watch(roomProvider);
-    final participantsAsync = ref.watch(participantsStreamProvider(widget.projectID));
+    final participantsAsync = ref.watch(
+      participantsStreamProvider(widget.projectID),
+    );
 
     // streams
     final canvasesAsync = ref.watch(canvasesStreamProvider(widget.projectID));
     final canvases = canvasesAsync.value ?? [];
-    final currentCanvas = canvases.where((c) => c.id == widget.canvasID).firstOrNull;
+    final currentCanvas = canvases
+        .where((c) => c.id == widget.canvasID)
+        .firstOrNull;
     final currentTempo = currentCanvas?.tempo ?? 120.0;
     final currentTimeSignature = currentCanvas?.timeSignature ?? '4/4';
 
     final isLeader = roomState.leaderID == _userID;
 
-    final intentParams = PlaybackIntentParams( // intent
+    final intentParams = PlaybackIntentParams(
+      // intent
       roomID: widget.projectID,
       projectID: widget.projectID,
       defaultCanvasID: widget.canvasID,
@@ -75,13 +80,18 @@ class _TeamDashboardState extends ConsumerState<TeamDashboard> {
       sections: widget.sections,
     );
     final intentState = ref.watch(playbackIntentProvider(intentParams));
-    final intentController = ref.read(playbackIntentProvider(intentParams).notifier);
+    final intentController = ref.read(
+      playbackIntentProvider(intentParams).notifier,
+    );
 
     // select partitur
     if (isLeader && intentController.selectedCanvasId.isEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
-          intentController.initSelectedCanvas(widget.canvasID, currentCanvas?.title ?? 'Partitur');
+          intentController.initSelectedCanvas(
+            widget.canvasID,
+            currentCanvas?.title ?? 'Partitur',
+          );
         }
       });
     }
@@ -113,13 +123,16 @@ class _TeamDashboardState extends ConsumerState<TeamDashboard> {
                 ),
                 Text(
                   "Room: ${roomState.roomCode ?? '-'}",
-                  style: AppStyles.bodySmall(context).copyWith(color: AppStyles.lightTeal),
+                  style: AppStyles.bodySmall(
+                    context,
+                  ).copyWith(color: AppStyles.lightTeal),
                 ),
               ],
             ),
             toolbarHeight: 80,
             backgroundColor: AppStyles.darkNavy,
-            actions: [ // IMPORTANT TODO: setting pengujian aja, reminder hapus
+            actions: [
+              // IMPORTANT TODO: setting pengujian aja, reminder hapus
               if (isLeader)
                 Tooltip(
                   message: 'Reset Playback (Debug)',
@@ -143,14 +156,19 @@ class _TeamDashboardState extends ConsumerState<TeamDashboard> {
           body: participantsAsync.when(
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, _) => Center(
-              child: Text('Error: $e', style: const TextStyle(color: Colors.red)),
+              child: Text(
+                'Error: $e',
+                style: const TextStyle(color: Colors.red),
+              ),
             ),
             data: (participantList) {
               if (participantList.isEmpty) {
                 return Center(
                   child: Text(
                     'No participants yet',
-                    style: AppStyles.bodyMedium(context).copyWith(color: AppStyles.white),
+                    style: AppStyles.bodyMedium(
+                      context,
+                    ).copyWith(color: AppStyles.white),
                   ),
                 );
               }
@@ -189,11 +207,13 @@ class _TeamDashboardState extends ConsumerState<TeamDashboard> {
                             : intentState.isMyReady
                             ? 'All ready! Starting...'
                             : 'Waiting...',
-                        style: AppStyles.bodyMedium(context).copyWith(color: AppStyles.grey400),
+                        style: AppStyles.bodyMedium(
+                          context,
+                        ).copyWith(color: AppStyles.grey400),
                         textAlign: TextAlign.center,
                       ),
                     ),
-                  const SizedBox(height: 8),
+                  8.height,
                 ],
               );
             },
@@ -212,9 +232,21 @@ class _TeamDashboardState extends ConsumerState<TeamDashboard> {
     required List<CanvasModel> canvases,
   }) {
     if (isLeader) {
-      return buildLeaderControls(context, isPlaybackLive, intentState, intentController, canvases);
+      return buildLeaderControls(
+        context,
+        isPlaybackLive,
+        intentState,
+        intentController,
+        canvases,
+      );
     }
-    return buildMemberControls(context, isPlaybackLive, intentState, intentController, canvases);
+    return buildMemberControls(
+      context,
+      isPlaybackLive,
+      intentState,
+      intentController,
+      canvases,
+    );
   }
 
   Widget buildLeaderControls(
@@ -235,25 +267,39 @@ class _TeamDashboardState extends ConsumerState<TeamDashboard> {
               canvases.isEmpty
                   ? const SizedBox.shrink()
                   : Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: AppStyles.grey800,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.music_note, color: AppStyles.lightTeal, size: 20),
-                          const SizedBox(width: 8),
+                          const Icon(
+                            Icons.music_note,
+                            color: AppStyles.lightTeal,
+                            size: 20,
+                          ),
+                          8.width,
                           Expanded(
                             child: DropdownButtonHideUnderline(
                               child: DropdownButton<String>(
                                 value: intentController.selectedCanvasId.isEmpty
-                                    ? (canvases.isNotEmpty ? canvases.first.id : null)
+                                    ? (canvases.isNotEmpty
+                                          ? canvases.first.id
+                                          : null)
                                     : (canvases.any(
-                                            (c) => c.id == intentController.selectedCanvasId,
+                                            (c) =>
+                                                c.id ==
+                                                intentController
+                                                    .selectedCanvasId,
                                           )
                                           ? intentController.selectedCanvasId
-                                          : (canvases.isNotEmpty ? canvases.first.id : null)),
+                                          : (canvases.isNotEmpty
+                                                ? canvases.first.id
+                                                : null)),
                                 isExpanded: true,
                                 dropdownColor: AppStyles.grey700,
                                 style: AppStyles.bodyMedium(
@@ -273,8 +319,13 @@ class _TeamDashboardState extends ConsumerState<TeamDashboard> {
                                 }).toList(),
                                 onChanged: (value) {
                                   if (value != null) {
-                                    final canvas = canvases.firstWhere((c) => c.id == value);
-                                    intentController.setSelectedCanvas(value, canvas.title);
+                                    final canvas = canvases.firstWhere(
+                                      (c) => c.id == value,
+                                    );
+                                    intentController.setSelectedCanvas(
+                                      value,
+                                      canvas.title,
+                                    );
                                   }
                                 },
                               ),
@@ -283,7 +334,7 @@ class _TeamDashboardState extends ConsumerState<TeamDashboard> {
                         ],
                       ),
                     ),
-              const SizedBox(height: 12),
+              12.height,
             ],
             intentState.state == IntentState.idle
                 ? GestureDetector(
@@ -313,14 +364,16 @@ class _TeamDashboardState extends ConsumerState<TeamDashboard> {
                           onTap: () => intentController.toggleReady(),
                           child: TheButton(
                             text: intentState.isMyReady ? "Ready!" : "Ready Up",
-                            color: intentState.isMyReady ? AppStyles.success : AppStyles.darkNavy,
+                            color: intentState.isMyReady
+                                ? AppStyles.success
+                                : AppStyles.darkNavy,
                             textColor: AppStyles.white,
                           ),
                         ),
                       ),
                     ],
                   )
-                : Row( 
+                : Row(
                     children: [
                       Expanded(
                         child: GestureDetector(
@@ -335,7 +388,8 @@ class _TeamDashboardState extends ConsumerState<TeamDashboard> {
                       12.width,
                       Expanded(
                         child: GestureDetector(
-                          onTap: () => onStartPlayback(context, intentController),
+                          onTap: () =>
+                              onStartPlayback(context, intentController),
                           child: TheButton(
                             text: "Start",
                             color: AppStyles.darkNavy,
@@ -390,7 +444,7 @@ class _TeamDashboardState extends ConsumerState<TeamDashboard> {
           children: [
             if (hasIntent && intentState.selectedCanvasTitle != null) ...[
               selectedPartitur(intentState),
-              const SizedBox(height: 12),
+              12.height,
             ],
             GestureDetector(
               onTap: hasIntent ? () => intentController.toggleReady() : null,
@@ -406,21 +460,26 @@ class _TeamDashboardState extends ConsumerState<TeamDashboard> {
     );
   }
 
-  Widget selectedPartitur (PlaybackIntentState intentState) {
+  Widget selectedPartitur(PlaybackIntentState intentState) {
     final title = intentState.selectedCanvasTitle;
     if (title == null || title.isEmpty) return const SizedBox.shrink();
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(color: AppStyles.grey800, borderRadius: BorderRadius.circular(8)),
+      decoration: BoxDecoration(
+        color: AppStyles.grey800,
+        borderRadius: BorderRadius.circular(8),
+      ),
       child: Row(
         children: [
           const Icon(Icons.info_outline, color: AppStyles.lightTeal, size: 20),
-          const SizedBox(width: 8),
+          8.width,
           Expanded(
             child: Text(
               'Leader memilih: $title',
-              style: AppStyles.bodySmall(context).copyWith(color: AppStyles.lightTeal),
+              style: AppStyles.bodySmall(
+                context,
+              ).copyWith(color: AppStyles.lightTeal),
               overflow: TextOverflow.ellipsis,
             ),
           ),
@@ -440,24 +499,35 @@ class _TeamDashboardState extends ConsumerState<TeamDashboard> {
     // fetch fetch
     final repository = ref.read(projectRepositoryProvider);
     final canvases = await repository.getCanvases(widget.projectID);
-    final currentCanvas = canvases.where((c) => c.id == selectedCanvasId).firstOrNull;
+    final currentCanvas = canvases
+        .where((c) => c.id == selectedCanvasId)
+        .firstOrNull;
     final currentTempo = currentCanvas?.tempo ?? 120.0;
     final currentTimeSignature = currentCanvas?.timeSignature ?? '4/4';
-    final selectedSections = await repository.getSections(widget.projectID, selectedCanvasId);
+    final selectedSections = await repository.getSections(
+      widget.projectID,
+      selectedCanvasId,
+    );
 
     if (!context.mounted) return;
+
     // IMPORTANT TODO: setting pengujian aja, reminder hapus
-    final settings = await DevSettingsSheet.show(context, defaultCountdownBeats: 4); 
+    // final settings = await DevSettingsSheet.show(context, defaultCountdownBeats: 4);
 
-    if (settings == null) return;
-    if (!context.mounted) return;
+    // if (settings == null) return;
+    // if (!context.mounted) return;
+    
+    const settings = PlaybackSettings(
+      enableHalfwayResync: false,
+      countdownBeats: 4,
+    );
 
     intentController.resetIntent();
 
     //leader only, member auto
     Navigator.push(
       context,
-      MaterialPageRoute( 
+      MaterialPageRoute(
         builder: (ctx) => PlaybackScreen(
           projectID: widget.projectID,
           canvasID: selectedCanvasId,
@@ -481,7 +551,11 @@ class _TeamDashboardState extends ConsumerState<TeamDashboard> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        icon: const Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 48),
+        icon: const Icon(
+          Icons.warning_amber_rounded,
+          color: Colors.orange,
+          size: 48,
+        ),
         title: const Text('Debug Stick'),
 
         actions: [
@@ -505,7 +579,10 @@ class _TeamDashboardState extends ConsumerState<TeamDashboard> {
       await ref.read(roomProvider.notifier).forceResetAndRebuildSections();
       if (mounted) {
         scaffoldMessenger.showSnackBar(
-          const SnackBar(content: Text('State Reset.'), backgroundColor: Colors.green),
+          const SnackBar(
+            content: Text('State Reset.'),
+            backgroundColor: Colors.green,
+          ),
         );
       }
     }

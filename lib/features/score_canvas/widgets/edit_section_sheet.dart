@@ -7,6 +7,7 @@ import 'package:jam_sync/shared/models/canvas_model.dart';
 import 'package:jam_sync/shared/utils/app_styles.dart';
 import 'package:jam_sync/shared/repositories/project_repository.dart';
 import 'package:jam_sync/features/score_canvas/widgets/add_bar_dialog.dart';
+import 'package:jam_sync/shared/utils/gap_helper.dart';
 import 'package:jam_sync/shared/widgets/dialog_helpers.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -85,7 +86,10 @@ class _EditSectionSheetState extends ConsumerState<EditSectionSheet> {
   @override
   Widget build(BuildContext context) {
     final sectionsAsync = ref.watch(
-      sectionsStreamProvider((projectID: widget.projectID, canvasID: widget.canvasID)),
+      sectionsStreamProvider((
+        projectID: widget.projectID,
+        canvasID: widget.canvasID,
+      )),
     );
 
     return PopScope(
@@ -111,7 +115,9 @@ class _EditSectionSheetState extends ConsumerState<EditSectionSheet> {
               appBar: AppBar(
                 title: Text(selectedSection?.name ?? "Pilih Section"),
                 leading: IconButton(
-                  icon: Icon(selectedSection != null ? Icons.arrow_back : Icons.close),
+                  icon: Icon(
+                    selectedSection != null ? Icons.arrow_back : Icons.close,
+                  ),
                   onPressed: () {
                     if (selectedSection != null) {
                       setState(() {
@@ -134,7 +140,8 @@ class _EditSectionSheetState extends ConsumerState<EditSectionSheet> {
                       onPressed: () async {
                         final result = await showDialog<int>(
                           context: context,
-                          builder: (_) => AddBarDialog(timeSignature: widget.timeSignature),
+                          builder: (_) =>
+                              AddBarDialog(timeSignature: widget.timeSignature),
                         );
 
                         if (result != null && mounted) {
@@ -173,7 +180,10 @@ class _EditSectionSheetState extends ConsumerState<EditSectionSheet> {
             final section = sections[index];
             return ListTile(
               title: Text(section.name, style: AppStyles.bodyLarge(context)),
-              subtitle: Text("${section.barCount} bars", style: AppStyles.bodySmall(context)),
+              subtitle: Text(
+                "${section.barCount} bars",
+                style: AppStyles.bodySmall(context),
+              ),
               trailing: const Icon(Icons.chevron_right),
               onTap: () {
                 setState(() {
@@ -228,8 +238,11 @@ class _EditSectionSheetState extends ConsumerState<EditSectionSheet> {
           itemCount: displayBars.length,
           itemBuilder: (context, index) {
             final bar = displayBars[index];
-            final chordSummary = bar.chords.where((c) => c.isNotEmpty).join(' | ');
-            final displayBeatCount = bar.beatCount ?? beatsPerBar(widget.timeSignature);
+            final chordSummary = bar.chords
+                .where((c) => c.isNotEmpty)
+                .join(' | ');
+            final displayBeatCount =
+                bar.beatCount ?? beatsPerBar(widget.timeSignature);
 
             return ListTile(
               key: ValueKey(bar.id),
@@ -237,9 +250,10 @@ class _EditSectionSheetState extends ConsumerState<EditSectionSheet> {
               title: Text("Bar ${index + 1}"),
               subtitle: Text(
                 chordSummary.isEmpty ? "Empty" : chordSummary,
-                style: AppStyles.bodySmall(
-                  context,
-                ).copyWith(color: AppStyles.darkNavy, fontWeight: FontWeight.w600),
+                style: AppStyles.bodySmall(context).copyWith(
+                  color: AppStyles.darkNavy,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -248,9 +262,15 @@ class _EditSectionSheetState extends ConsumerState<EditSectionSheet> {
                     label: Text("$displayBeatCount beats"),
                     onPressed: () => editBeatCount(bar),
                   ),
-                  const SizedBox(width: 8),
+                  8.width,
                   IconButton(
-                    icon: const Icon(Icons.delete, color: Colors.red),
+                    style: IconButton.styleFrom(
+                      backgroundColor: AppStyles.error,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    icon: const Icon(Icons.delete, color: AppStyles.white),
                     onPressed: () => confirmDeleteBar(bar.id, index),
                   ),
                 ],

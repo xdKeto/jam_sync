@@ -374,7 +374,7 @@ class LivePlaybackBanner extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(width: 8),
+          8.width,
           Text(
             'LIVE PLAYBACK IN PROGRESS',
             style: AppStyles.bodyMedium(context).copyWith(

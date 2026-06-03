@@ -90,8 +90,8 @@ class _AddCanvasSheetState extends ConsumerState<AddCanvasSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: BackgroundGradient(
+    return BackgroundGradient(
+      child: SafeArea(
         child: Container(
           decoration: BoxDecoration(
             color: Colors.transparent,
@@ -237,7 +237,7 @@ class _AddCanvasSheetState extends ConsumerState<AddCanvasSheet> {
                                   children: [
                                     Text("Song Template", style: AppStyles.h5(context)),
                                     if (selectedTemplate != null) ...[
-                                      const SizedBox(width: 8),
+                                      8.width,
                                       GestureDetector(
                                         onTap: () {
                                           setState(() {

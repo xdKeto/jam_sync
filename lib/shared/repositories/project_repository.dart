@@ -17,7 +17,8 @@ class ProjectRepository {
   ProjectRepository({FirebaseFirestore? firestore})
     : _firestore = firestore ?? FirebaseFirestore.instance;
 
-  CollectionReference get projectsRef => _firestore.collection('projects'); //project
+  CollectionReference get projectsRef =>
+      _firestore.collection('projects'); //project
 
   String generateRoomCode() {
     final uuid = const Uuid().v4();
@@ -84,7 +85,11 @@ class ProjectRepository {
     return projectId;
   }
 
-  void addTemplateSections(WriteBatch batch, DocumentReference canvasRef, String timeSignature) {
+  void addTemplateSections(
+    WriteBatch batch,
+    DocumentReference canvasRef,
+    String timeSignature,
+  ) {
     final slots = beatsPerBar(timeSignature);
     final emptyChords = List.filled(slots, '');
 
@@ -110,9 +115,16 @@ class ProjectRepository {
 
       for (int i = 0; i < barCount; i++) {
         final barRef = sectionRef.collection('bars').doc();
-        final bar = BarModel(id: barRef.id, index: startBar + i, chords: List.from(emptyChords));
+        final bar = BarModel(
+          id: barRef.id,
+          index: startBar + i,
+          chords: List.from(emptyChords),
+        );
 
-        batch.set(barRef, {...barToFirestore(bar), 'updatedAt': FieldValue.serverTimestamp()});
+        batch.set(barRef, {
+          ...barToFirestore(bar),
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
       }
     }
   }
@@ -151,7 +163,10 @@ class ProjectRepository {
           chords: barChords.map((e) => e.toString()).toList(),
         );
 
-        batch.set(barRef, {...barToFirestore(bar), 'updatedAt': FieldValue.serverTimestamp()});
+        batch.set(barRef, {
+          ...barToFirestore(bar),
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
       }
     }
   }
@@ -183,7 +198,11 @@ class ProjectRepository {
         .collection('canvases')
         .orderBy('order')
         .snapshots()
-        .map((snapshot) => snapshot.docs.map((doc) => CanvasModel.fromFirestore(doc)).toList())
+        .map(
+          (snapshot) => snapshot.docs
+              .map((doc) => CanvasModel.fromFirestore(doc))
+              .toList(),
+        )
         .handleError((_) {});
   }
 
@@ -195,10 +214,17 @@ class ProjectRepository {
         .collection('sections')
         .orderBy('order')
         .snapshots()
-        .map((snapshot) => snapshot.docs.map((doc) => SectionModel.fromFirestore(doc)).toList());
+        .map(
+          (snapshot) => snapshot.docs
+              .map((doc) => SectionModel.fromFirestore(doc))
+              .toList(),
+        );
   }
 
-  Future<List<SectionModel>> getSections(String projectId, String canvasId) async {
+  Future<List<SectionModel>> getSections(
+    String projectId,
+    String canvasId,
+  ) async {
     final snapshot = await projectsRef
         .doc(projectId)
         .collection('canvases')
@@ -209,7 +235,11 @@ class ProjectRepository {
     return snapshot.docs.map((doc) => SectionModel.fromFirestore(doc)).toList();
   }
 
-  Stream<List<BarModel>> streamBars(String projectId, String canvasId, String sectionId) {
+  Stream<List<BarModel>> streamBars(
+    String projectId,
+    String canvasId,
+    String sectionId,
+  ) {
     return projectsRef
         .doc(projectId)
         .collection('canvases')
@@ -219,10 +249,17 @@ class ProjectRepository {
         .collection('bars')
         .orderBy('index')
         .snapshots()
-        .map((snapshot) => snapshot.docs.map((doc) => BarModel.fromFirestore(doc)).toList());
+        .map(
+          (snapshot) =>
+              snapshot.docs.map((doc) => BarModel.fromFirestore(doc)).toList(),
+        );
   }
 
-  Future<List<BarModel>> getBars(String projectId, String canvasId, String sectionId) async {
+  Future<List<BarModel>> getBars(
+    String projectId,
+    String canvasId,
+    String sectionId,
+  ) async {
     final snapshot = await projectsRef
         .doc(projectId)
         .collection('canvases')
@@ -287,7 +324,6 @@ class ProjectRepository {
 
   // CHORD STUFF
   Future<void> updateBarChord({
-    
     required String projectID,
     required String canvasID,
     required String sectionID,
@@ -365,9 +401,11 @@ class ProjectRepository {
     final doc = await barRef.get();
     final chords = List<String>.from(doc.data()?['passingChord'] ?? []);
     final mainChords = List<dynamic>.from(doc.data()?['chords'] ?? []);
-    
+
     // nosql, buat kosong dulu
-    final targetLength = mainChords.length > beatIndex ? mainChords.length : beatIndex + 1;
+    final targetLength = mainChords.length > beatIndex
+        ? mainChords.length
+        : beatIndex + 1;
     while (chords.length < targetLength) {
       chords.add('');
     }
@@ -402,7 +440,9 @@ class ProjectRepository {
     final chords = List<String>.from(doc.data()?['passingChord'] ?? []);
     final mainChords = List<dynamic>.from(doc.data()?['chords'] ?? []);
 
-    final targetLength = mainChords.length > beatIndex ? mainChords.length : beatIndex + 1;
+    final targetLength = mainChords.length > beatIndex
+        ? mainChords.length
+        : beatIndex + 1;
     while (chords.length < targetLength) {
       chords.add('');
     }
@@ -454,10 +494,63 @@ class ProjectRepository {
     for (int i = 0; i < barCount; i++) {
       final barRef = sectionRef.collection('bars').doc();
       batch.set(barRef, {
-        ...barToFirestore(BarModel(id: barRef.id, index: startBar + i, chords: List.from(empty))),
+        ...barToFirestore(
+          BarModel(
+            id: barRef.id,
+            index: startBar + i,
+            chords: List.from(empty),
+          ),
+        ),
         'updatedAt': FieldValue.serverTimestamp(),
       });
     }
+    await batch.commit();
+  }
+
+  Future<void> copySection({
+    required String projectID,
+    required String canvasID,
+    required String sectionID,
+    required String name,
+    required int order,
+    required int barCount,
+    required int startBar,
+  }) async {
+    final copiedBars = await getBars(projectID, canvasID, sectionID);
+
+    final batch = _firestore.batch();
+    final sectionRef = projectsRef
+        .doc(projectID)
+        .collection('canvases')
+        .doc(canvasID)
+        .collection('sections')
+        .doc();
+
+    batch.set(
+      sectionRef,
+      sectionToFirestore(
+        SectionModel(
+          id: sectionRef.id,
+          name: name,
+          order: order,
+          barCount: barCount,
+          startBar: startBar,
+        ),
+      ),
+    );
+
+    for (int i = 0; i < copiedBars.length; i++) {
+      final copiedBar = copiedBars[i];
+      final barRef = sectionRef.collection('bars').doc();
+      batch.set(barRef, {
+        'index': startBar + i,
+        'chords': List<String>.from(copiedBar.chords),
+        'passingChord': List<String>.from(copiedBar.passingChord),
+        'beatCount': copiedBar.beatCount,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    }
+
     await batch.commit();
   }
 
@@ -515,7 +608,10 @@ class ProjectRepository {
           .collection('sections')
           .doc(section.id);
 
-      batch.update(ref, {'order': i, 'startBar': runningStartBar}); //update index
+      batch.update(ref, {
+        'order': i,
+        'startBar': runningStartBar,
+      }); //update index
 
       runningStartBar += section.barCount;
     }
@@ -544,7 +640,14 @@ class ProjectRepository {
 
     final batch = _firestore.batch();
     batch.set(barRef, {
-      ...barToFirestore(BarModel(id: barRef.id, index: index, chords: empty, beatCount: beatCount)),
+      ...barToFirestore(
+        BarModel(
+          id: barRef.id,
+          index: index,
+          chords: empty,
+          beatCount: beatCount,
+        ),
+      ),
       'updatedAt': FieldValue.serverTimestamp(),
     });
     batch.update(sectionRef, {'barCount': FieldValue.increment(1)});
@@ -616,11 +719,20 @@ class ProjectRepository {
     List<String> newPassing;
 
     if (newBeatCount > currentChords.length) {
-      newChords = [...currentChords, ...List.filled(newBeatCount - currentChords.length, '')];
-      newPassing = [...currentPassing, ...List.filled(newBeatCount - currentPassing.length, '')];
+      newChords = [
+        ...currentChords,
+        ...List.filled(newBeatCount - currentChords.length, ''),
+      ];
+      newPassing = [
+        ...currentPassing,
+        ...List.filled(newBeatCount - currentPassing.length, ''),
+      ];
     } else {
       newChords = currentChords.sublist(0, newBeatCount);
-      newPassing = currentPassing.sublist(0, newBeatCount.clamp(0, currentPassing.length));
+      newPassing = currentPassing.sublist(
+        0,
+        newBeatCount.clamp(0, currentPassing.length),
+      );
     }
 
     await barRef.update({
@@ -679,7 +791,10 @@ class ProjectRepository {
     required String projectID,
     required String canvasID,
   }) async {
-    final canvasRef = projectsRef.doc(projectID).collection('canvases').doc(canvasID);
+    final canvasRef = projectsRef
+        .doc(projectID)
+        .collection('canvases')
+        .doc(canvasID);
 
     final sectionsSnap = await canvasRef.collection('sections').get();
     final batch = _firestore.batch();
@@ -722,10 +837,7 @@ class ProjectRepository {
         .doc(projectID)
         .collection('canvases')
         .doc(canvasID)
-        .update({
-          'tempo': tempo,
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
+        .update({'tempo': tempo, 'updatedAt': FieldValue.serverTimestamp()});
   }
 }
 

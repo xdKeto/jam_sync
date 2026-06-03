@@ -33,6 +33,7 @@ class EditOptionSheet extends ConsumerWidget {
                 context: context,
                 isScrollControlled: true,
                 useSafeArea: true,
+                constraints: const BoxConstraints(maxWidth: double.infinity),
                 builder: (_) => SongStructureSheet(
                   projectID: projectID,
                   canvasID: canvasID,
@@ -51,6 +52,7 @@ class EditOptionSheet extends ConsumerWidget {
                 context: context,
                 isScrollControlled: true,
                 useSafeArea: true,
+                constraints: const BoxConstraints(maxWidth: double.infinity),
                 builder: (_) => EditSectionSheet(
                   projectID: projectID,
                   canvasID: canvasID,

@@ -305,7 +305,7 @@ class NewProjectScreenState extends ConsumerState<NewProjectScreen> {
                                     children: [
                                       Text("Song Template", style: AppStyles.h5(context)),
                                       if (selectedTemplate != null) ...[
-                                        const SizedBox(width: 8),
+                                        8.width,
                                         GestureDetector(
                                           onTap: () {
                                             setState(() {
