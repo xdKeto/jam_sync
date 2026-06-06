@@ -27,7 +27,7 @@ class PlaybackState {
   final String roomID;
   final String projectID;
   final String canvasID;
-  final double correctionOffsetMs;
+  // final double correctionOffsetMs;
   final Map<int, int> barIndexMap;
 
   const PlaybackState({
@@ -45,7 +45,7 @@ class PlaybackState {
     this.roomID = '',
     this.projectID = '',
     this.canvasID = '',
-    this.correctionOffsetMs = 0,
+    // this.correctionOffsetMs = 0,
     this.barIndexMap = const {},
   });
 
@@ -64,7 +64,7 @@ class PlaybackState {
     String? roomID,
     String? projectID,
     String? canvasID,
-    double? correctionOffsetMs,
+    // double? correctionOffsetMs,
     Map<int, int>? barIndexMap,
   }) {
     return PlaybackState(
@@ -82,7 +82,7 @@ class PlaybackState {
       roomID: roomID ?? this.roomID,
       projectID: projectID ?? this.projectID,
       canvasID: canvasID ?? this.canvasID,
-      correctionOffsetMs: correctionOffsetMs ?? this.correctionOffsetMs,
+      // correctionOffsetMs: correctionOffsetMs ?? this.correctionOffsetMs,
       barIndexMap: barIndexMap ?? this.barIndexMap,
     );
   }
@@ -135,7 +135,7 @@ class PlaybackController extends StateNotifier<PlaybackState> {
   final PlaybackProviderParams params;
   final SyncService syncService;
   final ResyncService resyncService;
-  final MainLoggerService logger = MainLoggerService(syncService: SyncService());
+  late final MainLoggerService logger;
 
   Timer? countdownTimer;
   Timer? playbackTimer;
@@ -174,6 +174,8 @@ class PlaybackController extends StateNotifier<PlaybackState> {
     tempo = params.tempo;
     beatDurationMs = 60000 / params.tempo;
     countdownBeats = params.countdownBeats;
+
+    logger = MainLoggerService(syncService: syncService);
 
     setupRTDBListener();
   }
@@ -356,7 +358,7 @@ class PlaybackController extends StateNotifier<PlaybackState> {
 
     countdownDurationMs = (countdownBeats * beatDurationMs).round();
     serverStartTime =
-        syncService.getEstimatedServerTime() + countdownDurationMs + 5000 + 500;
+        syncService.getEstimatedServerTime() + countdownDurationMs + 5000;
 
     final sessionId = const Uuid().v4();
 
@@ -490,7 +492,7 @@ class PlaybackController extends StateNotifier<PlaybackState> {
       smoothedPositionMs: 0,
       currentBarIndex: 0,
       playbackProgress: 0,
-      correctionOffsetMs: 0,
+      // correctionOffsetMs: 0,
       barIndexMap: Map.from(barIndexMap),
     );
 
@@ -535,15 +537,15 @@ class PlaybackController extends StateNotifier<PlaybackState> {
         .toDouble(); // "estimasi server" - "waktu mulai" = "skrg lagu sampe mana"
 
     // tambah decay
-    final decayedOffset = state.correctionOffsetMs * 0.98;
-    final targetPosition = rawPosition + decayedOffset;
+    // final decayedOffset = state.correctionOffsetMs * 0.98;
+    // final targetPosition = rawPosition + decayedOffset;
 
     // smoothing
-    final error = (targetPosition - state.smoothedPositionMs).abs();
+    final error = (rawPosition - state.smoothedPositionMs).abs();
     final alpha = error > 50 ? 0.3 : 0.15;
     final smoothed =
         state.smoothedPositionMs +
-        alpha * (targetPosition - state.smoothedPositionMs);
+        alpha * (rawPosition - state.smoothedPositionMs);
 
     // nentuin UI bar
     final barIndex = positionToBarIndex(smoothed);
@@ -578,7 +580,7 @@ class PlaybackController extends StateNotifier<PlaybackState> {
       playbackProgress: totalDurationMs > 0
           ? (smoothed / totalDurationMs).clamp(0.0, 1.0)
           : 0,
-      correctionOffsetMs: decayedOffset,
+      // correctionOffsetMs: decayedOffset,
     );
   }
 

@@ -75,7 +75,7 @@ class PlaybackIntentController extends StateNotifier<PlaybackIntentState> {
   final String timeSignature;
   final int countdownBeats;
   final List<SectionModel> sections;
-  final Future<List<BarModel>> Function(String sectionID)? getBarsForSection;
+  // final Future<List<BarModel>> Function(String sectionID)? getBarsForSection;
 
   String tempSelectedCanvasID = '';
   String tempSelectedCanvasTitle = '';
@@ -96,7 +96,7 @@ class PlaybackIntentController extends StateNotifier<PlaybackIntentState> {
     required this.timeSignature,
     required this.countdownBeats,
     required this.sections,
-    this.getBarsForSection,
+    // this.getBarsForSection,
   }) : super(const PlaybackIntentState()) {
     tempSelectedCanvasID = defaultCanvasID;
     initListeners();
@@ -460,6 +460,6 @@ final playbackIntentProvider =
         timeSignature: params.timeSignature,
         countdownBeats: params.countdownBeats,
         sections: params.sections,
-        getBarsForSection: params.getBarsForSection,
+        // getBarsForSection: params.getBarsForSection,
       );
     });
