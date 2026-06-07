@@ -37,6 +37,10 @@ service cloud.firestore {
       match /canvases/{canvasId} {
         allow read, write: if isAuthenticated() && isProjectParticipant(projectId);
 
+        match /notes/{noteId} {
+          allow read, write: if isAuthenticated() && isProjectParticipant(projectId);
+        }
+
         match /sections/{sectionId} {
           allow read, write: if isAuthenticated() && isProjectParticipant(projectId);
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jam_sync/features/score_canvas/providers/canvas_provider.dart';
 import 'package:jam_sync/features/score_canvas/providers/playback_provider.dart';
+import 'package:jam_sync/features/score_canvas/widgets/draggable_note_widget.dart';
 import 'package:jam_sync/features/score_canvas/widgets/playback/playback_section_widget.dart';
 import 'package:jam_sync/shared/utils/app_styles.dart';
 import 'package:jam_sync/shared/utils/gap_helper.dart';
@@ -137,6 +138,11 @@ class _PlaybackCanvasState extends ConsumerState<PlaybackCanvas> {
       sectionsStreamProvider((projectID: widget.projectID, canvasID: widget.canvasID)),
     );
 
+    final notesAsync = ref.watch(notesStreamProvider((
+      projectID: widget.projectID,
+      canvasID: widget.canvasID,
+    )));
+
     final timeSignature = playbackState.timeSignature;
 
     return sectionAsync.when(
@@ -154,6 +160,8 @@ class _PlaybackCanvasState extends ConsumerState<PlaybackCanvas> {
             ),
           );
         }
+
+        final notes = notesAsync.value ?? [];
 
         // hasil hitungan autonomous
         final beatPosition = widget.smoothedPositionMs / beatDurationMs;
@@ -184,7 +192,7 @@ class _PlaybackCanvasState extends ConsumerState<PlaybackCanvas> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      if (widget.title != null)
+                      if (widget.title != null) ...[
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           crossAxisAlignment: CrossAxisAlignment.center,
@@ -192,25 +200,43 @@ class _PlaybackCanvasState extends ConsumerState<PlaybackCanvas> {
                             Text(widget.title!, style: AppStyles.h2(context)),
                           ],
                         ),
-                      12.height,
-                      ...sections.asMap().entries.map((entry) {
-                          final idx = entry.key;
-                          final section = entry.value;
-                          return PlaybackSectionWidget(
-                            projectID: widget.projectID,
-                            canvasID: widget.canvasID,
-                            timeSignature: timeSignature,
-                            section: section,
-                            isFirst: idx == 0,
-                            barWidth: barWidth,
-                            canvasWidth: canvasWidth,
-                            isEditable: widget.isEditable,
-                            currentBeatIndex: widget.isPlaying ? currentBeatIndex : -1,
-                            barIndexMap: widget.barIndexMap,
-                            sectionStartBarIndex: widget.sectionStartBarIndex[section.id] ?? 0,
-                            beatPosition: widget.isPlaying ? beatPosition : -1,
-                          );
-                        }),
+                        12.height,
+                      ],
+                      Stack(
+                        children: [
+                          Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              ...sections.asMap().entries.map((entry) {
+                                  final idx = entry.key;
+                                  final section = entry.value;
+                                  return PlaybackSectionWidget(
+                                    projectID: widget.projectID,
+                                    canvasID: widget.canvasID,
+                                    timeSignature: timeSignature,
+                                    section: section,
+                                    isFirst: idx == 0,
+                                    barWidth: barWidth,
+                                    canvasWidth: canvasWidth,
+                                    isEditable: widget.isEditable,
+                                    currentBeatIndex: widget.isPlaying ? currentBeatIndex : -1,
+                                    barIndexMap: widget.barIndexMap,
+                                    sectionStartBarIndex: widget.sectionStartBarIndex[section.id] ?? 0,
+                                    beatPosition: widget.isPlaying ? beatPosition : -1,
+                                  );
+                                }),
+                            ],
+                          ),
+                          ...notes.map((note) => DraggableNoteWidget(
+                                note: note,
+                                projectID: widget.projectID,
+                                canvasID: widget.canvasID,
+                                canvasWidth: canvasWidth,
+                                isEditable: widget.isEditable,
+                              )),
+                        ],
+                      ),
                     ],
                   ),
                 ),
