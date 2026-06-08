@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:jam_sync/shared/models/note_model.dart';
 import 'package:uuid/uuid.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:jam_sync/shared/models/project_model.dart';
@@ -838,6 +839,75 @@ class ProjectRepository {
         .collection('canvases')
         .doc(canvasID)
         .update({'tempo': tempo, 'updatedAt': FieldValue.serverTimestamp()});
+  }
+  // NOTES
+
+  Stream<List<NoteModel>> streamNotes(String projectID, String canvasID) {
+    return projectsRef
+        .doc(projectID)
+        .collection('canvases')
+        .doc(canvasID)
+        .collection('notes')
+        .orderBy('createdAt')
+        .snapshots()
+        .map(
+          (snapshot) =>
+              snapshot.docs.map((doc) => NoteModel.fromFirestore(doc)).toList(),
+        );
+  }
+
+  Future<void> addNote({
+    required String projectID,
+    required String canvasID,
+    required String text,
+    required double posX,
+    required double posY,
+  }) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) throw Exception('User not log in');
+
+    await projectsRef
+        .doc(projectID)
+        .collection('canvases')
+        .doc(canvasID)
+        .collection('notes')
+        .add({
+          'text': text,
+          'posX': posX,
+          'posY': posY,
+          'createdBy': user.uid,
+          'createdAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+  }
+
+  Future<void> updateNote({
+    required String projectID,
+    required String canvasID,
+    required String noteID,
+    required Map<String, dynamic> data,
+  }) async {
+    await projectsRef
+        .doc(projectID)
+        .collection('canvases')
+        .doc(canvasID)
+        .collection('notes')
+        .doc(noteID)
+        .update({...data, 'updatedAt': FieldValue.serverTimestamp()});
+  }
+
+  Future<void> deleteNote({
+    required String projectID,
+    required String canvasID,
+    required String noteID,
+  }) async {
+    await projectsRef
+        .doc(projectID)
+        .collection('canvases')
+        .doc(canvasID)
+        .collection('notes')
+        .doc(noteID)
+        .delete();
   }
 }
 

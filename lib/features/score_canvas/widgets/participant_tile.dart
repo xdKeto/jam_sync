@@ -99,10 +99,10 @@ class ParticipantTile extends StatelessWidget {
                         ),
                       ),
                     ],
-                    if (!participant.isLeader) ...[
-                      8.width,
-                      Icon(Icons.more_vert, color: AppStyles.grey500, size: 20),
-                    ],
+                    // if (!participant.isLeader) ...[
+                    //   8.width,
+                    //   Icon(Icons.more_vert, color: AppStyles.grey500, size: 20),
+                    // ],
                   ],
                 ),
                 2.height,

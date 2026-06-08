@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:jam_sync/features/score_canvas/providers/canvas_provider.dart';
+import 'package:jam_sync/features/score_canvas/widgets/draggable_note_widget.dart';
 import 'package:jam_sync/features/score_canvas/widgets/section_widget.dart';
 import 'package:jam_sync/shared/utils/app_styles.dart';
 import 'package:jam_sync/shared/utils/gap_helper.dart';
@@ -118,6 +119,11 @@ class CanvasWidgetState extends ConsumerState<CanvasWidget> {
       canvasID: widget.canvasID,
     )));
 
+    final notesAsync = ref.watch(notesStreamProvider((
+      projectID: widget.projectID,
+      canvasID: widget.canvasID,
+    )));
+
     return sectionsAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) => Center(child: Text('Error: $e', style: const TextStyle(color: AppStyles.error))),
@@ -125,6 +131,8 @@ class CanvasWidgetState extends ConsumerState<CanvasWidget> {
         if (sections.isEmpty) {
           return buildEmptyState();
         }
+
+        final notes = notesAsync.value ?? [];
 
         return LayoutBuilder(
           builder: (context, constraints) {
@@ -146,18 +154,29 @@ class CanvasWidgetState extends ConsumerState<CanvasWidget> {
                 padding: const EdgeInsets.all(canvasPadding),
                 child: SizedBox(
                   width: canvasWidth,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: List.generate(sections.length, (i) {
-                      return SectionWidget(
-                        projectID: widget.projectID,
-                        canvasID: widget.canvasID,
-                        timeSignature: widget.timeSignature,
-                        section: sections[i],
-                        isFirst: i == 0,
-                        barWidth: canvasBarWidth,
-                      );
-                    }),
+                  child: Stack(
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: List.generate(sections.length, (i) {
+                          return SectionWidget(
+                            projectID: widget.projectID,
+                            canvasID: widget.canvasID,
+                            timeSignature: widget.timeSignature,
+                            section: sections[i],
+                            isFirst: i == 0,
+                            barWidth: canvasBarWidth,
+                          );
+                        }),
+                      ),
+                      ...notes.map((note) => DraggableNoteWidget(
+                            note: note,
+                            projectID: widget.projectID,
+                            canvasID: widget.canvasID,
+                            canvasWidth: canvasWidth,
+                            isEditable: true,
+                          )),
+                    ],
                   ),
                 ),
               ),
