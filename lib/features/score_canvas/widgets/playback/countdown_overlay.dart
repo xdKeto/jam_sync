@@ -38,7 +38,7 @@ class CountdownOverlay extends ConsumerWidget {
         return buildCountdownOverlay(context, state);
       case PlaybackPhase.ended:
         return buildEndedOverlay(context);
-      default:
+      default: // playing
         return SizedBox.shrink();
     }
   }

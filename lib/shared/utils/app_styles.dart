@@ -51,6 +51,7 @@ class AppStyles {
       borderSide: BorderSide(color: AppStyles.darkNavy),
       borderRadius: BorderRadius.circular(10.0),
     ),
+    floatingLabelBehavior: FloatingLabelBehavior.always
   );
 
   static BoxDecoration buttonBox(Color color, double borderRad) {

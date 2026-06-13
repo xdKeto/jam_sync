@@ -11,6 +11,7 @@ class PlaybackControls extends ConsumerStatefulWidget {
   final bool isLeader;
   final VoidCallback? onClose;
   final VoidCallback? onStop;
+  final double playbackProgress;
 
   const PlaybackControls({
     super.key,
@@ -20,6 +21,7 @@ class PlaybackControls extends ConsumerStatefulWidget {
     required this.isLeader,
     this.onClose,
     this.onStop,
+    required this.playbackProgress,
   });
 
   @override
@@ -75,13 +77,33 @@ class _PlaybackControlsState extends ConsumerState<PlaybackControls> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   PhaseIndicator(phase: widget.phase),
+                  // 8.height,
+                  // if (widget.phase == PlaybackPhase.playing)
+                  //   Padding(
+                  //     padding: EdgeInsets.symmetric(horizontal: 16),
+                  //     child: ClipRRect(
+                  //       borderRadius: BorderRadiusGeometry.circular(4),
+                  //       child: LinearProgressIndicator(
+                  //         value: widget.playbackProgress,
+                  //         backgroundColor: AppStyles.grey400,
+                  //         valueColor: AlwaysStoppedAnimation(
+                  //           AppStyles.warning,
+                  //         ),
+                  //         minHeight: 4,
+                  //       ),
+                  //     ),
+                  //   ),
+                  // Consumer(builder: (context, ref, _) {
+                  //   final syncService = ref.read(syncServiceProvider);
+
+                  // }),
                   12.height,
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       if (widget.phase == PlaybackPhase.playing &&
                           widget.isLeader)
-                        _ControlButton(
+                        ControlButton(
                           icon: Icons.stop,
                           label: 'Stop',
                           color: AppStyles.error,
@@ -152,13 +174,13 @@ class PhaseIndicator extends StatelessWidget {
   }
 }
 
-class _ControlButton extends StatelessWidget {
+class ControlButton extends StatelessWidget {
   final IconData icon;
   final String label;
   final Color color;
   final VoidCallback onTap;
 
-  const _ControlButton({
+  const ControlButton({
     required this.icon,
     required this.label,
     required this.color,

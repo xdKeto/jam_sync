@@ -11,7 +11,7 @@ class PlaybackCanvas extends ConsumerStatefulWidget {
   final String projectID;
   final String canvasID;
   final double scrollOffset;
-  final int currentIndex;
+  // final int currentIndex;
   final double smoothedPositionMs;
   final bool isPlaying;
   final bool isEditable;
@@ -25,7 +25,7 @@ class PlaybackCanvas extends ConsumerStatefulWidget {
     required this.projectID,
     required this.canvasID,
     required this.scrollOffset,
-    required this.currentIndex,
+    // required this.currentIndex,
     required this.smoothedPositionMs,
     required this.isPlaying,
     this.isEditable = true,

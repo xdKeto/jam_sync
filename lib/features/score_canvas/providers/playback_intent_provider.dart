@@ -130,7 +130,7 @@ class PlaybackIntentController extends StateNotifier<PlaybackIntentState> {
   String get selectedCanvasId => tempSelectedCanvasID;
   String get selectedCanvasTitle => tempSelectedCanvasTitle;
 
-  void listenIntent() { //updating state idle/waiting/partitur
+  void listenIntent() { //updat state idle/waiting/partitur
     intentSubscription?.cancel();
     intentSubscription = FirebaseDatabase.instance
         .ref()
@@ -292,7 +292,7 @@ class PlaybackIntentController extends StateNotifier<PlaybackIntentState> {
       'playback_sessions/$roomID/participants',
     );
 
-    final snapshot = await participantsRef.get();
+    final snapshot = await participantsRef.get(); // cek dupe
     if (snapshot.exists) {
       final data = snapshot.value as Map<dynamic, dynamic>;
       for (final entry in data.entries) {
@@ -306,7 +306,7 @@ class PlaybackIntentController extends StateNotifier<PlaybackIntentState> {
       }
     }
 
-    // state lokal
+    // update state
     state = state.copyWith(
       state: IntentState.waiting,
       isIntentSent: true,

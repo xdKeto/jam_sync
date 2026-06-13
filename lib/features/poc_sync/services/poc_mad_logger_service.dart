@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jam_sync/features/poc_sync/services/poc_sync_provider.dart';
 import 'package:uuid/uuid.dart';
 
-// Leader creates session and stores in RTDB agar semua client pakai session yang sama
 Future<String> createSharedLogSession(String roomId) async {
   final rtdb = FirebaseDatabase.instance.ref();
   final doc = await FirebaseFirestore.instance.collection('poc_sessions').add({
@@ -20,7 +19,6 @@ Future<String> createSharedLogSession(String roomId) async {
   return doc.id;
 }
 
-// Member reads existing session from RTDB
 Future<String?> getSharedLogSession(String roomId) async {
   final rtdb = FirebaseDatabase.instance.ref();
   final snapshot = await rtdb

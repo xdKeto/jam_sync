@@ -1,4 +1,4 @@
-/// single source of truth untuk semua layout
+// single source of truth untuk semua layout
 abstract final class PlaybackLayout {
   static const double canvasWidth = 1000;
   static const double barWidth = canvasWidth / 4;       // 250

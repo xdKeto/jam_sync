@@ -30,7 +30,7 @@ class ChordActionSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildListTile(
+  Widget buildListTile(
     BuildContext context,
     IconData icon,
     String title,
@@ -61,16 +61,15 @@ class ChordActionSheet extends StatelessWidget {
           ),
           const Divider(height: 32),
 
-          // Main Chord Actions
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Text('Main Chord', style: AppStyles.labelSmall(context)),
           ),
           if (!hasMain)
-            _buildListTile(context, Icons.add, 'Add Chord', ChordAction.addChord)
+            buildListTile(context, Icons.add, 'Add Chord', ChordAction.addChord)
           else ...[
-            _buildListTile(context, Icons.edit, 'Edit Chord', ChordAction.changeChord),
-            _buildListTile(
+            buildListTile(context, Icons.edit, 'Edit Chord', ChordAction.changeChord),
+            buildListTile(
               context,
               Icons.delete_outline,
               'Delete Chord',
@@ -81,21 +80,20 @@ class ChordActionSheet extends StatelessWidget {
 
           const Divider(),
 
-          // Passing Chord Actions
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Text('Passing Chord', style: AppStyles.labelSmall(context)),
           ),
           if (!hasPassing)
-            _buildListTile(
+            buildListTile(
               context,
               Icons.add_circle_outline,
               'Add Passing Chord',
               ChordAction.addPassing,
             )
           else ...[
-            _buildListTile(context, Icons.edit, 'Edit Passing Chord', ChordAction.changePassing),
-            _buildListTile(
+            buildListTile(context, Icons.edit, 'Edit Passing Chord', ChordAction.changePassing),
+            buildListTile(
               context,
               Icons.delete_outline,
               'Delete Passing Chord',

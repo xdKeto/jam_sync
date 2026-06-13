@@ -27,8 +27,8 @@ class SyncService {
 
   List<NTPSample> offsetHistory = [];
   Timer? bgTimer;
-  static const int history = 80;
-  static const int interval = 25000; //25 detik
+  static const int history = 40;
+  static const int interval = 15000;
   static const int minSample = 7;
 
   void initService() {
@@ -37,10 +37,9 @@ class SyncService {
     //   serverTimeOffset = (event.snapshot.value as int?) ?? 0;
     //   // print("server offset: $serverTimeOffset");
     // });
-
     // return;
 
-    // app start
+    // 
     burstCalibrate();
   }
 
@@ -51,6 +50,7 @@ class SyncService {
   }
 
   int getEstimatedServerTime() {
+    // debugPrint(serverTimeOffset.toString());R
     return DateTime.now().millisecondsSinceEpoch + serverTimeOffset;
   }
 
@@ -67,13 +67,20 @@ class SyncService {
     final offset = serverTime - tSend - (rtt ~/ 2);
 
     await ping.remove();
-    return (offset: offset, rtt: rtt, timestamp: DateTime.now().millisecondsSinceEpoch);
+    return (
+      offset: offset,
+      rtt: rtt,
+      timestamp: DateTime.now().millisecondsSinceEpoch,
+    );
   }
 
-  //call in room aja
+  //in room 
   void startBackgroundCalibration() {
     if (bgTimer != null) return;
-    bgTimer = Timer.periodic(Duration(milliseconds: interval), (_) => backgroundCalibrate());
+    bgTimer = Timer.periodic(
+      Duration(milliseconds: interval),
+      (_) => backgroundCalibrate(),
+    );
   }
 
   void pauseBackgroundCalibration() {
@@ -81,15 +88,13 @@ class SyncService {
     bgTimer = null;
   }
 
-  bool get isCalibrating => bgTimer != null;
-
   Future<void> backgroundCalibrate() async {
     for (int i = 0; i < 2; i++) {
       final sample = await calculateNTP();
       if (sample.rtt > 200) return; // quality gate
       if (offsetHistory.length >= history) offsetHistory.removeAt(0);
 
-      debugPrint('background calibrate ${i+1} triggered');
+      debugPrint('background calibrate ${i + 1} triggered');
       offsetHistory.add(sample);
       updateHistory();
 
@@ -97,12 +102,12 @@ class SyncService {
     }
   }
 
-  // on start, ambil 6
+  // on start
   Future<void> burstCalibrate() async {
     for (int i = 0; i < 6; i++) {
       final sample = await calculateNTP();
 
-      // quality gate, kalo sample pertama > 200 tetep masukin, biar ngga pure kosong
+      // quality gate, kalo sample pertama > 200 tetep masukin
       if (sample.rtt > 200) {
         if (offsetHistory.isEmpty) {
           offsetHistory.add(sample);
@@ -110,7 +115,7 @@ class SyncService {
         continue;
       }
 
-      debugPrint('burst calibrate ${i+1} triggered');
+      debugPrint('burst calibrate ${i + 1} triggered');
       offsetHistory.add(sample);
       updateHistory();
 
@@ -118,7 +123,7 @@ class SyncService {
     }
   }
 
-  // leader only, cek sample dulu, final calibration
+  // final calibration
   Future<void> smartQuickCalibrate() async {
     if (offsetHistory.length < minSample) {
       await multiSampleCalibrate();
@@ -127,7 +132,7 @@ class SyncService {
     }
   }
 
-  // kurang sample, ambil 10
+  // kurang sample, ambil 8
   Future<void> multiSampleCalibrate() async {
     try {
       final samples = <NTPSample>[];
@@ -145,21 +150,19 @@ class SyncService {
         return;
       }
 
-      // sort, take 8/10
       samples.sort((a, b) => a.rtt.compareTo(b.rtt));
       final topSamples = samples.take((samples.length * 0.8).ceil()).toList();
 
-      // median
       topSamples.sort((a, b) => a.offset.compareTo(b.offset));
       final medianOffset = topSamples[topSamples.length ~/ 2].offset;
 
       // blend
-      serverTimeOffset = ((serverTimeOffset * 0.5) + (medianOffset * 0.5)).round();
-
+      serverTimeOffset = ((serverTimeOffset * 0.5) + (medianOffset * 0.5))
+          .round();
     } finally {}
   }
 
-  // sample cukup, ambil 3
+  // sample cukup, ambil 2
   Future<void> quickCalibrate() async {
     try {
       final samples = <({int offset, int rtt, int timestamp})>[];
@@ -170,23 +173,22 @@ class SyncService {
 
         await Future.delayed(Duration(milliseconds: 300));
       }
-
-      // sort, take 2/3
+      
       samples.sort((a, b) => a.rtt.compareTo(b.rtt));
       final best = samples.take(2).toList();
 
       // mean sample
-      final offset = best.map((e) => e.offset).reduce((a, b) => a + b) ~/ best.length;
+      final offset =
+          best.map((e) => e.offset).reduce((a, b) => a + b) ~/ best.length; // total / len
       final rtt = best.map((e) => e.rtt).reduce((a, b) => a + b) / best.length;
 
-      // diff
       final difference = (offset - serverTimeOffset).abs();
 
-      // gabungin offset background + quick calibrate kalo diff nya gede aja
-      // 15/4: difference ini salah, harusnya <
+      // blend offset, kalo diff nya gede aja
       // if (difference > 10 && rtt < 200) {
       if (difference < 15 && rtt < 150) {
-        serverTimeOffset = ((serverTimeOffset * 0.7) + (offset * 0.3)).round(); //blend 70/30
+        serverTimeOffset = ((serverTimeOffset * 0.7) + (offset * 0.3))
+            .round(); //blend 70/30
         debugPrint('blend 70/30 offset');
       } else {
         debugPrint('blend skipped');
@@ -213,7 +215,11 @@ class ResyncService {
   ResyncService(this.service);
 
   // leader broadcast
-  void broadcastPosition(String roomID, int serverStartTime, {int delay = 2000}) {
+  void broadcastPosition(
+    String roomID,
+    int serverStartTime, {
+    int delay = 2000,
+  }) {
     Future.delayed(Duration(milliseconds: delay), () {
       final now = service.getEstimatedServerTime();
       final position = now - serverStartTime;
@@ -247,7 +253,9 @@ class ResyncService {
     bool isReceived = false;
 
     subscription = rtdb
-        .child('playback_sessions/$roomID/${isHalfway ? 'halfwayCorrection' : 'startupCorrection'}')
+        .child(
+          'playback_sessions/$roomID/${isHalfway ? 'halfwayCorrection' : 'startupCorrection'}',
+        )
         .onValue
         .listen((event) {
           if (!event.snapshot.exists) return; //skip stale

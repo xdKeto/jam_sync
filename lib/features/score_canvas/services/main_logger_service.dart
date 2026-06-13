@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_database/firebase_database.dart';
-import 'package:flutter/foundation.dart';
 import 'package:jam_sync/features/score_canvas/services/sync_service.dart';
 import 'package:uuid/uuid.dart';
 

@@ -17,7 +17,6 @@ class PlaybackSectionWidget extends ConsumerWidget {
   final bool isEditable;
   final int currentBeatIndex;
   final Map<int, int> barIndexMap;
-
   final int sectionStartBarIndex;
   final double beatPosition;
 
@@ -41,10 +40,6 @@ class PlaybackSectionWidget extends ConsumerWidget {
   static const double barHeight = 60;
   static const double runSpacing = 8;
   static const int barsPerRow = 4;
-
-  int computeRowCount(int barCount) {
-    return (barCount / barsPerRow).ceil();
-  }
 
   double cursorProgress(int barStartBeat, int barEndBeat) {
     if (beatPosition < 0) return 0.0;
@@ -100,7 +95,7 @@ class PlaybackSectionWidget extends ConsumerWidget {
                     ),
                   );
                 }
-
+ 
                 final rows = <Widget>[];
                 final totalBars = bars.length;
 
@@ -127,11 +122,12 @@ class PlaybackSectionWidget extends ConsumerWidget {
 
                             final barStartBeat =
                                 barIndexMap[globalBarIndex] ?? (globalBarIndex * 4);
-                            final barEndBeat = barIndexMap[globalBarIndex + 1] ?? barStartBeat + 4;
+                            final barEndBeat = barIndexMap[globalBarIndex + 1] ?? barStartBeat + 4; // asumsi 4
+
                             final isHighlighted =
                                 currentBeatIndex >= barStartBeat && currentBeatIndex < barEndBeat;
                             final beatIndexWithinBar = isHighlighted
-                                ? (currentBeatIndex - barStartBeat)
+                                ? (currentBeatIndex - barStartBeat) // 18-16 = beat 2 (within bar)
                                 : -1;
 
                             return SizedBox(

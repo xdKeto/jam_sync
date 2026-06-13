@@ -87,7 +87,7 @@ class _PlaybackAutoNavigatorState extends ConsumerState<PlaybackAutoNavigator> {
 
   @override
   Widget build(BuildContext context) {
-    ref.read(syncServiceProvider);
+    ref.read(syncServiceProvider); // watch
 
     final roomState = ref.watch(roomProvider);
     final userID = FirebaseAuth.instance.currentUser?.uid ?? '';
@@ -111,13 +111,14 @@ class _PlaybackAutoNavigatorState extends ConsumerState<PlaybackAutoNavigator> {
       countdownBeats: 4,
       sections: widget.sections,
     );
-    final intentState = ref.watch(playbackIntentProvider(intentParams));
+
+    final intentState = ref.watch(playbackIntentProvider(intentParams)); //watch
 
     if (roomState.serverStartTime == 0) {
       hasNavigated = false;
     }
 
-    // auto navigate member (only) yang udah ready
+    // cek rtdb
     if (!isLeader &&
         roomState.serverStartTime > 0 &&
         intentState.isMyReady &&

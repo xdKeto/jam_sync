@@ -208,7 +208,7 @@ class BarWidget extends ConsumerWidget {
                   passingChord = passingChords![index];
                 }
 
-                // highlighting ketukan, collaborative, hijau playback
+                // highlighting beat, collaborative, hijau playback
                 final isPlaybackHighlighted = isHighlighted && index == highlightedBeatIndex;
                 final isEditingHighlighted = index == editorBeatIndex && beatHighlightColor != null;
                 final Color beatBackground = isEditingHighlighted

@@ -12,19 +12,19 @@ class AvatarPicker extends StatefulWidget {
 
 class _AvatarPickerState extends State<AvatarPicker>
     with SingleTickerProviderStateMixin {
-  late TabController _tabController;
-  String? _selectedAvatar;
+  late TabController tabController;
+  String? selectedAvatar;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
-    _selectedAvatar = widget.initialAvatar;
+    tabController = TabController(length: 2, vsync: this);
+    selectedAvatar = widget.initialAvatar;
   }
 
   @override
   void dispose() {
-    _tabController.dispose();
+    tabController.dispose();
     super.dispose();
   }
 
@@ -38,15 +38,15 @@ class _AvatarPickerState extends State<AvatarPicker>
       ),
       child: Column(
         children: [
-          _buildHeader(),
-          _buildTabBar(),
-          Expanded(child: _buildTabBarView()),
+          buildHeader(),
+          buildTabBar(),
+          Expanded(child: buildTabBarView()),
         ],
       ),
     );
   }
 
-  Widget _buildHeader() {
+  Widget buildHeader() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       child: Row(
@@ -68,13 +68,13 @@ class _AvatarPickerState extends State<AvatarPicker>
             ).copyWith(fontWeight: FontWeight.bold),
           ),
           TextButton(
-            onPressed: _selectedAvatar != null
-                ? () => Navigator.pop(context, _selectedAvatar)
+            onPressed: selectedAvatar != null
+                ? () => Navigator.pop(context, selectedAvatar)
                 : null,
             child: Text(
               'Done',
               style: AppStyles.bodyMedium(context).copyWith(
-                color: _selectedAvatar != null
+                color: selectedAvatar != null
                     ? AppStyles.darkNavy
                     : AppStyles.grey500,
                 fontWeight: FontWeight.bold,
@@ -86,9 +86,9 @@ class _AvatarPickerState extends State<AvatarPicker>
     );
   }
 
-  Widget _buildTabBar() {
+  Widget buildTabBar() {
     return TabBar(
-      controller: _tabController,
+      controller: tabController,
       labelColor: AppStyles.darkNavy,
       unselectedLabelColor: AppStyles.grey500,
       indicatorColor: AppStyles.darkNavy,
@@ -99,17 +99,17 @@ class _AvatarPickerState extends State<AvatarPicker>
     );
   }
 
-  Widget _buildTabBarView() {
+  Widget buildTabBarView() {
     return TabBarView(
-      controller: _tabController,
+      controller: tabController,
       children: [
-        _buildAvatarGrid('boy', 1, 50),
-        _buildAvatarGrid('girl', 51, 100),
+        buildAvatarGrid('boy', 1, 50),
+        buildAvatarGrid('girl', 51, 100),
       ],
     );
   }
 
-  Widget _buildAvatarGrid(String folder, int startIndex, int endIndex) {
+  Widget buildAvatarGrid(String folder, int startIndex, int endIndex) {
     return GridView.builder(
       padding: const EdgeInsets.all(16),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -121,12 +121,12 @@ class _AvatarPickerState extends State<AvatarPicker>
       itemBuilder: (context, index) {
         final avatarIndex = startIndex + index;
         final avatarPath = 'assets/avatars/$folder/AV$avatarIndex.png';
-        final isSelected = _selectedAvatar == avatarPath;
+        final isSelected = selectedAvatar == avatarPath;
 
         return GestureDetector(
           onTap: () {
             setState(() {
-              _selectedAvatar = avatarPath;
+              selectedAvatar = avatarPath;
             });
           },
           child: Container(

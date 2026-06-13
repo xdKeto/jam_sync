@@ -135,7 +135,7 @@ class ParticipantTile extends StatelessWidget {
                   ],
                 ),
               ),
-              6.height, // Ready status
+              6.height, 
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [

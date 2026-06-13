@@ -93,7 +93,7 @@ class SectionWidget extends ConsumerWidget {
                     passingChords: bar.passingChord,
                     isCornerLeft: isLeft,
                     isCornerRight: isRight,
-                    sortedParticipants: sortedOnline,
+                    sortedParticipants: sortedOnline, // warna editing presence
                     onChordChanged: (beatIndex, chord) {
                       ref
                           .read(projectRepositoryProvider)

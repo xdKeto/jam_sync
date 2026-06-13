@@ -26,9 +26,9 @@ class CreateProjectState {
 }
 
 class CreateProjectNotifier extends StateNotifier<CreateProjectState> {
-  final ProjectRepository _repository;
+  final ProjectRepository repository;
 
-  CreateProjectNotifier(this._repository)
+  CreateProjectNotifier(this.repository)
       : super(const CreateProjectState());
 
   Future<bool> createProject({
@@ -42,7 +42,7 @@ class CreateProjectNotifier extends StateNotifier<CreateProjectState> {
     state = state.copyWith(isLoading: true, error: null);
 
     try {
-      final projectId = await _repository.createProject(
+      final projectId = await repository.createProject(
         title: title,
         songTitle: songTitle,
         tempo: tempo,

@@ -21,7 +21,7 @@ final userProvider = FutureProvider.family<Map<String, dynamic>?, String>((
   return doc.data();
 });
 
-// cek status user - autoDispose
+// cek
 final isNewUserProvider = FutureProvider.autoDispose<bool>((ref) async {
   final user = FirebaseAuth.instance.currentUser;
   if (user == null) return false;
@@ -98,7 +98,6 @@ class AuthNotifier extends StateNotifier<AsyncValue<void>> {
         final docSnapshot = await userDoc.get();
 
         if (!docSnapshot.exists) {
-          // User baru - buat dokumen dengan profileCompleted: false
           await userDoc.set({
             'uid': user.uid,
             'email': user.email,

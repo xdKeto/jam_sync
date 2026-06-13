@@ -106,7 +106,6 @@ class PocSyncService {
     }
   }
 
-  // Quick re-calibration: 3 samples, fine-tune (weighted blend, BUKAN overwrite)
   Future<void> calibrateQuick() async {
     final samples = <({int offset, int rtt})>[];
 
@@ -173,7 +172,6 @@ class PocResyncService {
 
   PocResyncService(this.syncService);
 
-  // One-time broadcast: leader sends position once after delay
   void broadcastOnce(String roomID, int serverStartTime, {int delayMs = 2000}) {
     Future.delayed(Duration(milliseconds: delayMs), () {
       final now = syncService.getEstimatedServerTime();
@@ -256,7 +254,6 @@ class PocResyncService {
           sub?.cancel();
         });
 
-    // timeout: cancel after 3s if nothing received
     Future.delayed(const Duration(seconds: 3), () {
       if (!hasReceived) {
         sub?.cancel();

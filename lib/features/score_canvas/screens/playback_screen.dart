@@ -52,30 +52,6 @@ class _PlaybackScreenState extends ConsumerState<PlaybackScreen> {
   bool started = false;
   bool sessionStale = false;
 
-  /// Track section data version to invalidate cached sectionStartBarIndex
-  // int _sectionsVersion = 0;
-
-  /// Cached section start bar index to avoid recalculating
-  // Map<String, int>? _cachedSectionStartBarIndex;
-
-  /// Build a map of section ID -> global starting bar index
-  /// Uses ACTUAL bar counts from Firestore, not section.barCount metadata
-  // Future<Map<String, int>> _buildSectionStartBarIndexAsync(List<SectionModel> sections) async {
-  //   final repo = ref.read(projectRepositoryProvider);
-  //   int cumulativeBars = 0;
-  //   final result = <String, int>{};
-
-  //   for (final section in sections) {
-  //     result[section.id] = cumulativeBars;
-  //     // Fetch actual bars to get correct count
-  //     final bars = await repo.getBars(widget.projectID, widget.canvasID, section.id);
-  //     cumulativeBars += bars.length;
-  //   }
-
-  //   // _cachedSectionStartBarIndex = result;
-  //   return result;
-  // }
-
   Map<String, int> buildSectionStartBarIndex(List<SectionModel> sections) {
     int cumulativeBars = 0;
     final result = <String, int>{};
@@ -128,7 +104,7 @@ class _PlaybackScreenState extends ConsumerState<PlaybackScreen> {
   }
 
   void setupPlaybackListener() {
-    ref.listen<PlaybackState>(playbackProvider(params), (previous, next) async {
+    ref.listen<PlaybackState>(playbackProvider(params), (previous, next) async { //trigger member
       if (previous?.phase != PlaybackPhase.ended &&
           next.phase == PlaybackPhase.ended) {
         await resetIntentState();
@@ -191,7 +167,7 @@ class _PlaybackScreenState extends ConsumerState<PlaybackScreen> {
     final playbackDurationMs = totalBars * barDurationMs;
     final totalSessionMs = countdownDurationMs + playbackDurationMs + 2000;
 
-    // harusnya udah selesai, tapi masih jalan (elapsed) = expired
+    // kelewatan
     return elapsedMs > totalSessionMs;
   }
 
@@ -247,25 +223,6 @@ class _PlaybackScreenState extends ConsumerState<PlaybackScreen> {
     );
 
     final currentSections = sectionsAsync.value ?? widget.sections;
-
-    // Track section changes to trigger barIndexMap rebuild
-    // final sectionCount = currentSections.length;
-    // if (sectionCount != _sectionsVersion) {
-    //   _sectionsVersion = sectionCount;
-    //   // Rebuild barIndexMap and sectionStartBarIndex with fresh section data
-    //   WidgetsBinding.instance.addPostFrameCallback((_) async {
-    //     if (!mounted) return;
-    //     if (params.getBarsForSection != null) {
-    //       await playbackController(ref, params).rebuildBarIndexMap(currentSections);
-    //     }
-    //     // Also rebuild sectionStartBarIndex with actual bar counts
-    //     await _buildSectionStartBarIndexAsync(currentSections);
-    //     if (mounted) {
-    //       setState(() {});
-    //     }
-    //   });
-    // }
-
     final state = ref.watch(playbackProvider(params));
     final controller = playbackController(ref, params);
 
@@ -322,7 +279,7 @@ class _PlaybackScreenState extends ConsumerState<PlaybackScreen> {
                 projectID: widget.projectID,
                 canvasID: widget.canvasID,
                 scrollOffset: 0,
-                currentIndex: state.currentBarIndex,
+                // currentIndex: state.currentBarIndex,
                 smoothedPositionMs: state.smoothedPositionMs,
                 isPlaying: state.phase == PlaybackPhase.playing,
                 isEditable: state.phase != PlaybackPhase.playing,
@@ -343,8 +300,9 @@ class _PlaybackScreenState extends ConsumerState<PlaybackScreen> {
                 onClose: () async {
                   await resetIntentState();
                   controller.stop();
-                  if (mounted) Navigator.pop(context);
+                  if (context.mounted) Navigator.pop(context);
                 },
+                playbackProgress: state.playbackProgress,
               ),
             ],
           ),

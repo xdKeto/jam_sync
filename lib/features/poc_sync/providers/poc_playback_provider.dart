@@ -19,12 +19,10 @@ class PocPlaybackService {
   Future<void> startPlayback(String roomId) async {
     final syncService = ref.read(pocSyncServiceProvider);
 
-    // NTP quick re-calibration sebelum mulai (jika aktif)
     if (PocSyncService.useNtpCalibration) {
       await syncService.calibrateQuick();
     }
 
-    // leader buat shared log session dulu sebelum countdown
     await createSharedLogSession(roomId);
 
     // time now + buffer (8 detik)

@@ -17,7 +17,7 @@ class PlaybackState {
   final int countdownBeat;
   final double beatProgress;
   final double smoothedPositionMs;
-  final int currentBarIndex;
+  // final int currentBarIndex;
   final double playbackProgress;
   final int totalBars;
   final int serverStartTime;
@@ -35,7 +35,7 @@ class PlaybackState {
     this.countdownBeat = 4,
     this.beatProgress = 0,
     this.smoothedPositionMs = 0,
-    this.currentBarIndex = 0,
+    // this.currentBarIndex = 0,
     this.playbackProgress = 0,
     this.totalBars = 0,
     this.serverStartTime = 0,
@@ -54,7 +54,7 @@ class PlaybackState {
     int? countdownBeat,
     double? beatProgress,
     double? smoothedPositionMs,
-    int? currentBarIndex,
+    // int? currentBarIndex,
     double? playbackProgress,
     int? totalBars,
     int? serverStartTime,
@@ -72,7 +72,7 @@ class PlaybackState {
       countdownBeat: countdownBeat ?? this.countdownBeat,
       beatProgress: beatProgress ?? this.beatProgress,
       smoothedPositionMs: smoothedPositionMs ?? this.smoothedPositionMs,
-      currentBarIndex: currentBarIndex ?? this.currentBarIndex,
+      // currentBarIndex: currentBarIndex ?? this.currentBarIndex,
       playbackProgress: playbackProgress ?? this.playbackProgress,
       totalBars: totalBars ?? this.totalBars,
       serverStartTime: serverStartTime ?? this.serverStartTime,
@@ -148,6 +148,7 @@ class PlaybackController extends StateNotifier<PlaybackState> {
 
   String? logSessionId;
   int serverStartTime = 0;
+  int capturedOffset = 0;
   int countdownBeats = 4;
   late double tempo;
   double beatDurationMs = 500;
@@ -388,9 +389,7 @@ class PlaybackController extends StateNotifier<PlaybackState> {
     syncingTimer?.cancel();
     syncingTimer = null;
     syncingTimer = Timer.periodic(Duration(milliseconds: 50), (timer) {
-      //cek every 50ms, "is it already beatStartTime?"
       final now = syncService.getEstimatedServerTime();
-      //"kalo start jam 5:07, brarti mulai countdown harus 5:05"
       final beatStartTime = serverStartTime - countdownDurationMs;
 
       if (now >= beatStartTime) {
@@ -418,7 +417,7 @@ class PlaybackController extends StateNotifier<PlaybackState> {
 
     countdownTimer?.cancel();
     countdownTimer = Timer.periodic(Duration(milliseconds: 16), (timer) {
-      //kalo telat, langsung aja
+      //telat
       final now = syncService.getEstimatedServerTime();
       final elapsed = now - (serverStartTime - beatDurationMs.round());
       if (elapsed >= beatDurationMs) {
@@ -456,11 +455,9 @@ class PlaybackController extends StateNotifier<PlaybackState> {
           countdownBeats,
         );
         final rawProgress = (totalElapsed % beatDurationMs) / beatDurationMs;
-        final beatProgress = rawProgress.clamp(
-          0.0,
-          1.0,
-        ); // animasi progress bar
+        final beatProgress = rawProgress.clamp(0.0, 1.0);
 
+        // update ke ui
         state = state.copyWith(
           countdownBeat: currentBeat,
           beatProgress: beatProgress,
@@ -487,10 +484,12 @@ class PlaybackController extends StateNotifier<PlaybackState> {
   void startPlayback() {
     countdownTimer?.cancel();
     halfwayResyncFired = false;
+    capturedOffset = syncService.serverTimeOffset;
+
     state = state.copyWith(
       phase: PlaybackPhase.playing,
       smoothedPositionMs: 0,
-      currentBarIndex: 0,
+      // currentBarIndex: 0,
       playbackProgress: 0,
       // correctionOffsetMs: 0,
       barIndexMap: Map.from(barIndexMap),
@@ -510,7 +509,7 @@ class PlaybackController extends StateNotifier<PlaybackState> {
     }
 
     playbackTimer = Timer.periodic(
-      Duration(milliseconds: 16), // 1000/60 = 16ms / 60fps
+      Duration(milliseconds: 16),
       (_) => autonomousPlayback(),
     );
 
@@ -520,9 +519,6 @@ class PlaybackController extends StateNotifier<PlaybackState> {
     //   resyncService.listenPosition(params.roomID, false, handleCorrection, timeout: Duration(seconds: 5));
     //   if (params.enableHalfwayResync) {
     //     resyncService.listenPosition(params.roomID, true, (position, broadcastTime) {
-    //       debugPrint(
-    //         '[Member] halfway correction received: pos=$position, broadcastTime=$broadcastTime',
-    //       );
     //       handleCorrection(position, broadcastTime);
     //     });
     //   }
@@ -532,23 +528,16 @@ class PlaybackController extends StateNotifier<PlaybackState> {
   void autonomousPlayback() {
     if (state.phase != PlaybackPhase.playing) return;
 
-    final now = syncService.getEstimatedServerTime();
-    final rawPosition = (now - serverStartTime)
-        .toDouble(); // "estimasi server" - "waktu mulai" = "skrg lagu sampe mana"
+    final now = DateTime.now().millisecondsSinceEpoch + capturedOffset;
+    final rawPosition = (now - serverStartTime).toDouble();
 
-    // tambah decay
     // final decayedOffset = state.correctionOffsetMs * 0.98;
     // final targetPosition = rawPosition + decayedOffset;
 
     // smoothing
-    final error = (rawPosition - state.smoothedPositionMs).abs();
-    final alpha = error > 50 ? 0.3 : 0.15;
-    final smoothed =
-        state.smoothedPositionMs +
-        alpha * (rawPosition - state.smoothedPositionMs);
-
-    // nentuin UI bar
-    final barIndex = positionToBarIndex(smoothed);
+    final error = rawPosition - state.smoothedPositionMs;
+    final alpha = error.abs() > 50 ? 0.3 : 0.15;
+    final smoothed = state.smoothedPositionMs + alpha * error;
 
     // cek
     if (isPlaybackEnded()) {
@@ -564,7 +553,6 @@ class PlaybackController extends StateNotifier<PlaybackState> {
     //   final halfwayBar = state.totalBars ~/ 2;
     //   if (barIndex >= halfwayBar) {
     //     halfwayResyncFired = true;
-    //     debugPrint('[Leader] broadcasting halfway at bar $barIndex/$halfwayBar');
     //     resyncService.broadcastHalfway(
     //       params.roomID,
     //       smoothed.round(),
@@ -576,7 +564,7 @@ class PlaybackController extends StateNotifier<PlaybackState> {
     // update state
     state = state.copyWith(
       smoothedPositionMs: smoothed,
-      currentBarIndex: barIndex,
+      // currentBarIndex: barIndex,
       playbackProgress: totalDurationMs > 0
           ? (smoothed / totalDurationMs).clamp(0.0, 1.0)
           : 0,
@@ -584,16 +572,17 @@ class PlaybackController extends StateNotifier<PlaybackState> {
     );
   }
 
-  // void handleCorrection(int leaderPosition, int broadcastTime) {
-  //   final latency = syncService.getEstimatedServerTime() - broadcastTime;
-  //   if (latency < 0 || latency > 200) return;
+  // check playback
+  bool isPlaybackEnded() {
+    if (barIndexMap.isEmpty || state.totalBars <= 0) return false;
 
-  //   final delta = leaderPosition - state.smoothedPositionMs;
-  //   if (delta.abs() < 5) return;
+    final totalDuration = totalDurationMs; //get
+    if (totalDuration <= 0) return false;
 
-  //   final clampedDelta = delta.clamp(-30.0, 30.0);
-  //   state = state.copyWith(correctionOffsetMs: clampedDelta);
-  // }
+    if (state.smoothedPositionMs < 1000) return false;
+
+    return state.smoothedPositionMs > totalDuration;
+  }
 
   void stop() {
     syncingTimer?.cancel();
@@ -601,6 +590,17 @@ class PlaybackController extends StateNotifier<PlaybackState> {
     playbackTimer?.cancel();
     resetPlaybackSession();
   }
+
+  // void handleCorrection(int leaderPosition, int broadcastTime) {
+  //   final latency = syncService.getEstimatedServerTime() - broadcastTime;
+  //   if (latency < 0 || latency > 200) return;
+
+  //   final diff = leaderPosition - state.smoothedPositionMs;
+  //   if (diff.abs() < 5) return;
+
+  //   final clampedDiff = diff.clamp(-30.0, 30.0);
+  //   state = state.copyWith(correctionOffsetMs: clampedDiff);
+  // }
 
   // ====== HELPER FUNCTIONS ======
 
@@ -664,62 +664,52 @@ class PlaybackController extends StateNotifier<PlaybackState> {
     }
     final sortedKeys = barIndexMap.keys.toList()..sort();
     if (sortedKeys.isEmpty) return 0;
+
     final lastBar = sortedKeys.last;
     final lastCumulative = barIndexMap[lastBar]!;
     final lastBarBeats = getBarBeatCount(lastBar);
+
     return (lastCumulative + lastBarBeats) *
         beatDurationMs; // total beat * durasi beat = lama lagu (ms)
   }
 
-  int positionToBarIndex(double positionMs) {
-    if (positionMs < 0 || barIndexMap.isEmpty) return 0;
+  // int positionToBarIndex(double positionMs) {
+  //   if (positionMs < 0 || barIndexMap.isEmpty) return 0;
 
-    final beats = positionMs / beatDurationMs; // beat keberapa
-    final found = findBarSectionHelper(beats, barIndexMap);
+  //   final beats = positionMs / beatDurationMs; // beat keberapa
+  //   final found = findBarSectionHelper(beats, barIndexMap);
 
-    if (found == -1) return 0;
-    return found.clamp(0, state.totalBars > 0 ? state.totalBars - 1 : 0);
-  }
+  //   if (found == -1) return 0;
+  //   return found.clamp(0, state.totalBars > 0 ? state.totalBars - 1 : 0);
+  // }
 
-  // cari bar index berdasarkan beat keberapa
-  int findBarSectionHelper(double beats, Map<int, int> beatMap) {
-    if (beatMap.isEmpty) return -1;
+  // // cari bar index berdasarkan beat keberapa
+  // int findBarSectionHelper(double beats, Map<int, int> beatMap) {
+  //   if (beatMap.isEmpty) return -1;
 
-    List<int> keys = beatMap.keys.toList()..sort();
-    int left = 0;
-    int right = keys.length - 1;
+  //   List<int> keys = beatMap.keys.toList()..sort();
+  //   int left = 0;
+  //   int right = keys.length - 1;
 
-    if (beats < 0) return -1;
+  //   if (beats < 0) return -1;
 
-    // binary searchhh
-    int result = -1;
-    while (left <= right) {
-      int mid = left + (right - left) ~/ 2;
-      int midKey = keys[mid];
-      int midValue = beatMap[midKey]!;
+  //   // binary searchhh
+  //   int result = -1;
+  //   while (left <= right) {
+  //     int mid = left + (right - left) ~/ 2;
+  //     int midKey = keys[mid];
+  //     int midValue = beatMap[midKey]!;
 
-      if (midValue <= beats) {
-        result = midKey;
-        left = mid + 1;
-      } else {
-        right = mid - 1;
-      }
-    }
+  //     if (midValue <= beats) {
+  //       result = midKey;
+  //       left = mid + 1;
+  //     } else {
+  //       right = mid - 1;
+  //     }
+  //   }
 
-    return result;
-  }
-
-  // check playback
-  bool isPlaybackEnded() {
-    if (barIndexMap.isEmpty || state.totalBars <= 0) return false;
-
-    final totalDuration = totalDurationMs;
-    if (totalDuration <= 0) return false;
-
-    if (state.smoothedPositionMs < 1000) return false;
-
-    return state.smoothedPositionMs > totalDuration;
-  }
+  //   return result;
+  // }
 
   @override
   void dispose() {

@@ -192,7 +192,7 @@ class ProjectRepository {
     return ProjectModel.fromFirestore(doc);
   }
 
-  // ambil snapshot, not all data
+  // get snapshots
   Stream<List<CanvasModel>> streamCanvases(String projectId) {
     return projectsRef
         .doc(projectId)
@@ -840,8 +840,8 @@ class ProjectRepository {
         .doc(canvasID)
         .update({'tempo': tempo, 'updatedAt': FieldValue.serverTimestamp()});
   }
+  
   // NOTES
-
   Stream<List<NoteModel>> streamNotes(String projectID, String canvasID) {
     return projectsRef
         .doc(projectID)

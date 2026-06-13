@@ -35,7 +35,7 @@ class _AddCanvasSheetState extends ConsumerState<AddCanvasSheet> {
   bool isLoading = false;
   Map<String, dynamic>? selectedTemplate;
 
-  void _applyTemplate(Map<String, dynamic> template) {
+  void applyTemplate(Map<String, dynamic> template) {
     setState(() {
       selectedTemplate = template;
       final canvas = template['canvas'] as Map<String, dynamic>;
@@ -54,7 +54,7 @@ class _AddCanvasSheetState extends ConsumerState<AddCanvasSheet> {
     super.dispose();
   }
 
-  Future<void> _handleCreateCanvas() async {
+  Future<void> handleCreateCanvas() async {
     if (!formKey.currentState!.validate()) return;
 
     setState(() => isLoading = true);
@@ -280,7 +280,7 @@ class _AddCanvasSheetState extends ConsumerState<AddCanvasSheet> {
                                       TemplateChip(
                                         template: template,
                                         isSelected: selectedTemplate?['id'] == template['id'],
-                                        onTap: () => _applyTemplate(template),
+                                        onTap: () => applyTemplate(template),
                                       ),
                                   ],
                                 ),
@@ -293,7 +293,7 @@ class _AddCanvasSheetState extends ConsumerState<AddCanvasSheet> {
                 ),
                 16.height,
                 GestureDetector(
-                  onTap: isLoading ? null : _handleCreateCanvas,
+                  onTap: isLoading ? null : handleCreateCanvas,
                   child: isLoading
                       ? const Center(child: CircularProgressIndicator(color: AppStyles.darkNavy))
                       : TheButton(

@@ -14,7 +14,7 @@ final editingPresenceProvider =
           final d = val as Map<dynamic, dynamic>;
           final barPath = d['barPath'] as String;
           final beatIndex = (d['beatIndex'] as int?) ?? -1;
-          return MapEntry(uid as String, (barPath: barPath, beatIndex: beatIndex));
+          return MapEntry(uid as String, (barPath: barPath, beatIndex: beatIndex)); // bar db path, beat
         });
       });
     });

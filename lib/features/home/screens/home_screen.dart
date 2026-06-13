@@ -17,8 +17,7 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Force syncServiceProvider initialization on home screen open
-    // This triggers burstCalibrate() for NTP time sync before playback
+    // calibrate
     ref.read(syncServiceProvider);
 
     final authState = ref.watch(authStateProvider);

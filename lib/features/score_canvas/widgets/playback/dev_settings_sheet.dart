@@ -88,13 +88,13 @@ class _DevSettingsSheetState extends State<DevSettingsSheet> {
             style: AppStyles.h3(context).copyWith(color: AppStyles.white),
             textAlign: TextAlign.center,
           ),
-          24.height,
-          _buildToggle(
-            title: "Halfway Resync",
-            subtitle: "Resinkronisasi setengah lagu",
-            value: _enableHalfwayResync,
-            onChanged: (v) => setState(() => _enableHalfwayResync = v),
-          ),
+          // 24.height,
+          // buildToggle(
+          //   title: "Halfway Resync",
+          //   subtitle: "Resinkronisasi setengah lagu",
+          //   value: _enableHalfwayResync,
+          //   onChanged: (v) => setState(() => _enableHalfwayResync = v),
+          // ),
           24.height,
           Text(
             "Countdown Beats",
@@ -103,11 +103,11 @@ class _DevSettingsSheetState extends State<DevSettingsSheet> {
           8.height,
           Row(
             children: [
-              _beatOption(2),
+              beatOption(2),
               12.width,
-              _beatOption(4),
+              beatOption(4),
               12.width,
-              _beatOption(8),
+              beatOption(8),
             ],
           ),
           32.height,
@@ -133,7 +133,7 @@ class _DevSettingsSheetState extends State<DevSettingsSheet> {
     );
   }
 
-  Widget _buildToggle({
+  Widget buildToggle({
     required String title,
     required String subtitle,
     required bool value,
@@ -166,7 +166,7 @@ class _DevSettingsSheetState extends State<DevSettingsSheet> {
     );
   }
 
-  Widget _beatOption(int beats) {
+  Widget beatOption(int beats) {
     final isSelected = _countdownBeats == beats;
     return Expanded(
       child: GestureDetector(
