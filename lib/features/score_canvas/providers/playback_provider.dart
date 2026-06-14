@@ -267,7 +267,7 @@ class PlaybackController extends StateNotifier<PlaybackState> {
       return;
     }
 
-    // new sesi
+    // start
     if (startTime > 0 &&
         state.phase != PlaybackPhase.syncing &&
         state.phase != PlaybackPhase.countdown &&

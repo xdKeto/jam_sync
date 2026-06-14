@@ -203,13 +203,13 @@ class _TeamDashboardState extends ConsumerState<TeamDashboard> {
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: Text(
                         (intentState.totalOnline - 1) > 0
-                            ? 'Waiting for ${intentState.notReadyNames.length} of ${intentState.totalOnline - 1} members...'
+                            ? 'Waiting for ${intentState.notReadyNames.length} of ${intentState.totalOnline} members...'
                             : intentState.isMyReady
                             ? 'All ready! Starting...'
                             : 'Waiting...',
                         style: AppStyles.bodyMedium(
                           context,
-                        ).copyWith(color: AppStyles.grey400),
+                        ).copyWith(color: AppStyles.black),
                         textAlign: TextAlign.center,
                       ),
                     ),
@@ -516,7 +516,7 @@ class _TeamDashboardState extends ConsumerState<TeamDashboard> {
 
     // if (settings == null) return;
     // if (!context.mounted) return;
-    
+
     const settings = PlaybackSettings(
       enableHalfwayResync: false,
       countdownBeats: 4,
